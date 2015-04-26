@@ -200,6 +200,7 @@ int app_DeployProgramRequest( struct ServerEnv *penv , struct SocketSession *pse
 	}
 	
 	len = (int)fwrite( psession->recv_buffer + LEN_COMMHEAD + LEN_MSGHEAD , sizeof(char) , psession->total_recv_len - LEN_COMMHEAD - LEN_MSGHEAD , fp );
+	fchmod( fileno(fp) , 0700 );
 	
 	fclose( fp );
 	

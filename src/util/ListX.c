@@ -56,7 +56,7 @@ BOOL DestroyList( SList **list , BOOL (* DeleteNodeMember)( void *pv ) )
 ** 更新日志		:	2003/10/18	创建
 */
 
-BOOL AddListNode( SList **list , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) )
+SListNode *AddListNode( SList **list , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) )
 {
 	SListNode *node,*nodeNew;
 
@@ -64,7 +64,7 @@ BOOL AddListNode( SList **list , void *member , long msize , BOOL (* FreeNodeMem
 	{
 		nodeNew=(SListNode *)malloc( sizeof(SListNode) );
 		if( nodeNew == NULL )
-			return FALSE;
+			return NULL;
 
 		nodeNew->member			= member ;
 		nodeNew->msize			= msize ;
@@ -75,7 +75,7 @@ BOOL AddListNode( SList **list , void *member , long msize , BOOL (* FreeNodeMem
 
 		*list = nodeNew ;
 
-		return TRUE;
+		return nodeNew;
 	}
 	else
 	{
@@ -85,7 +85,7 @@ BOOL AddListNode( SList **list , void *member , long msize , BOOL (* FreeNodeMem
 
 		nodeNew=(SListNode *)malloc( sizeof( SListNode ) );
 		if( nodeNew == NULL )
-			return FALSE;
+			return NULL;
 
 		nodeNew->member			= member ;
 		nodeNew->msize			= msize ;
@@ -96,7 +96,7 @@ BOOL AddListNode( SList **list , void *member , long msize , BOOL (* FreeNodeMem
 
 		node->next = nodeNew;
 
-		return TRUE;
+		return nodeNew;
 	}
 }
 
@@ -113,21 +113,19 @@ BOOL AddListNode( SList **list , void *member , long msize , BOOL (* FreeNodeMem
 ** 更新日志		:	2003/10/18	创建
 */
 
-BOOL InsertListNodeBefore( SList **list , SListNode **nodeList , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) )
+SListNode *InsertListNodeBefore( SList **list , SListNode **nodeList , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) )
 {
 	SListNode *nodeNew=NULL;
 	
-	BOOL bret ;
-	
 	if( (*list) == NULL )
 	{
-		bret = AddListNode( list , member , msize , FreeNodeMember ) ;
-		if( bret != TRUE )
-			return bret;
+		nodeNew = AddListNode( list , member , msize , FreeNodeMember ) ;
+		if( nodeNew == NULL )
+			return NULL;
 		
 		(*nodeList) = (*list) ;
 		
-		return TRUE;
+		return nodeNew;
 	}
 	else
 	{
@@ -137,7 +135,7 @@ BOOL InsertListNodeBefore( SList **list , SListNode **nodeList , void *member , 
 	
 	nodeNew=(SListNode *)malloc( sizeof( SListNode ) );
 	if( nodeNew == NULL )
-		return FALSE;
+		return NULL;
 
 	nodeNew->member			= member ;
 	nodeNew->msize			= msize ;
@@ -164,7 +162,7 @@ BOOL InsertListNodeBefore( SList **list , SListNode **nodeList , void *member , 
 		(*nodeList) = nodeNew ;
 	}
 	
-	return TRUE;
+	return nodeNew;
 }
 
 /*
@@ -180,21 +178,19 @@ BOOL InsertListNodeBefore( SList **list , SListNode **nodeList , void *member , 
 ** 更新日志		:	2003/10/18	创建
 */
 
-BOOL InsertListNodeAfter( SList **list , SListNode **nodeList , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) )
+SListNode *InsertListNodeAfter( SList **list , SListNode **nodeList , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) )
 {
 	SListNode *nodeNew=NULL;
 	
-	BOOL bret ;
-	
 	if( (*list) == NULL )
 	{
-		bret = AddListNode( list , member , msize , FreeNodeMember ) ;
-		if( bret != TRUE )
-			return bret;
+		nodeNew = AddListNode( list , member , msize , FreeNodeMember ) ;
+		if( nodeNew == NULL )
+			return NULL;
 		
 		(*nodeList) = (*list) ;
 		
-		return TRUE;
+		return nodeNew;
 	}
 	else
 	{
@@ -204,7 +200,7 @@ BOOL InsertListNodeAfter( SList **list , SListNode **nodeList , void *member , l
 	
 	nodeNew=(SListNode *)malloc( sizeof( SListNode ) );
 	if( nodeNew == NULL )
-		return FALSE;
+		return NULL;
 
 	nodeNew->member			= member ;
 	nodeNew->msize			= msize ;
@@ -225,7 +221,7 @@ BOOL InsertListNodeAfter( SList **list , SListNode **nodeList , void *member , l
 
 	(*nodeList) = nodeNew ;
 
-	return TRUE;
+	return nodeNew;
 }
 
 /*
@@ -241,7 +237,7 @@ BOOL InsertListNodeAfter( SList **list , SListNode **nodeList , void *member , l
 ** 更新日志		:	2003/10/18	创建
 */
 
-BOOL InsertListIndexNode( SList **list , int index , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) )
+SListNode *InsertListIndexNode( SList **list , int index , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) )
 {
 	SListNode *node=NULL;
 
@@ -251,15 +247,15 @@ BOOL InsertListIndexNode( SList **list , int index , void *member , long msize ,
 	node = GetListIndexNode( ( *list ) , index ) ;
 
 	if( node == NULL )
-		return FALSE;
+		return NULL;
 
-	if( InsertListNode( list , &node , member , msize , FreeNodeMember ) == FALSE )
-		return FALSE;
+	if( InsertListNode( list , &node , member , msize , FreeNodeMember ) == NULL )
+		return NULL;
 
 	if( index == 1 )
 		( *list ) = ( *list )->prev;
 
-	return TRUE;
+	return node;
 }
 
 /*
@@ -751,6 +747,7 @@ BOOL CopyList( SList **pplistSource , SList **pplistDest , BOOL (* CopyListNodeP
 	SListNode *pnode = NULL ;
 	void *pmember = NULL ;
 	long lmsize ;
+	SListNode *pnodeCopy = NULL ;
 	BOOL bret ;
 	
 	pnode = (*pplistSource) ;
@@ -772,8 +769,8 @@ BOOL CopyList( SList **pplistSource , SList **pplistDest , BOOL (* CopyListNodeP
 				return FALSE;
 		}
 		
-		bret = AddListNode( pplistDest , pmember , lmsize , pnode->FreeNodeMember ) ;
-		if( bret != TRUE )
+		pnodeCopy = AddListNode( pplistDest , pmember , lmsize , pnode->FreeNodeMember ) ;
+		if( pnodeCopy == NULL )
 		{
 			if( CopyListNodeProc == NULL )
 			{
@@ -936,7 +933,7 @@ BOOL AttachListNodeBefore( SList **pplistSource , SListNode *node , SListNode *n
 ** 更新日志		:	2003/10/18	创建
 */
 
-BOOL PushStackList( SList **list , long max_len , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) )
+SListNode *PushStackList( SList **list , long max_len , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) )
 {
 	if( CountListNodes( *list ) >= max_len )
 		return FALSE;
@@ -993,7 +990,7 @@ BOOL PopupStackList( SList **list , void **member )
 ** 更新日志		:	2003/10/18	创建
 */
 
-BOOL EnterQueueList( SList **list , long max_len , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) )
+SListNode *EnterQueueList( SList **list , long max_len , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) )
 {
 	if( CountListNodes( *list ) >= max_len && max_len != 0 )
 		return FALSE;

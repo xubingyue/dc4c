@@ -76,8 +76,6 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 	SListNode		*worker_info_node = NULL ;
 	struct WorkerInfo	*worker_info = NULL ;
 	
-	BOOL			bret = BOOLNULL ;
-	
 	if( p_req->sysname[0] == '\0' || p_req->release[0] == '\0' || p_req->bits == 0 )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "sysname[%s] release[%s] bits[%d] invalid" , p_req->sysname , p_req->release , p_req->bits );
@@ -127,8 +125,8 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 						worker_info->is_working = 0 ;
 						worker_info->access_timestamp = timestamp ;
 						
-						bret = InsertListNodeBefore( & (host_info->worker_info_list) , & (host_info->worker_info_list) , worker_info , sizeof(struct WorkerInfo) , & FreeWorkerInfo ) ;
-						if( bret != TRUE )
+						worker_info_node = InsertListNodeBefore( & (host_info->worker_info_list) , & (host_info->worker_info_list) , worker_info , sizeof(struct WorkerInfo) , & FreeWorkerInfo ) ;
+						if( worker_info_node == NULL )
 						{
 							ErrorLog( __FILE__ , __LINE__ , "AddListNode failed , errno[%d]" , errno );
 							p_rsp->response_code = 11 ;
@@ -138,6 +136,10 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 						host_info->idler_count++;
 						
 						DebugLog( __FILE__ , __LINE__ , "Add worker ok , port[%d] in sysname[%s] release[%s] bits[%d] ip[%s]" , p_req->port , p_req->sysname , p_req->release , p_req->bits , p_req->ip );
+						
+						psession->p1 = os_type_node ;
+						psession->p2 = host_info_node ;
+						psession->p3 = worker_info_node ;
 						
 						break;
 					}
@@ -168,16 +170,16 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 				strcpy( host_info->ip , p_req->ip );
 				host_info->idler_count = 0 ;
 				host_info->working_count = 0 ;
-				bret = AddListNode( & (host_info->worker_info_list) , worker_info , sizeof(struct WorkerInfo) , & FreeWorkerInfo ) ;
-				if( bret != TRUE )
+				worker_info_node = AddListNode( & (host_info->worker_info_list) , worker_info , sizeof(struct WorkerInfo) , & FreeWorkerInfo ) ;
+				if( worker_info_node == NULL )
 				{
 					ErrorLog( __FILE__ , __LINE__ , "AddListNode failed , errno[%d]" , errno );
 					p_rsp->response_code = 11 ;
 					return 0;
 				}
 				
-				bret = AddListNode( & (os_type->host_info_list) , host_info , sizeof(struct HostInfo) , & FreeHostInfo ) ;
-				if( bret != TRUE )
+				host_info_node = AddListNode( & (os_type->host_info_list) , host_info , sizeof(struct HostInfo) , & FreeHostInfo ) ;
+				if( host_info_node == NULL )
 				{
 					ErrorLog( __FILE__ , __LINE__ , "AddListNode failed , errno[%d]" , errno );
 					p_rsp->response_code = 11 ;
@@ -185,6 +187,10 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 				}
 				
 				DebugLog( __FILE__ , __LINE__ , "Add worker ok , ip[%s] port[%d] in sysname[%s] release[%s] bits[%d]" , p_req->ip , p_req->port , p_req->sysname , p_req->release , p_req->bits );
+				
+				psession->p1 = os_type_node ;
+				psession->p2 = host_info_node ;
+				psession->p3 = worker_info_node ;
 			}
 			
 			break;
@@ -215,8 +221,8 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 		strcpy( host_info->ip , p_req->ip );
 		host_info->idler_count = 0 ;
 		host_info->working_count = 0 ;
-		bret = AddListNode( & (host_info->worker_info_list) , worker_info , sizeof(struct WorkerInfo) , & FreeWorkerInfo ) ;
-		if( bret != TRUE )
+		worker_info_node = AddListNode( & (host_info->worker_info_list) , worker_info , sizeof(struct WorkerInfo) , & FreeWorkerInfo ) ;
+		if( worker_info_node == NULL )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "AddListNode failed , errno[%d]" , errno );
 			p_rsp->response_code = 11 ;
@@ -234,16 +240,16 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 		strcpy( os_type->sysname , p_req->sysname );
 		strcpy( os_type->release , p_req->release );
 		os_type->bits = p_req->bits ;
-		bret = AddListNode( & (os_type->host_info_list) , host_info , sizeof(struct HostInfo) , & FreeHostInfo ) ;
-		if( bret != TRUE )
+		host_info_node = AddListNode( & (os_type->host_info_list) , host_info , sizeof(struct HostInfo) , & FreeHostInfo ) ;
+		if( host_info_node == NULL )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "AddListNode failed , errno[%d]" , errno );
 			p_rsp->response_code = 11 ;
 			return 0;
 		}
 		
-		bret = InsertListNodeBefore( & (penv->os_type_list) , & (penv->os_type_list) , os_type , sizeof(struct OsType) , & FreeOsType ) ;
-		if( bret != TRUE )
+		os_type_node = InsertListNodeBefore( & (penv->os_type_list) , & (penv->os_type_list) , os_type , sizeof(struct OsType) , & FreeOsType ) ;
+		if( os_type_node == NULL )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "AddListNode failed , errno[%d]" , errno );
 			p_rsp->response_code = 11 ;
@@ -251,6 +257,10 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 		}
 		
 		DebugLog( __FILE__ , __LINE__ , "Add worker ok , sysname[%s] release[%s] bits[%d] ip[%s] port[%d]" , p_req->sysname , p_req->release , p_req->bits , p_req->ip , p_req->port );
+		
+		psession->p1 = os_type_node ;
+		psession->p2 = host_info_node ;
+		psession->p3 = worker_info_node ;
 	}
 	
 	p_rsp->response_code = 0 ;
@@ -446,6 +456,44 @@ int app_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *pses
 	return 0;
 }
 
+int app_WorkerUnregister( struct ServerEnv *penv , struct SocketSession *psession )
+{
+	SListNode		*os_type_node = NULL ;
+	struct OsType		*os_type = NULL ;
+	SListNode		*host_info_node = NULL ;
+	struct HostInfo		*host_info = NULL ;
+	SListNode		*worker_info_node = NULL ;
+	struct WorkerInfo	*worker_info = NULL ;
+	
+	if( psession->p1 == NULL || psession->p2 == NULL || psession->p3 == NULL )
+		return 0;
+	
+	os_type_node = (SListNode*)(psession->p1) ;
+	os_type = GetNodeMember(os_type_node) ;
+	host_info_node = (SListNode*)(psession->p2) ;
+	host_info = GetNodeMember(host_info_node) ;
+	worker_info_node = (SListNode*)(psession->p3) ;
+	worker_info = GetNodeMember(worker_info_node) ;
+	
+	host_info->idler_count -= (worker_info->is_working?0:1) ;
+	host_info->working_count -= (worker_info->is_working?1:0) ;
+	
+	InfoLog( __FILE__ , __LINE__ , "DeleteListNode sysname[%s] release[%s] bits[%d] ip[%s] - port[%d]" , os_type->sysname , os_type->release , os_type->bits , host_info->ip , worker_info->port );
+	DeleteListNode( & (host_info->worker_info_list) , & worker_info_node , NULL );
+	if( host_info->worker_info_list == NULL )
+	{
+		InfoLog( __FILE__ , __LINE__ , "DeleteListNode sysname[%s] release[%s] bits[%d] - ip[%s]" , os_type->sysname , os_type->release , os_type->bits , host_info->ip );
+		DeleteListNode( & (os_type->host_info_list) , & host_info_node , NULL );
+		if( os_type->host_info_list == NULL )
+		{
+			InfoLog( __FILE__ , __LINE__ , "DeleteListNode sysname[%s] release[%s] bits[%d]" , os_type->sysname , os_type->release , os_type->bits );
+			DeleteListNode( & (penv->os_type_list) , & os_type_node , NULL );
+		}
+	}
+	
+	return 0;
+}
+
 int app_QueryAllWorkers( struct ServerEnv *penv , struct SocketSession *psession )
 {
 	SListNode		*os_type_node = NULL ;
@@ -498,8 +546,8 @@ int app_QueryAllHosts( struct ServerEnv *penv , struct SocketSession *psession )
 			
 			len = (int)SNPRINTF( psession->send_buffer + psession->total_send_len
 				, psession->send_buffer_size-1 - psession->total_send_len
-				, "%s\t%s\t%d\t%s\r\n"
-				, os_type->sysname , os_type->release , os_type->bits , host_info->ip );
+				, "%s\t%s\t%d\t%s\t%d\t%d\r\n"
+				, os_type->sysname , os_type->release , os_type->bits , host_info->ip , host_info->idler_count , host_info->working_count );
 			psession->total_send_len += len ;
 		}
 	}

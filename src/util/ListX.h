@@ -102,11 +102,11 @@ SList,SListNode;
 _WINDLL_EXPORT SList *CreateList();
 _WINDLL_EXPORT BOOL DestroyList( SList **list , BOOL (* FreeNodeMember)( void *pv ) );
 
-_WINDLL_EXPORT BOOL AddListNode( SList **list , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) );
+_WINDLL_EXPORT SList *AddListNode( SList **list , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) );
 #define InsertListNode	InsertListNodeBefore
-_WINDLL_EXPORT BOOL InsertListNodeBefore( SList **list , SListNode **nodeList , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) );
-_WINDLL_EXPORT BOOL InsertListNodeAfter( SList **list , SListNode **nodeList , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) );
-_WINDLL_EXPORT BOOL InsertListIndexNode( SList **list , int index , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) );
+_WINDLL_EXPORT SList *InsertListNodeBefore( SList **list , SListNode **nodeList , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) );
+_WINDLL_EXPORT SList *InsertListNodeAfter( SList **list , SListNode **nodeList , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) );
+_WINDLL_EXPORT SList *InsertListIndexNode( SList **list , int index , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) );
 
 _WINDLL_EXPORT BOOL DeleteListNode( SList **list , SListNode **nodeList , BOOL (* FreeNodeMember)( void *pv ) );
 _WINDLL_EXPORT BOOL DeleteListIndexNode( SList **list , int index , BOOL (* FreeNodeMember)( void *pv ) );
@@ -147,14 +147,14 @@ _WINDLL_EXPORT BOOL AttachListNodeBefore( SList **pplistSource , SListNode *node
 ** 函数集描述	:	栈式链表的函数集
 */
 
-_WINDLL_EXPORT BOOL PushStackList( SList **listHead , long max_len , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) );
+_WINDLL_EXPORT SListNode *PushStackList( SList **listHead , long max_len , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) );
 _WINDLL_EXPORT BOOL PopupStackList(SList **listHead , void **member );
 
 /*
 ** 函数集描述	:	队列式链表的函数集
 */
 
-_WINDLL_EXPORT BOOL EnterQueueList( SList **listHead , long max_len , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) );
+_WINDLL_EXPORT SListNode *EnterQueueList( SList **listHead , long max_len , void *member , long msize , BOOL (* FreeNodeMember)( void *pv ) );
 _WINDLL_EXPORT BOOL LeaveQueueList( SList **listHead , void **member );
 
 #ifdef __cplusplus

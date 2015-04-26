@@ -459,7 +459,7 @@ int AsyncConnectSocket( char *ip , long port , struct SocketSession *psession )
 		if( errno == EINPROGRESS )
 		{
 			DebugLog( __FILE__ , __LINE__ , "connect2[%s:%d] ok" , psession->ip , psession->port );
-			return CONNECTING_IN_PROGRESS;
+			return RETURN_CONNECTING_IN_PROGRESS;
 		}
 		else
 		{
@@ -522,19 +522,24 @@ int DiscardAcceptSocket( int epoll_socks , int listen_sock )
 	return 0;
 }
 
-/* 该函数有问题，待修正 */
-int AsyncReceiveAndSendSocketData( struct SocketSession *psession , void *_penv , funcDoProtocol *pfuncDoProtocol , int change_mode_flag )
+int AsyncReceiveSocketData( int epoll_socks , struct SocketSession *psession , int change_mode_flag )
 {
-	long			len ;
-	int			send_response = 0 ;
+	int		len ;
 	
-	int			nret = 0 ;
+	int		nret = 0 ;
 	
-	len = (int)recv( psession->sock , psession->recv_buffer + psession->total_recv_len , psession->recv_buffer_size-1 - psession->total_recv_len , 0 ) ;
+	if( psession->recv_body_len == 0 )
+	{
+		len = (int)recv( psession->sock , psession->recv_buffer + psession->total_recv_len , LEN_COMMHEAD , 0 ) ;
+	}
+	else
+	{
+		len = (int)recv( psession->sock , psession->recv_buffer + psession->total_recv_len , LEN_COMMHEAD + psession->recv_body_len - psession->total_recv_len , 0 ) ;
+	}
 	if( len < 0 )
 	{
 		if( _ERRNO == _EWOULDBLOCK )
-			return RECEIVING_IN_PROGRESS;
+			return RETURN_RECEIVING_IN_PROGRESS;
 		
 		ErrorLog( __FILE__ , __LINE__ , "detected sock[%d] error on receiving data" , psession->sock );
 		return -1;
@@ -544,7 +549,7 @@ int AsyncReceiveAndSendSocketData( struct SocketSession *psession , void *_penv 
 		if( psession->total_recv_len == 0 )
 		{
 			InfoLog( __FILE__ , __LINE__ , "detected sock[%d] closed on waiting for first byte" , psession->sock );
-			return PEER_CLOSED;
+			return RETURN_PEER_CLOSED;
 		}
 		else
 		{
@@ -573,12 +578,10 @@ int AsyncReceiveAndSendSocketData( struct SocketSession *psession , void *_penv 
 		else
 		{
 			psession->comm_protocol_mode = COMMPROTO_LINE ;
-			return CHANGE_COMM_PROTOCOL_MODE;
+			return RETURN_CHANGE_COMM_PROTOCOL_MODE;
 			
 		}
 	}
-	
-_GOTO_CALC_HEAD_LEN :
 	
 	if( psession->recv_body_len == 0 )
 	{
@@ -610,68 +613,48 @@ _GOTO_CALC_HEAD_LEN :
 	
 	if( psession->recv_body_len > 0 )
 	{
-		if( psession->total_recv_len >= LEN_COMMHEAD + psession->recv_body_len )
+		if( psession->total_recv_len == LEN_COMMHEAD + psession->recv_body_len )
 		{
-			char			bak ;
-			
-			bak = psession->recv_buffer[ LEN_COMMHEAD + psession->recv_body_len ] ;
+			psession->bak = psession->recv_buffer[ LEN_COMMHEAD + psession->recv_body_len ] ;
 			psession->recv_buffer[ LEN_COMMHEAD + psession->recv_body_len ] = '\0' ;
-			
-			nret = pfuncDoProtocol( _penv , psession ) ;
-			if( nret > 0 )
-			{
-				InfoLog( __FILE__ , __LINE__ , "proto return ok , disconnect socket" );
-				return PEER_CLOSED;
-			}
-			else if( nret < 0 )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "proto return failed[%d]" , nret );
-				return -1;
-			}
-			else
-			{
-				if( psession->total_send_len == 0 )
-				{
-					DebugLog( __FILE__ , __LINE__ , "proto return ok , but no data need sending" );
-				}
-				else
-				{
-					DebugLog( __FILE__ , __LINE__ , "proto return ok , sock[%d] convert to wait EPOLLOUT event" , psession->sock );
-					if( send_response == 0 )
-						send_response = 1 ;
-				}
-				
-				if( psession->total_recv_len == LEN_COMMHEAD + psession->recv_body_len )
-				{
-					CleanRecvBuffer( psession );
-					DebugLog( __FILE__ , __LINE__ , "clean recv buffer" );
-				}
-				else
-				{
-					memmove( psession->recv_buffer , psession->recv_buffer + LEN_COMMHEAD + psession->recv_body_len , psession->total_recv_len - LEN_COMMHEAD - psession->recv_body_len );
-					psession->recv_buffer[0] = bak ;
-					psession->total_recv_len -= LEN_COMMHEAD + psession->recv_body_len ;
-					psession->recv_body_len = 0 ;
-					DebugHexLog( __FILE__ , __LINE__ , psession->recv_buffer , psession->total_recv_len , "recv buffer remain [%d]bytes" , psession->total_recv_len );
-					goto _GOTO_CALC_HEAD_LEN;
-				}
-			}
+			return 0;
 		}
 	}
 	
-	if( send_response == 1 )
-		return 0;
-	else
-		return NO_SEND_RESPONSE;
+	return RETURN_RECEIVING_IN_PROGRESS;
 }
 
-int AsyncReceiveCommandAndSendResponse( struct SocketSession *psession , void *_penv , funcDoProtocol *pfuncDoCommandProtocol , int skip_recv_flag )
+int AfterDoProtocol( struct SocketSession *psession )
 {
-	int			len ;
-	char			*newline = NULL ;
-	int			send_response = 0 ;
+	if( psession->total_recv_len == LEN_COMMHEAD + psession->recv_body_len )
+	{
+		CleanRecvBuffer( psession );
+		DebugLog( __FILE__ , __LINE__ , "clean recv buffer" );
+	}
+	else
+	{
+		memmove( psession->recv_buffer , psession->recv_buffer + LEN_COMMHEAD + psession->recv_body_len , psession->total_recv_len - LEN_COMMHEAD - psession->recv_body_len );
+		psession->recv_buffer[0] = psession->bak ;
+		psession->total_recv_len -= LEN_COMMHEAD + psession->recv_body_len ;
+		psession->recv_body_len = 0 ;
+		DebugHexLog( __FILE__ , __LINE__ , psession->recv_buffer , psession->total_recv_len , "recv buffer remain [%d]bytes" , psession->total_recv_len );
+	}
 	
-	int			nret = 0 ;
+	if( psession->total_send_len == 0 )
+	{
+		DebugLog( __FILE__ , __LINE__ , "proto return ok , but no data need sending" );
+		return RETURN_NO_SEND_RESPONSE;
+	}
+	else
+	{
+		DebugLog( __FILE__ , __LINE__ , "proto return ok , sock[%d] convert to wait EPOLLOUT event" , psession->sock );
+		return 0;
+	}
+}
+
+int AsyncReceiveCommand( int epoll_socks , struct SocketSession *psession , int skip_recv_flag )
+{
+	int		len ;
 	
 	if( ! ( skip_recv_flag == OPTION_ASYNC_SKIP_RECV_FLAG ) )
 	{
@@ -679,7 +662,7 @@ int AsyncReceiveCommandAndSendResponse( struct SocketSession *psession , void *_
 		if( len < 0 )
 		{
 			if( _ERRNO == _EWOULDBLOCK )
-				return RECEIVING_IN_PROGRESS;
+				return RETURN_RECEIVING_IN_PROGRESS;
 			
 			ErrorLog( __FILE__ , __LINE__ , "detected sock[%d] error on receiving data" , psession->sock );
 			return -1;
@@ -689,7 +672,7 @@ int AsyncReceiveCommandAndSendResponse( struct SocketSession *psession , void *_
 			if( psession->total_recv_len == 0 )
 			{
 				InfoLog( __FILE__ , __LINE__ , "detected sock[%d] closed on waiting for first byte" , psession->sock );
-				return PEER_CLOSED;
+				return RETURN_PEER_CLOSED;
 			}
 			else
 			{
@@ -710,67 +693,53 @@ int AsyncReceiveCommandAndSendResponse( struct SocketSession *psession , void *_
 		}
 	}
 	
-	while(1)
+	psession->newline = strchr( psession->recv_buffer , '\n' ) ;
+	if( psession->newline == NULL )
+		return RETURN_RECEIVING_IN_PROGRESS;
+	
+	*(psession->newline) = '\0' ;
+	
+	return 0;
+}
+	
+int AfterDoCommandProtocol( struct SocketSession *psession )
+{
+	if( *(psession->newline+1) == '\0' )
 	{
-		newline = strchr( psession->recv_buffer , '\n' ) ;
-		if( newline == NULL )
-			break;
-		
-		(*newline) = '\0' ;
-		
-		nret = pfuncDoCommandProtocol( _penv , psession ) ;
-		if( nret < 0 )
-		{
-			ErrorLog( __FILE__ , __LINE__ , "proto return failed[%d]" , nret );
-			return PEER_CLOSED;
-		}
-		else if( nret > 0 )
-		{
-			InfoLog( __FILE__ , __LINE__ , "proto return ok , disconnect socket" );
-			return 0;
-		}
-		else
-		{
-			if( psession->total_send_len )
-			{
-				DebugLog( __FILE__ , __LINE__ , "proto return ok , sock[%d] convert to wait EPOLLOUT event" , psession->sock );
-				if( send_response == 0 )
-					send_response = 1 ;
-			}
-			else
-			{
-				DebugLog( __FILE__ , __LINE__ , "proto return ok , but no data need send" );
-			}
-		}
-		
-		if( *(newline+1) == '\0' )
-		{
-			memset( psession->recv_buffer , 0x00 , psession->recv_buffer_size );
-			psession->total_recv_len = 0 ;
-			DebugLog( __FILE__ , __LINE__ , "clean recv buffer" );
-		}
-		else
-		{
-			/* "command1\ncommand2\n" */
-			int	len ;
-			len = strlen(newline+1) ;
-			strcpy( psession->recv_buffer , newline+1 );
-			psession->total_recv_len = len ;
-			DebugHexLog( __FILE__ , __LINE__ , psession->recv_buffer , psession->total_recv_len , "recv buffer remain [%d]bytes" , psession->total_recv_len );
-		}
+		CleanRecvBuffer( psession );
+		DebugLog( __FILE__ , __LINE__ , "clean recv buffer" );
+	}
+	else
+	{
+		/* "command1\ncommand2\n" */
+		int	len ;
+		len = strlen(psession->newline+1) ;
+		strcpy( psession->recv_buffer , psession->newline+1 );
+		psession->total_recv_len = len ;
+		DebugHexLog( __FILE__ , __LINE__ , psession->recv_buffer , psession->total_recv_len , "recv buffer remain [%d]bytes" , psession->total_recv_len );
 	}
 	
-	psession->total_recv_len = strlen(psession->recv_buffer) ;
-	
-	if( send_response == 1 )
-		return 0;
+	if( psession->total_send_len == 0 )
+	{
+		DebugLog( __FILE__ , __LINE__ , "proto return ok , but no data need send" );
+		return RETURN_NO_SEND_RESPONSE;
+	}
 	else
-		return NO_SEND_RESPONSE;
+	{
+		DebugLog( __FILE__ , __LINE__ , "proto return ok , sock[%d] convert to wait EPOLLOUT event" , psession->sock );
+		return 0;
+	}
 }
 
-int AsyncSendSocketData( struct SocketSession *psession )
+int AsyncSendSocketData( int epoll_socks , struct SocketSession *psession )
 {
 	int			len ;
+	
+	if( psession->total_send_len == 0 )
+	{
+		ModifyInputSockFromEpoll( epoll_socks , psession );
+		return 0;
+	}
 	
 	len = (int)send( psession->sock , psession->send_buffer + psession->send_len , psession->total_send_len - psession->send_len , 0 ) ;
 	if( len < 0 )
@@ -829,39 +798,6 @@ int SyncConnectSocket( char *ip , long port , struct SocketSession *psession )
 	return 0;
 }
 
-int SyncSendSocketData( struct SocketSession *psession )
-{
-	int			len ;
-	
-	while( psession->send_len < psession->total_send_len )
-	{
-		len = (int)send( psession->sock , psession->send_buffer + psession->send_len , psession->total_send_len - psession->send_len , 0 ) ;
-		if( len < 0 )
-		{
-			if( _ERRNO == _EWOULDBLOCK )
-				return SENDING_IN_PROGRESS;
-			
-			ErrorLog( __FILE__ , __LINE__ , "detected sock[%d] error on sending data" , psession->sock );
-			return -1;
-		}
-		else
-		{
-			int	short_len ;
-			
-			short_len = len ;
-			if( short_len > 4096 )
-				short_len = 4096 ;
-			DebugHexLog( __FILE__ , __LINE__ , psession->send_buffer + psession->send_len , short_len , "sended sock[%d] [%d]bytes" , psession->sock , len );
-			
-			psession->send_len += len ;
-		}
-	}
-	
-	CleanSendBuffer( psession );
-	
-	return 0;
-}
-
 int SyncReceiveSocketData( struct SocketSession *psession )
 {
 	long			len ;
@@ -881,7 +817,7 @@ int SyncReceiveSocketData( struct SocketSession *psession )
 			if( psession->total_recv_len == 0 )
 			{
 				InfoLog( __FILE__ , __LINE__ , "detected sock[%d] close on waiting for first byte" , psession->sock );
-				return PEER_CLOSED;
+				return RETURN_PEER_CLOSED;
 			}
 			else
 			{
@@ -929,6 +865,39 @@ int SyncReceiveSocketData( struct SocketSession *psession )
 			psession->total_recv_len += len ;
 		}
 	}
+	
+	return 0;
+}
+
+int SyncSendSocketData( struct SocketSession *psession )
+{
+	int			len ;
+	
+	while( psession->send_len < psession->total_send_len )
+	{
+		len = (int)send( psession->sock , psession->send_buffer + psession->send_len , psession->total_send_len - psession->send_len , 0 ) ;
+		if( len < 0 )
+		{
+			if( _ERRNO == _EWOULDBLOCK )
+				return RETURN_SENDING_IN_PROGRESS;
+			
+			ErrorLog( __FILE__ , __LINE__ , "detected sock[%d] error on sending data" , psession->sock );
+			return -1;
+		}
+		else
+		{
+			int	short_len ;
+			
+			short_len = len ;
+			if( short_len > 4096 )
+				short_len = 4096 ;
+			DebugHexLog( __FILE__ , __LINE__ , psession->send_buffer + psession->send_len , short_len , "sended sock[%d] [%d]bytes" , psession->sock , len );
+			
+			psession->send_len += len ;
+		}
+	}
+	
+	CleanSendBuffer( psession );
 	
 	return 0;
 }

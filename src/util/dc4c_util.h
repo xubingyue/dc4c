@@ -79,6 +79,12 @@ struct SocketSession
 	char			*send_buffer ;
 	int			total_send_len ;
 	int			send_len ;
+	
+	char			bak ;
+	char			*newline ;
+	void			*p1 ;
+	void			*p2 ;
+	void			*p3 ;
 } ;
 
 /********* comm *********/
@@ -107,24 +113,27 @@ void SetSocketAddr( struct sockaddr_in *p_sockaddr , char *ip , long port );
 void GetSocketAddr( struct sockaddr_in *addr , char *ip , long *port );
 
 int BindListenSocket( char *ip , long port , struct SocketSession *psession );
-#define CONNECTING_IN_PROGRESS		1
+#define RETURN_CONNECTING_IN_PROGRESS		1
 int AsyncConnectSocket( char *ip , long port , struct SocketSession *psession );
 int AcceptSocket( int epoll_socks , int listen_sock , struct SocketSession *psession );
 int DiscardAcceptSocket( int epoll_socks , int listen_sock );
+#define RETURN_CLOSE_PEER			1
 typedef int funcDoProtocol( void *_penv , struct SocketSession *psession );
-#define OPTION_ASYNC_CHANGE_MODE_FLAG	1
-#define RECEIVING_IN_PROGRESS		1
-#define CHANGE_COMM_PROTOCOL_MODE	2
-#define NO_SEND_RESPONSE		3
-#define PEER_CLOSED			4
-int AsyncReceiveAndSendSocketData( struct SocketSession *psession , void *_penv , funcDoProtocol *pfuncDoProtocol , int change_mode_flag );
-#define OPTION_ASYNC_SKIP_RECV_FLAG	1
-int AsyncReceiveCommandAndSendResponse( struct SocketSession *psession , void *_penv , funcDoProtocol *pfuncDoCommandProtocol , int skip_recv_flag );
-#define SENDING_IN_PROGRESS		1
-int AsyncSendSocketData( struct SocketSession *psession );
+#define OPTION_ASYNC_CHANGE_MODE_FLAG		1
+#define RETURN_RECEIVING_IN_PROGRESS		1
+#define RETURN_CHANGE_COMM_PROTOCOL_MODE	2
+#define RETURN_NO_SEND_RESPONSE			3
+#define RETURN_PEER_CLOSED			4
+int AsyncReceiveSocketData( int epoll_socks , struct SocketSession *psession , int change_mode_flag );
+int AfterDoProtocol( struct SocketSession *psession );
+#define OPTION_ASYNC_SKIP_RECV_FLAG		1
+int AsyncReceiveCommand( int epoll_socks , struct SocketSession *psession , int skip_recv_flag );
+int AfterDoCommandProtocol( struct SocketSession *psession );
+#define RETURN_SENDING_IN_PROGRESS		1
+int AsyncSendSocketData( int epoll_socks , struct SocketSession *psession );
 int SyncConnectSocket( char *ip , long port , struct SocketSession *psession );
-int SyncSendSocketData( struct SocketSession *psession );
 int SyncReceiveSocketData( struct SocketSession *psession );
+int SyncSendSocketData( struct SocketSession *psession );
 
 /********* proto *********/
 

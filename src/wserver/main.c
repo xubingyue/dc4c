@@ -119,7 +119,7 @@ int main( int argc , char *argv[] )
 	}
 	
 	nret = comm_AsyncConnectToRegisterServer( penv , 0 ) ;
-	if( nret == CONNECTING_IN_PROGRESS )
+	if( nret == RETURN_CONNECTING_IN_PROGRESS )
 	{
 		InfoLog( __FILE__ , __LINE__ , "comm_AsyncConnectToRegisterServer[%s:%d] done , but connecting is progressing" , penv->param.rserver_ip , penv->param.rserver_port );
 	}
