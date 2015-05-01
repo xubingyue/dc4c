@@ -65,14 +65,22 @@ void CleanSocketSession( struct SocketSession *psession )
 {
 	if( psession )
 	{
+		if( psession->established_flag == 1 )
+		{
+			close( psession->sock );
+			psession->established_flag = 0 ;
+		}
+		
 		if( psession->recv_buffer )
 		{
 			free( psession->recv_buffer );
+			psession->recv_buffer = NULL ;
 		}
 		
 		if( psession->send_buffer )
 		{
 			free( psession->send_buffer );
+			psession->send_buffer = NULL ;
 		}
 	}
 	
@@ -222,112 +230,6 @@ struct SocketSession *GetUnusedSocketSession( struct SocketSession *p_session_ar
 	return NULL;
 }
 
-int AddInputSockToEpoll( int epoll_socks , struct SocketSession *psession )
-{
-	struct epoll_event	event ;
-	
-	int			nret = 0 ;
-	
-	memset( & event , 0x00 , sizeof(event) );
-	event.data.ptr = psession ;
-	event.events = EPOLLIN | EPOLLERR ;
-	nret = epoll_ctl( epoll_socks , EPOLL_CTL_ADD , psession->sock , & event ) ;
-	if( nret )
-	{
-		ErrorLog( __FILE__ , __LINE__ , "add sock[%d] to wait EPOLLIN event failed[%d] , errno[%d]" , psession->sock , nret , errno );
-		return -1;
-	}
-	else
-	{
-		DebugLog( __FILE__ , __LINE__ , "add sock[%d] to wait EPOLLIN event" , psession->sock );
-		return 0;
-	}
-}
-
-int AddOutputSockToEpoll( int epoll_socks , struct SocketSession *psession )
-{
-	struct epoll_event	event ;
-	
-	int			nret = 0 ;
-	
-	memset( & event , 0x00 , sizeof(event) );
-	event.data.ptr = psession ;
-	event.events = EPOLLOUT | EPOLLERR ;
-	nret = epoll_ctl( epoll_socks , EPOLL_CTL_ADD , psession->sock , & event ) ;
-	if( nret )
-	{
-		ErrorLog( __FILE__ , __LINE__ , "add sock[%d] to wait EPOLLOUT event failed[%d] , errno[%d]" , psession->sock , nret , errno );
-		return -1;
-	}
-	else
-	{
-		DebugLog( __FILE__ , __LINE__ , "add sock[%d] to wait EPOLLOUT event" , psession->sock );
-		return 0;
-	}
-}
-
-int ModifyInputSockFromEpoll( int epoll_socks , struct SocketSession *psession )
-{
-	struct epoll_event	event ;
-	
-	int			nret = 0 ;
-	
-	memset( & event , 0x00 , sizeof(event) );
-	event.data.ptr = psession ;
-	event.events = EPOLLIN | EPOLLERR ;
-	nret = epoll_ctl( epoll_socks , EPOLL_CTL_MOD , psession->sock , & event ) ;
-	if( nret )
-	{
-		ErrorLog( __FILE__ , __LINE__ , "modify sock[%d] to wait EPOLLIN event failed[%d] , errno[%d]" , psession->sock , nret , errno );
-		return -1;
-	}
-	else
-	{
-		DebugLog( __FILE__ , __LINE__ , "modify sock[%d] to wait EPOLLIN event" , psession->sock );
-		return 0;
-	}
-}
-
-int ModifyOutputSockFromEpoll( int epoll_socks , struct SocketSession *psession )
-{
-	struct epoll_event	event ;
-	
-	int			nret = 0 ;
-	
-	memset( & event , 0x00 , sizeof(event) );
-	event.data.ptr = psession ;
-	event.events = EPOLLOUT | EPOLLERR ;
-	nret = epoll_ctl( epoll_socks , EPOLL_CTL_MOD , psession->sock , & event ) ;
-	if( nret )
-	{
-		ErrorLog( __FILE__ , __LINE__ , "modify sock[%d] to wait EPOLLOUT event failed[%d] , errno[%d]" , psession->sock , nret , errno );
-		return -1;
-	}
-	else
-	{
-		DebugLog( __FILE__ , __LINE__ , "modify sock[%d] to wait EPOLLOUT event" , psession->sock );
-		return 0;
-	}
-}
-
-int DeleteSockFromEpoll( int epoll_socks , struct SocketSession *psession )
-{
-	int			nret = 0 ;
-	
-	nret = epoll_ctl( epoll_socks , EPOLL_CTL_DEL , psession->sock , NULL ) ;
-	if( nret )
-	{
-		ErrorLog( __FILE__ , __LINE__ , "delete sock[%d] from epoll failed[%d] , errno[%d]" , psession->sock , nret , errno );
-		return -1;
-	}
-	else
-	{
-		DebugLog( __FILE__ , __LINE__ , "delete sock[%d] from epoll" , psession->sock );
-		close( psession->sock );
-		return 0;
-	}
-}
-
 int SetAddrReused( int sock )
 {
 	int	on ;
@@ -433,6 +335,28 @@ int BindListenSocket( char *ip , long port , struct SocketSession *psession )
 	return 0;
 }
 
+int AcceptSocket( int listen_sock , struct SocketSession *psession )
+{
+	socklen_t		addr_len ;
+	
+	memset( & (psession->addr) , 0x00 , sizeof(struct sockaddr_in) );
+	addr_len = sizeof(struct sockaddr_in) ;
+	psession->sock = accept( listen_sock , (struct sockaddr *) & (psession->addr) , & addr_len ) ;
+	if( psession->sock == -1 )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "[%d]accept failed , errno[%d]" , listen_sock , errno );
+		return -1;
+	}
+	else
+	{
+		GetSocketAddr( & (psession->addr) , psession->ip , & (psession->port) );
+		InfoLog( __FILE__ , __LINE__ , "[%d]accept[%d] ok , from[%s:%d]" , listen_sock , psession->sock , psession->ip , psession->port );
+		psession->established_flag = 1 ;
+	}
+	
+	return 0;
+}
+
 int AsyncConnectSocket( char *ip , long port , struct SocketSession *psession )
 {
 	int			nret = 0 ;
@@ -464,40 +388,20 @@ int AsyncConnectSocket( char *ip , long port , struct SocketSession *psession )
 		else
 		{
 			ErrorLog( __FILE__ , __LINE__ , "connect[%s:%d] failed[%d]errno[%d]" , psession->ip , psession->port , psession->sock , errno );
-			close( psession->sock );
+			CloseSocket( psession );
 			return -1;
 		}
 	}
 	else
 	{
 		DebugLog( __FILE__ , __LINE__ , "connect[%s:%d] ok" , psession->ip , psession->port );
+		psession->established_flag = 1 ;
 	}
 	
 	return 0;
 }
 
-int AcceptSocket( int epoll_socks , int listen_sock , struct SocketSession *psession )
-{
-	socklen_t		addr_len ;
-	
-	memset( & (psession->addr) , 0x00 , sizeof(struct sockaddr_in) );
-	addr_len = sizeof(struct sockaddr_in) ;
-	psession->sock = accept( listen_sock , (struct sockaddr *) & (psession->addr) , & addr_len ) ;
-	if( psession->sock == -1 )
-	{
-		ErrorLog( __FILE__ , __LINE__ , "[%d]accept failed , errno[%d]" , listen_sock , errno );
-		return -1;
-	}
-	else
-	{
-		GetSocketAddr( & (psession->addr) , psession->ip , & (psession->port) );
-		InfoLog( __FILE__ , __LINE__ , "[%d]accept[%d] ok , from[%s:%d]" , listen_sock , psession->sock , psession->ip , psession->port );
-	}
-	
-	return 0;
-}
-
-int DiscardAcceptSocket( int epoll_socks , int listen_sock )
+int DiscardAcceptSocket( int listen_sock )
 {
 	struct SocketSession	session ;
 	socklen_t		addr_len ;
@@ -514,15 +418,33 @@ int DiscardAcceptSocket( int epoll_socks , int listen_sock )
 	{
 		GetSocketAddr( & (session.addr) , session.ip , & (session.port) );
 		InfoLog( __FILE__ , __LINE__ , "[%d]accept[%d] ok , from[%s:%d]" , listen_sock , session.sock , session.ip , session.port );
+		session.established_flag = 1 ;
 	}
 	
-	close( session.sock );
 	InfoLog( __FILE__ , __LINE__ , "discard accepted sock[%d]" , session.sock );
+	CloseSocket( & session );
 	
 	return 0;
 }
 
-int AsyncReceiveSocketData( int epoll_socks , struct SocketSession *psession , int change_mode_flag )
+void CloseSocket( struct SocketSession *psession )
+{
+	if( psession->established_flag == 1 )
+	{
+		InfoLog( __FILE__ , __LINE__ , "close sock[%d]" , psession->sock );
+		close( psession->sock );
+		psession->established_flag = 0 ;
+	}
+	
+	return;
+}
+
+int IsSocketEstablished( struct SocketSession *psession )
+{
+	return psession->established_flag;
+}
+
+int AsyncReceiveSocketData( struct SocketSession *psession , int change_mode_flag )
 {
 	int		len ;
 	
@@ -652,7 +574,7 @@ int AfterDoProtocol( struct SocketSession *psession )
 	}
 }
 
-int AsyncReceiveCommand( int epoll_socks , struct SocketSession *psession , int skip_recv_flag )
+int AsyncReceiveCommand( struct SocketSession *psession , int skip_recv_flag )
 {
 	int		len ;
 	
@@ -731,15 +653,9 @@ int AfterDoCommandProtocol( struct SocketSession *psession )
 	}
 }
 
-int AsyncSendSocketData( int epoll_socks , struct SocketSession *psession )
+int AsyncSendSocketData( struct SocketSession *psession )
 {
 	int			len ;
-	
-	if( psession->total_send_len == 0 )
-	{
-		ModifyInputSockFromEpoll( epoll_socks , psession );
-		return 0;
-	}
 	
 	len = (int)send( psession->sock , psession->send_buffer + psession->send_len , psession->total_send_len - psession->send_len , 0 ) ;
 	if( len < 0 )
@@ -793,19 +709,54 @@ int SyncConnectSocket( char *ip , long port , struct SocketSession *psession )
 	else
 	{
 		DebugLog( __FILE__ , __LINE__ , "connect[%s:%d] ok" , psession->ip , psession->port );
+		psession->established_flag = 1 ;
 	}
 	
 	return 0;
 }
 
-int SyncReceiveSocketData( struct SocketSession *psession )
+int SyncReceiveSocketData( struct SocketSession *psession , long *p_timeout )
 {
-	long			len ;
+	fd_set			read_fds , expt_fds ;
+	struct timeval		tv ;
+	long			tt1 , tt2 ;
+	int			len ;
+	
+	int			nret = 0 ;
 	
 	CleanRecvBuffer( psession );
 	
 	while( psession->total_recv_len < 8 )
 	{
+		time( & tt1 );
+		
+		FD_ZERO( & read_fds );
+		FD_ZERO( & expt_fds );
+		FD_SET( psession->sock , & read_fds );
+		FD_SET( psession->sock , & expt_fds );
+		tv.tv_sec = (*p_timeout) ;
+		tv.tv_usec = 0 ;
+		nret = select( psession->sock+1 , & read_fds , NULL , & expt_fds , & tv ) ;
+		if( nret == 0 )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "send timeout when selecting" );
+			return DC4C_ERROR_TIMETOUT;
+		}
+		
+		if( FD_ISSET( psession->sock , & expt_fds ) )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "expection when selecting" );
+			return DC4C_ERROR_SOCKET_EXPECTION;
+		}
+		
+		time( & tt2 );
+		(*p_timeout) -= ( tt2 - tt1 ) ;
+		if( (*p_timeout) <= 0 )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "send timeout after select" );
+			return DC4C_ERROR_TIMETOUT;
+		}
+		
 		len = (int)recv( psession->sock , psession->recv_buffer + psession->total_recv_len , 8 - psession->total_recv_len , 0 ) ;
 		if( len < 0 )
 		{
@@ -842,6 +793,35 @@ int SyncReceiveSocketData( struct SocketSession *psession )
 	
 	while( psession->total_recv_len < 8 + psession->recv_body_len )
 	{
+		time( & tt1 );
+		
+		FD_ZERO( & read_fds );
+		FD_ZERO( & expt_fds );
+		FD_SET( psession->sock , & read_fds );
+		FD_SET( psession->sock , & expt_fds );
+		tv.tv_sec = (*p_timeout) ;
+		tv.tv_usec = 0 ;
+		nret = select( psession->sock+1 , & read_fds , NULL , & expt_fds , & tv ) ;
+		if( nret == 0 )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "send timeout when selecting" );
+			return DC4C_ERROR_TIMETOUT;
+		}
+		
+		if( FD_ISSET( psession->sock , & expt_fds ) )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "expection when selecting" );
+			return DC4C_ERROR_SOCKET_EXPECTION;
+		}
+		
+		time( & tt2 );
+		(*p_timeout) -= ( tt2 - tt1 ) ;
+		if( (*p_timeout) <= 0 )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "send timeout after select" );
+			return DC4C_ERROR_TIMETOUT;
+		}
+		
 		len = (int)recv( psession->sock , psession->recv_buffer + psession->total_recv_len , 8 + psession->recv_body_len - psession->total_recv_len , 0 ) ;
 		if( len < 0 )
 		{
@@ -869,12 +849,46 @@ int SyncReceiveSocketData( struct SocketSession *psession )
 	return 0;
 }
 
-int SyncSendSocketData( struct SocketSession *psession )
+int SyncSendSocketData( struct SocketSession *psession , long *p_timeout )
 {
+	fd_set			read_fds , expt_fds ;
+	struct timeval		tv ;
+	long			tt1 , tt2 ;
 	int			len ;
+	
+	int			nret = 0 ;
 	
 	while( psession->send_len < psession->total_send_len )
 	{
+		time( & tt1 );
+		
+		FD_ZERO( & read_fds );
+		FD_ZERO( & expt_fds );
+		FD_SET( psession->sock , & read_fds );
+		FD_SET( psession->sock , & expt_fds );
+		tv.tv_sec = (*p_timeout) ;
+		tv.tv_usec = 0 ;
+		nret = select( psession->sock+1 , NULL , & read_fds , & expt_fds , & tv ) ;
+		if( nret == 0 )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "send timeout when selecting" );
+			return DC4C_ERROR_TIMETOUT;
+		}
+		
+		if( FD_ISSET( psession->sock , & expt_fds ) )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "expection when selecting" );
+			return DC4C_ERROR_SOCKET_EXPECTION;
+		}
+		
+		time( & tt2 );
+		(*p_timeout) -= ( tt2 - tt1 ) ;
+		if( (*p_timeout) <= 0 )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "send timeout after select" );
+			return DC4C_ERROR_TIMETOUT;
+		}
+		
 		len = (int)send( psession->sock , psession->send_buffer + psession->send_len , psession->total_send_len - psession->send_len , 0 ) ;
 		if( len < 0 )
 		{
@@ -933,7 +947,7 @@ static int HexExpand( char *HexBuf , int HexBufLen , char *AscBuf )
 	return(0);
 }
 
-int FileMd5( char *pathfilename , char *md5_exp )
+int FileMd5( char *pathfilename , char *program_md5_exp )
 {
 	MD5_CTX		context ;
 	FILE		*fp = NULL ;
@@ -964,7 +978,7 @@ int FileMd5( char *pathfilename , char *md5_exp )
 	memset( md5 , 0x00 , sizeof(md5) );
 	MD5_Final( (void*)md5 , & context );
 	
-	HexExpand( md5 , MD5_DIGEST_LENGTH , md5_exp );
+	HexExpand( md5 , MD5_DIGEST_LENGTH , program_md5_exp );
 	
 	return 0;
 }

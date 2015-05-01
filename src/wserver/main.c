@@ -150,11 +150,11 @@ int main( int argc , char *argv[] )
 		return -nret;
 	
 	DeleteSockFromEpoll( penv->epoll_socks , & (penv->listen_session) );
-	close( penv->listen_session.sock );
+	CloseSocket( & (penv->listen_session) );
 	CleanSocketSession( & (penv->listen_session) );
 	
 	DeleteSockFromEpoll( penv->epoll_socks , & (penv->connect_session) );
-	close( penv->connect_session.sock );
+	CloseSocket( & (penv->connect_session) );
 	CleanSocketSession( & (penv->connect_session) );
 	
 	close( penv->epoll_socks );

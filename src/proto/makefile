@@ -13,7 +13,6 @@ c_FILE		=	\
 			IDL_query_workers_request.dsc.c \
 			IDL_query_workers_response.dsc.c \
 			IDL_worker_notice_request.dsc.c \
-			IDL_worker_notice_response.dsc.c \
 			IDL_execute_program_request.dsc.c \
 			IDL_execute_program_response.dsc.c \
 			IDL_deploy_program_request.dsc.c \

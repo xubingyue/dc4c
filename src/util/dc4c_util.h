@@ -52,6 +52,9 @@
 #include "LOGC.h"
 #include "ListX.h"
 
+#define DC4C_ERROR_TIMETOUT		-14
+#define DC4C_ERROR_SOCKET_EXPECTION	-15
+
 #define MAXCNT_LISTEN_BAKLOG		10000
 
 #define LEN_COMMHEAD			8
@@ -67,6 +70,7 @@ struct SocketSession
 	long			port ;
 	int			sock ;
 	struct sockaddr_in	addr ;
+	int			established_flag ;
 	
 	int			comm_protocol_mode ;
 	
@@ -101,12 +105,6 @@ int ReallocRecvBuffer( struct SocketSession *psession , int new_buffer_size );
 
 struct SocketSession *GetUnusedSocketSession( struct SocketSession *p_session_array , int count , struct SocketSession **pp_slibing_session );
 
-int AddInputSockToEpoll( int epoll_socks , struct SocketSession *psession );
-int AddOutputSockToEpoll( int epoll_socks , struct SocketSession *psession );
-int ModifyInputSockFromEpoll( int epoll_socks , struct SocketSession *psession );
-int ModifyOutputSockFromEpoll( int epoll_socks , struct SocketSession *psession );
-int DeleteSockFromEpoll( int epoll_socks , struct SocketSession *psession );
-
 int SetAddrReused( int sock );
 int SetNonBlocking( int sock );
 void SetSocketAddr( struct sockaddr_in *p_sockaddr , char *ip , long port );
@@ -114,9 +112,11 @@ void GetSocketAddr( struct sockaddr_in *addr , char *ip , long *port );
 
 int BindListenSocket( char *ip , long port , struct SocketSession *psession );
 #define RETURN_CONNECTING_IN_PROGRESS		1
+int AcceptSocket( int listen_sock , struct SocketSession *psession );
 int AsyncConnectSocket( char *ip , long port , struct SocketSession *psession );
-int AcceptSocket( int epoll_socks , int listen_sock , struct SocketSession *psession );
-int DiscardAcceptSocket( int epoll_socks , int listen_sock );
+int DiscardAcceptSocket( int listen_sock );
+void CloseSocket( struct SocketSession *psession );
+int IsSocketEstablished( struct SocketSession *psession );
 #define RETURN_CLOSE_PEER			1
 typedef int funcDoProtocol( void *_penv , struct SocketSession *psession );
 #define OPTION_ASYNC_CHANGE_MODE_FLAG		1
@@ -124,16 +124,16 @@ typedef int funcDoProtocol( void *_penv , struct SocketSession *psession );
 #define RETURN_CHANGE_COMM_PROTOCOL_MODE	2
 #define RETURN_NO_SEND_RESPONSE			3
 #define RETURN_PEER_CLOSED			4
-int AsyncReceiveSocketData( int epoll_socks , struct SocketSession *psession , int change_mode_flag );
+int AsyncReceiveSocketData( struct SocketSession *psession , int change_mode_flag );
 int AfterDoProtocol( struct SocketSession *psession );
 #define OPTION_ASYNC_SKIP_RECV_FLAG		1
-int AsyncReceiveCommand( int epoll_socks , struct SocketSession *psession , int skip_recv_flag );
+int AsyncReceiveCommand( struct SocketSession *psession , int skip_recv_flag );
 int AfterDoCommandProtocol( struct SocketSession *psession );
 #define RETURN_SENDING_IN_PROGRESS		1
-int AsyncSendSocketData( int epoll_socks , struct SocketSession *psession );
+int AsyncSendSocketData( struct SocketSession *psession );
 int SyncConnectSocket( char *ip , long port , struct SocketSession *psession );
-int SyncReceiveSocketData( struct SocketSession *psession );
-int SyncSendSocketData( struct SocketSession *psession );
+int SyncReceiveSocketData( struct SocketSession *psession , long *p_timeout );
+int SyncSendSocketData( struct SocketSession *psession , long *p_timeout );
 
 /********* proto *********/
 
@@ -143,7 +143,6 @@ void FormatSendHead( struct SocketSession *psession , char *msg_type , int msg_l
 
 int ConvertToDaemonServer();
 int ns2i( char *str , int len );
-/* char	md5_exp[ MD5_DIGEST_LENGTH * 2 + 1 ] ; */
-int FileMd5( char *pathfilename , char *md5_exp );
+int FileMd5( char *pathfilename , char *program_md5_exp ); /* char program_md5_exp[ MD5_DIGEST_LENGTH * 2 + 1 ] ; */
 
 #endif

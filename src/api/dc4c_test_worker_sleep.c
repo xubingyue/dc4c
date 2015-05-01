@@ -8,11 +8,19 @@
 
 int main( int argc , char *argv[] )
 {
-	if( argc > 1 )
+	srand( (unsigned)time( NULL ) );
+	
+	if( argc == 1 + 1 )
 	{
-		sleep( atoi(argv[1]) );
+		int	num ;
+		
+		num = atoi(argv[1]) ;
+		if( num < 0 )
+			sleep( rand() % (-num) );
+		else
+			sleep( num );
 	}
 	
-	return 0;
+	return 2;
 }
 

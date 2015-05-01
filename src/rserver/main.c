@@ -103,7 +103,7 @@ int main( int argc , char *argv[] )
 	penv->accepted_session_array = (struct SocketSession *)malloc( sizeof(struct SocketSession) * MAXCOUNT_ACCEPTED_SESSION ) ;
 	if( penv->accepted_session_array == NULL )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "malloc failed[%d]errno[%d]" , nret , errno );
+		FatalLog( __FILE__ , __LINE__ , "malloc failed[%d]errno[%d]" , nret , errno );
 		printf( "malloc failed[%d]errno[%d]\n" , nret , errno );
 		return 1;
 	}

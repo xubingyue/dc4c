@@ -1,6 +1,7 @@
 #include "wserver.h"
 
-int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession *psession , int response_code , int status );
+int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession *psession , int status );
+
 int app_WaitProgramExiting( struct ServerEnv *penv , struct SocketSession *psession );
 
 int		g_exit_flag = 0 ;
@@ -97,7 +98,7 @@ int server( struct ServerEnv *penv )
 						continue;
 				}
 			}
-			else if( psession == & (penv->exit_session) )
+			else if( psession == & (penv->program_session) )
 			{
 				/* 为什么这时候的pevent->events是16(0x10)？ */
 				InfoLog( __FILE__ , __LINE__ , "EPOLL?? on exit sock[%d]" , psession->sock );

@@ -1,7 +1,8 @@
 #include "wserver.h"
 
+int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession *psession , int status );
 int proto_DeployProgramRequest( struct ServerEnv *penv , struct SocketSession *psession , execute_program_request *p_req );
-int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession *psession , int response_code , int status );
+int proto_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *psession );
 
 int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *psession , worker_register_request *p_req )
 {
@@ -33,7 +34,31 @@ int app_WorkerRegisterResponse( struct ServerEnv *penv , struct SocketSession *p
 		return -1;
 	}
 	
-	penv->connect_flag = 2 ;
+	penv->connect_progress = 2 ;
+	
+	return 0;
+}
+
+int app_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *psession , worker_notice_request *p_req )
+{
+	struct utsname		uts ;
+	
+	int			nret = 0 ;
+	
+	nret = uname( & uts ) ;
+	if( nret )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "uname failed[%d]" , nret );
+		return -1;
+	}
+	
+	strcpy( p_req->sysname , uts.sysname );
+	strcpy( p_req->release , uts.release );
+	p_req->bits = sizeof(long) * 8 ;
+	strcpy( p_req->ip , penv->param.wserver_ip );
+	p_req->port = penv->param.wserver_port ;
+	
+	p_req->is_working = (penv->accepted_progress?1:0) ;
 	
 	return 0;
 }
@@ -70,8 +95,7 @@ static int ExecuteProgram( struct ServerEnv *penv , execute_program_request *p_r
 		InfoLog( __FILE__ , __LINE__ , "[%d]fork[%d] ok" , (int)getppid() , (int)getpid() );
 		
 		i = 0 ;
-		args[i++] = p_req->program ;
-		pc = strtok( p_req->params , " \t" ) ;
+		pc = strtok( p_req->program_and_params , " \t" ) ;
 		while( pc && i < sizeof(args)/sizeof(args[0])-1 )
 		{
 			args[i++] = pc ;
@@ -79,8 +103,8 @@ static int ExecuteProgram( struct ServerEnv *penv , execute_program_request *p_r
 		}
 		if( i >= sizeof(args)/sizeof(args[0])-1 )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "param[%s] is to long" , p_req->params );
-			exit(1);
+			ErrorLog( __FILE__ , __LINE__ , "param[%s] is to long" , p_req->program_and_params );
+			exit(9);
 		}
 		args[i++] = NULL ;
 		
@@ -91,13 +115,16 @@ static int ExecuteProgram( struct ServerEnv *penv , execute_program_request *p_r
 	{
 		close( penv->exit_pipe[1] );
 		
-		ResetSocketSession( & (penv->exit_session) );
-		penv->exit_session.sock = penv->exit_pipe[0] ;
-		AddInputSockToEpoll( penv->epoll_socks , & (penv->exit_session) );
+		ResetSocketSession( & (penv->program_session) );
+		penv->program_session.sock = penv->exit_pipe[0] ;
+		penv->program_session.established_flag = 1 ;
+		AddInputSockToEpoll( penv->epoll_socks , & (penv->program_session) );
 		
 		InfoLog( __FILE__ , __LINE__ , "[%d]fork[%d] ok" , (int)getpid() , (int)pid );
+		
 		penv->pid = pid ;
-		penv->working_flag = 2 ;
+		
+		penv->accepted_progress = 2 ;
 	}
 	
 	return 0;
@@ -134,68 +161,96 @@ int app_WaitProgramExiting( struct ServerEnv *penv , struct SocketSession *psess
 		InfoLog( __FILE__ , __LINE__ , "child[%d] exit[%d]" , (int)pid , WEXITSTATUS(status) );
 	}
 	
-	penv->working_flag = 1 ;
-	
-	nret = proto_ExecuteProgramResponse( penv , & (penv->accepted_session) , 0 , WEXITSTATUS(status) ) ;
-	if( nret )
+	if( penv->accepted_progress == 2 )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "proto_ExecuteProgramResponse failed[%d]" , nret );
-		return nret;
+		penv->accepted_progress = 1 ;
+		
+		nret = proto_ExecuteProgramResponse( penv , & (penv->accepted_session) , status ) ;
+		if( nret )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "proto_ExecuteProgramResponse failed[%d]" , nret );
+			return nret;
+		}
+		else
+		{
+			DebugLog( __FILE__ , __LINE__ , "proto_ExecuteProgramResponse ok" );
+		}
+		
+		ModifyOutputSockFromEpoll( penv->epoll_socks , & (penv->accepted_session) );
 	}
 	else
 	{
-		InfoLog( __FILE__ , __LINE__ , "proto_ExecuteProgramResponse ok" );
+		penv->accepted_progress = 0 ;
+		DebugLog( __FILE__ , __LINE__ , "accepted sock not existed" );
 	}
 	
-	ModifyOutputSockFromEpoll( penv->epoll_socks , & (penv->accepted_session) );
-	
-	penv->accepted_flag = 3 ;
-	
 	DeleteSockFromEpoll( penv->epoll_socks , psession );
-	close( psession->sock );
+	CloseSocket( psession );
+	
+	penv->pid = 0 ;
 	
 	return 0;
 }
 
 int app_ExecuteProgramRequest( struct ServerEnv *penv , struct SocketSession *psession , execute_program_request *p_req )
 {
+	int		lock_fd ;
+	
+	char		program[ MAXLEN_FILENAME + 1 ] ;
 	char		pathfilename[ MAXLEN_FILENAME + 1 ] ;
-	char		md5_exp[ sizeof(((execute_program_request*)NULL)->md5_exp) ] ;
+	char		program_md5_exp[ sizeof(((execute_program_request*)NULL)->program_md5_exp) ] ;
 	
 	int		nret = 0 ;
 	
+	lock_file( & lock_fd );
+	
+	memcpy( & (penv->epq) , p_req , sizeof(execute_program_request) );
+	
+	memset( program , 0x00 , sizeof(program) );
+	sscanf( p_req->program_and_params , "%s" , program );
 	memset( pathfilename , 0x00 , sizeof(pathfilename) );
-	SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/bin/%s" , getenv("HOME") , p_req->program );
-	memset( md5_exp , 0x00 , sizeof(md5_exp) );
-	nret = FileMd5( pathfilename , md5_exp ) ;
-	if( nret || STRCMP( md5_exp , != , p_req->md5_exp ) )
+	SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/bin/%s" , getenv("HOME") , program );
+	memset( program_md5_exp , 0x00 , sizeof(program_md5_exp) );
+	nret = FileMd5( pathfilename , program_md5_exp ) ;
+	if( nret || STRCMP( program_md5_exp , != , p_req->program_md5_exp ) )
 	{
-		InfoLog( __FILE__ , __LINE__ , "FileMd5[%s][%d] or MD5[%s] and req[%s] not matched" , pathfilename , nret , md5_exp , p_req->md5_exp );
-		memcpy( & (penv->epq) , p_req , sizeof(execute_program_request) );
+		InfoLog( __FILE__ , __LINE__ , "FileMd5[%s][%d] or MD5[%s] and req[%s] not matched" , pathfilename , nret , program_md5_exp , p_req->program_md5_exp );
 		proto_DeployProgramRequest( penv , psession , p_req );
+		unlock_file( & lock_fd );
 		return 0;
 	}
 	else
 	{
-		InfoLog( __FILE__ , __LINE__ , "program[%s]md5[%s] matched" , pathfilename , md5_exp );
+		InfoLog( __FILE__ , __LINE__ , "program[%s] md5[%s] matched" , pathfilename , program_md5_exp );
 	}
+	
+	unlock_file( & lock_fd );
 	
 	return ExecuteProgram( penv , p_req );
 }
 
-int app_DeployProgramRequest( struct ServerEnv *penv , struct SocketSession *psession )
+int app_DeployProgramResponse( struct ServerEnv *penv , struct SocketSession *psession )
 {
+	int		lock_fd ;
+	
+	char		program[ MAXLEN_FILENAME + 1 ] ;
 	char		pathfilename[ MAXLEN_FILENAME + 1 ] ;
 	FILE		*fp = NULL ;
 	int		len ;
 	
+	lock_file( & lock_fd );
+	
+	memset( program , 0x00 , sizeof(program) );
+	sscanf( penv->epq.program_and_params , "%s" , program );
 	memset( pathfilename , 0x00 , sizeof(pathfilename) );
-	SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/bin/%s" , getenv("HOME") , penv->epq.program );
+	SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/bin/%s" , getenv("HOME") , program );
+	unlink( pathfilename );
 	fp = fopen( pathfilename , "wb" ) ;
 	if( fp == NULL )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "fopen[%s] failed , errno[%d]" , pathfilename , errno );
-		proto_ExecuteProgramResponse( penv , psession , 0 , 7 );
+		proto_ExecuteProgramResponse( penv , psession , 124<<8 );
+		unlock_file( & lock_fd );
 		return 0;
 	}
 	
@@ -207,9 +262,12 @@ int app_DeployProgramRequest( struct ServerEnv *penv , struct SocketSession *pse
 	if( len != psession->total_recv_len - LEN_COMMHEAD - LEN_MSGHEAD )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "filesize[%d] != writed[%d]bytes , errno[%d]" , psession->total_recv_len - LEN_COMMHEAD - LEN_MSGHEAD , len , errno );
-		proto_ExecuteProgramResponse( penv , psession , 0 , 8 );
+		proto_ExecuteProgramResponse( penv , psession , 125<<8 );
+		unlock_file( & lock_fd );
 		return 0;
 	}
+	
+	unlock_file( & lock_fd );
 	
 	return ExecuteProgram( penv , & (penv->epq) );
 }

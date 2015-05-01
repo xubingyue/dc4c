@@ -14,6 +14,7 @@ c_FILE		=	\
 
 c_FILE2		=	\
 			dc4c_test_master.c \
+			dc4c_test_batch_master.c \
 			dc4c_test_worker_sleep.c \
 
 ###### 目标文件、安装目录配置区
@@ -21,7 +22,7 @@ LIB		=	libdc4c_api.so
 LIBINST		=	$(HOME)/lib
 HDER		=	dc4c_api.h
 HDERINST	=	$(HOME)/include/dc4c_api
-BIN		=	dc4c_test_master dc4c_test_worker_sleep
+BIN		=	dc4c_test_master dc4c_test_batch_master dc4c_test_worker_sleep
 BININST		=	$(HOME)/bin
 
 ###### 编译选项
@@ -55,6 +56,9 @@ libdc4c_api.so	:	$(c_FILE_o)
 
 dc4c_test_master	:	dc4c_test_master.o
 	$(CC) -o $@ dc4c_test_master.o $(LFLAGS)
+
+dc4c_test_batch_master	:	dc4c_test_batch_master.o
+	$(CC) -o $@ dc4c_test_batch_master.o $(LFLAGS)
 
 dc4c_test_worker_sleep	:	dc4c_test_worker_sleep.o
 	$(CC) -o $@ dc4c_test_worker_sleep.o $(LFLAGS)

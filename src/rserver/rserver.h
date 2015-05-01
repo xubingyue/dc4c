@@ -6,7 +6,6 @@
 #include "IDL_query_workers_request.dsc.h"
 #include "IDL_query_workers_response.dsc.h"
 #include "IDL_worker_notice_request.dsc.h"
-#include "IDL_worker_notice_response.dsc.h"
 
 #include "dc4c_util.h"
 #include "dc4c_api.h"
@@ -79,10 +78,16 @@ int proto( void *_penv , struct SocketSession *psession );
 
 int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *psession , worker_register_request *p_req , worker_register_response *p_rsp );
 int app_QueryWorkersRequest( struct ServerEnv *penv , struct SocketSession *psession , query_workers_request *p_req , query_workers_response *p_rsp );
-int app_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *psession , worker_notice_request *p_req , worker_notice_response *p_rsp );
+int app_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *psession , worker_notice_request *p_req );
 
 int app_QueryAllWorkers( struct ServerEnv *penv , struct SocketSession *psession );
 int app_QueryAllHosts( struct ServerEnv *penv , struct SocketSession *psession );
 int app_QueryAllOsTypes( struct ServerEnv *penv , struct SocketSession *psession );
+
+int AddInputSockToEpoll( int epoll_socks , struct SocketSession *psession );
+int AddOutputSockToEpoll( int epoll_socks , struct SocketSession *psession );
+int ModifyInputSockFromEpoll( int epoll_socks , struct SocketSession *psession );
+int ModifyOutputSockFromEpoll( int epoll_socks , struct SocketSession *psession );
+int DeleteSockFromEpoll( int epoll_socks , struct SocketSession *psession );
 
 #endif

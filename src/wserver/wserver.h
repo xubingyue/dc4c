@@ -9,7 +9,6 @@
 #include "IDL_worker_register_request.dsc.h"
 #include "IDL_worker_register_response.dsc.h"
 #include "IDL_worker_notice_request.dsc.h"
-#include "IDL_worker_notice_response.dsc.h"
 #include "IDL_execute_program_request.dsc.h"
 #include "IDL_execute_program_response.dsc.h"
 #include "IDL_deploy_program_request.dsc.h"
@@ -34,14 +33,13 @@ struct ServerEnv
 	
 	int				epoll_socks ;
 	struct SocketSession		listen_session ;
-	int				connect_flag ;
+	int				connect_progress ;
 	struct SocketSession		connect_session ;
-	int				accepted_flag ;
+	int				accepted_progress ;
 	struct SocketSession		accepted_session ;
 	int				exit_pipe[ 2 ] ;
-	struct SocketSession		exit_session ;
+	struct SocketSession		program_session ;
 	
-	int				working_flag ;
 	execute_program_request		epq ;
 	pid_t				pid ;
 } ;
@@ -63,7 +61,16 @@ int proto( void *_penv , struct SocketSession *psession );
 
 int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *psession , worker_register_request *p_req );
 int app_WorkerRegisterResponse( struct ServerEnv *penv , struct SocketSession *psession , worker_register_response *p_rsp );
-int app_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *psession , worker_notice_request *p_req , worker_notice_response *p_rsp );
+int app_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *psession , worker_notice_request *p_req );
 int app_ExecuteProgramRequest( struct ServerEnv *penv , struct SocketSession *psession , execute_program_request *p_req );
+
+int AddInputSockToEpoll( int epoll_socks , struct SocketSession *psession );
+int AddOutputSockToEpoll( int epoll_socks , struct SocketSession *psession );
+int ModifyInputSockFromEpoll( int epoll_socks , struct SocketSession *psession );
+int ModifyOutputSockFromEpoll( int epoll_socks , struct SocketSession *psession );
+int DeleteSockFromEpoll( int epoll_socks , struct SocketSession *psession );
+
+int lock_file( int *p_fd );
+int unlock_file( int *p_fd );
 
 #endif

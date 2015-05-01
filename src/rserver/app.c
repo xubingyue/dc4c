@@ -133,9 +133,9 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 							return 0;
 						}
 						
-						host_info->idler_count++;
-						
 						DebugLog( __FILE__ , __LINE__ , "Add worker ok , port[%d] in sysname[%s] release[%s] bits[%d] ip[%s]" , p_req->port , p_req->sysname , p_req->release , p_req->bits , p_req->ip );
+						
+						host_info->idler_count++;
 						
 						psession->p1 = os_type_node ;
 						psession->p2 = host_info_node ;
@@ -187,6 +187,8 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 				}
 				
 				DebugLog( __FILE__ , __LINE__ , "Add worker ok , ip[%s] port[%d] in sysname[%s] release[%s] bits[%d]" , p_req->ip , p_req->port , p_req->sysname , p_req->release , p_req->bits );
+				
+				host_info->idler_count++;
 				
 				psession->p1 = os_type_node ;
 				psession->p2 = host_info_node ;
@@ -257,6 +259,8 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 		}
 		
 		DebugLog( __FILE__ , __LINE__ , "Add worker ok , sysname[%s] release[%s] bits[%d] ip[%s] port[%d]" , p_req->sysname , p_req->release , p_req->bits , p_req->ip , p_req->port );
+		
+		host_info->idler_count++;
 		
 		psession->p1 = os_type_node ;
 		psession->p2 = host_info_node ;
@@ -330,15 +334,15 @@ int app_QueryWorkersRequest( struct ServerEnv *penv , struct SocketSession *pses
 								DetachListNode( & (host_info->worker_info_list) , worker_info_node );
 								AttachListNodeAfter( & (host_info->worker_info_list) , last_node , worker_info_node );
 							}
-							
 							find_one = 1 ;
 							break;
 						}
 					}
-					
 					if( find_one == 1 )
 						break;
 				}
+				if( find_one == 0 )
+					break;
 			}
 			if( p_rsp->_nodes_count > p_rsp->_nodes_size )
 				p_rsp->_nodes_count = p_rsp->_nodes_size ;
@@ -349,7 +353,7 @@ int app_QueryWorkersRequest( struct ServerEnv *penv , struct SocketSession *pses
 	if( os_type_node == NULL )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "os[%s] main_version[%s] bits[%d] not found" , p_req->sysname , p_req->release , p_req->bits );
-		p_rsp->response_code = 4 ;
+		p_rsp->response_code = 1 ;
 		return 0;
 	}
 	
@@ -358,7 +362,7 @@ int app_QueryWorkersRequest( struct ServerEnv *penv , struct SocketSession *pses
 	return 0;
 }
 
-int app_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *psession , worker_notice_request *p_req , worker_notice_response *p_rsp )
+int app_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *psession , worker_notice_request *p_req )
 {
 	long			timestamp ;
 	
@@ -391,6 +395,9 @@ int app_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *pses
 				
 				if( STRCMP( host_info->ip , == , p_req->ip ) )
 				{
+					int		working_delta ;
+					
+					working_delta = 0 ;
 					host_info = GetNodeMember(host_info_node) ;
 					for( worker_info_node = FindFirstListNode(host_info->worker_info_list) ; worker_info_node ; worker_info_node = FindNextListNode(worker_info_node) )
 					{
@@ -399,7 +406,20 @@ int app_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *pses
 						
 						if( worker_info->port == p_req->port )
 						{
-							worker_info->is_working = p_req->is_working ;
+							if( worker_info->is_working == 0 && p_req->is_working == 1 )
+							{
+								worker_info->is_working = 1 ;
+								working_delta++;
+							}
+							else if( worker_info->is_working == 1 && p_req->is_working == 0 )
+							{
+								worker_info->is_working = 0 ;
+								working_delta--;
+							}
+							else
+							{
+								break;
+							}
 							
 							DebugLog( __FILE__ , __LINE__ , "worker notice ok , sysname[%s] release[%s] bits[%d] ip[%s] port[%d] is_working[%d]" , os_type->sysname , os_type->release , os_type->bits , host_info->ip , worker_info->port , worker_info->is_working );
 							
@@ -416,12 +436,11 @@ int app_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *pses
 					if( worker_info_node == NULL )
 					{
 						ErrorLog( __FILE__ , __LINE__ , "ip[%s] port[%d] not found" , p_req->ip , p_req->port );
-						p_rsp->response_code = 1 ;
 						return 0;
 					}
 					
-					host_info->idler_count += (p_req->is_working?-1:1) ;
-					host_info->working_count += (p_req->is_working?1:-1) ;
+					host_info->idler_count -= working_delta ;
+					host_info->working_count += working_delta ;
 					
 					while(1)
 					{
@@ -438,21 +457,18 @@ int app_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *pses
 						host_info_node = FindNextListNode(host_info_node) ;
 					}
 					
-					p_rsp->response_code = 0 ;
 					return 0;
 				}
 			}
 			if( host_info_node == NULL )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "ip[%s] not found" , p_req->ip );
-				p_rsp->response_code = 1 ;
 				return 0;
 			}
 		}
 	}
 	
 	ErrorLog( __FILE__ , __LINE__ , "os[%s] main_version[%s] bits[%d] not found" , p_req->sysname , p_req->release , p_req->bits );
-	p_rsp->response_code = 1 ;
 	return 0;
 }
 
@@ -519,7 +535,8 @@ int app_QueryAllWorkers( struct ServerEnv *penv , struct SocketSession *psession
 					, psession->send_buffer_size-1 - psession->total_send_len
 					, "%s\t%s\t%d\t%s\t%d\t%d\r\n"
 					, os_type->sysname , os_type->release , os_type->bits , host_info->ip , worker_info->port , worker_info->is_working );
-				psession->total_send_len += len ;
+				if( len > 0 && psession->total_send_len + len < psession->send_buffer_size-1 )
+					psession->total_send_len += len ;
 			}
 		}
 	}
@@ -548,7 +565,8 @@ int app_QueryAllHosts( struct ServerEnv *penv , struct SocketSession *psession )
 				, psession->send_buffer_size-1 - psession->total_send_len
 				, "%s\t%s\t%d\t%s\t%d\t%d\r\n"
 				, os_type->sysname , os_type->release , os_type->bits , host_info->ip , host_info->idler_count , host_info->working_count );
-			psession->total_send_len += len ;
+			if( len > 0 && psession->total_send_len + len < psession->send_buffer_size-1 )
+				psession->total_send_len += len ;
 		}
 	}
 	
@@ -570,7 +588,8 @@ int app_QueryAllOsTypes( struct ServerEnv *penv , struct SocketSession *psession
 			, psession->send_buffer_size-1 - psession->total_send_len
 			, "%s\t%s\t%d\r\n"
 			, os_type->sysname , os_type->release , os_type->bits );
-		psession->total_send_len += len ;
+		if( len > 0 && psession->total_send_len + len < psession->send_buffer_size-1 )
+				psession->total_send_len += len ;
 	}
 	
 	return 0;

@@ -35,17 +35,13 @@ int proto_CommandLine( struct ServerEnv *penv , struct SocketSession *psession )
 	memset( param , 0x00 , sizeof(param) );
 	sscanf( psession->recv_buffer , "%s %s" , cmd , param );
 	
-	if( cmd[0] == '\0' )
-	{
-		return 0;
-	}
-	else if( STRNCMP( cmd , == , "quit" , strlen(cmd) ) )
+	if( cmd[0] && STRNCMP( cmd , == , "quit" , strlen(cmd) ) )
 	{
 		return 1;
 	}
-	else if( STRNCMP( cmd , == , "list" , strlen(cmd) ) )
+	else if( cmd[0] && STRNCMP( cmd , == , "list" , strlen(cmd) ) )
 	{
-		if( STRNCMP( param , == , "workers" , strlen(param) ) || param[0] == '\0' )
+		if( param[0] && STRNCMP( param , == , "workers" , strlen(param) ) )
 		{
 			nret = app_QueryAllWorkers( penv , psession ) ;
 			if( nret )
@@ -54,8 +50,12 @@ int proto_CommandLine( struct ServerEnv *penv , struct SocketSession *psession )
 				ErrorLog( __FILE__ , __LINE__ , "app_QueryAllWorkers failed[%d]" , nret );
 				return -1;
 			}
+			else
+			{
+				DebugLog( __FILE__ , __LINE__ , "app_QueryAllWorkers ok" );
+			}
 		}
-		else if( STRNCMP( param , == , "hosts" , strlen(param) ) )
+		else if( param[0] && STRNCMP( param , == , "hosts" , strlen(param) ) )
 		{
 			nret = app_QueryAllHosts( penv , psession ) ;
 			if( nret )
@@ -64,8 +64,12 @@ int proto_CommandLine( struct ServerEnv *penv , struct SocketSession *psession )
 				ErrorLog( __FILE__ , __LINE__ , "app_QueryAllHosts failed[%d]" , nret );
 				return -1;
 			}
+			else
+			{
+				DebugLog( __FILE__ , __LINE__ , "app_QueryAllHosts ok" );
+			}
 		}
-		else if( STRNCMP( param , == , "os" , strlen(param) ) )
+		else if( param[0] && STRNCMP( param , == , "os" , strlen(param) ) )
 		{
 			nret = app_QueryAllOsTypes( penv , psession ) ;
 			if( nret )
@@ -73,6 +77,10 @@ int proto_CommandLine( struct ServerEnv *penv , struct SocketSession *psession )
 				psession->total_send_len = (int)SNPRINTF( psession->send_buffer , psession->send_buffer_size-1 , "unknow internal error[%d]\r\n" , nret );
 				ErrorLog( __FILE__ , __LINE__ , "app_QueryAllOsType failed[%d]" , nret );
 				return -1;
+			}
+			else
+			{
+				DebugLog( __FILE__ , __LINE__ , "app_QueryAllOsType ok" );
 			}
 		}
 		else
@@ -118,10 +126,6 @@ int proto( void *_penv , struct SocketSession *psession )
 		worker_register_request		req ;
 		worker_register_response	rsp ;
 		
-		/* test
-		00000103WRQ     {"os":"RedHatEnterpriseLinux","main_version":"5.8","bits":"64","ip":"127.0.0.1","port":11124}
-		*/
-		
 		DSCINIT_worker_register_request( & req );
 		DSCINIT_worker_register_response( & rsp );
 		
@@ -144,6 +148,10 @@ int proto( void *_penv , struct SocketSession *psession )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "app_WorkerRegisterRequest failed[%d]" , nret );
 			return -1;
+		}
+		else
+		{
+			DebugLog( __FILE__ , __LINE__ , "app_WorkerRegisterRequest ok" );
 		}
 		
 		DSCLOG_worker_register_response( & rsp );
@@ -168,10 +176,6 @@ int proto( void *_penv , struct SocketSession *psession )
 		query_workers_request		req ;
 		query_workers_response		rsp ;
 		
-		/* test
-		00000084WWQ     {"os":"RedHatEnterpriseLinux","main_version":"5.8","bits":"64","count":-1}
-		*/
-		
 		DSCINIT_query_workers_request( & req );
 		DSCINIT_query_workers_response( & rsp );
 		
@@ -195,6 +199,10 @@ int proto( void *_penv , struct SocketSession *psession )
 			ErrorLog( __FILE__ , __LINE__ , "app_WorkerRegisterRequest failed[%d]" , nret );
 			return -1;
 		}
+		else
+		{
+			DebugLog( __FILE__ , __LINE__ , "app_WorkerRegisterRequest ok" );
+		}
 		
 		DSCLOG_query_workers_response( & rsp );
 		
@@ -216,14 +224,8 @@ int proto( void *_penv , struct SocketSession *psession )
 	else if( STRNCMP( psession->recv_buffer + LEN_COMMHEAD , == , "WNQ" , LEN_MSGHEAD_MSGTYPE ) )
 	{
 		worker_notice_request		req ;
-		worker_notice_response		rsp ;
-		
-		/* test
-		00000056WNQ     {"ip":"127.0.0.1","port":11124,"is_working":1}
-		*/
 		
 		DSCINIT_worker_notice_request( & req );
-		DSCINIT_worker_notice_response( & rsp );
 		
 		msg_len = psession->total_recv_len - LEN_COMMHEAD - LEN_MSGHEAD_MSGTYPE ;
 		nret = DSCDESERIALIZE_JSON_COMPACT_worker_notice_request( NULL , psession->recv_buffer + LEN_COMMHEAD + LEN_MSGHEAD_MSGTYPE , & msg_len , & req ) ;
@@ -239,29 +241,16 @@ int proto( void *_penv , struct SocketSession *psession )
 		
 		DSCLOG_worker_notice_request( & req );
 		
-		nret = app_WorkerNoticeRequest( penv , psession , & req , & rsp ) ;
+		nret = app_WorkerNoticeRequest( penv , psession , & req ) ;
 		if( nret )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "app_WorkerRegisterRequest failed[%d]" , nret );
-			return -1;
-		}
-		
-		DSCLOG_worker_notice_response( & rsp );
-		
-		memset( psession->send_buffer , 0x00 , psession->send_buffer_size );
-		msg_len = psession->send_buffer_size-1 - LEN_COMMHEAD - LEN_MSGHEAD_MSGTYPE ;
-		nret = DSCSERIALIZE_JSON_COMPACT_worker_notice_response( & rsp , NULL , psession->send_buffer + LEN_COMMHEAD + LEN_MSGHEAD , & msg_len ) ;
-		if( nret )
-		{
-			ErrorLog( __FILE__ , __LINE__ , "DSCSERIALIZE_JSON_COMPACT_worker_notice_response failed[%d]" , nret );
+			ErrorLog( __FILE__ , __LINE__ , "app_WorkerNoticeRequest failed[%d]" , nret );
 			return -1;
 		}
 		else
 		{
-			DebugLog( __FILE__ , __LINE__ , "DSCSERIALIZE_JSON_COMPACT_worker_notice_response ok , [%d]bytes" , msg_len );
+			DebugLog( __FILE__ , __LINE__ , "app_WorkerNoticeRequest ok" );
 		}
-		
-		FormatSendHead( psession , "WNP" , msg_len );
 	}
 	else
 	{

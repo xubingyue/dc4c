@@ -1,3 +1,4 @@
+#include "dc4c_util.h"
 #include "dc4c_api.h"
 
 #define PREFIX_DSCLOG_query_workers_request	DebugLog( __FILE__ , __LINE__ , 
@@ -20,10 +21,10 @@
 #define NEWLINE_DSCLOG_deploy_program_request
 #include "IDL_deploy_program_request.dsc.LOG.c"
 
-int app_QueryWorkersRequest( struct SocketSession *psession , query_workers_request *p_req );
-int app_ExecuteProgramRequest( struct SocketSession *psession , execute_program_request *p_req , char *program , char *params );
+int app_QueryWorkersRequest( struct SocketSession *psession , query_workers_request *p_req , int want_count );
+int app_ExecuteProgramRequest( struct SocketSession *psession , execute_program_request *p_req , char *program_and_params );
 
-int proto_QueryWorkersRequest( struct SocketSession *psession )
+int proto_QueryWorkersRequest( struct SocketSession *psession , int want_count )
 {
 	int				msg_len ;
 	
@@ -34,7 +35,7 @@ int proto_QueryWorkersRequest( struct SocketSession *psession )
 	CleanSendBuffer( psession );
 	
 	DSCINIT_query_workers_request( & req );
-	nret = app_QueryWorkersRequest( psession , & req ) ;
+	nret = app_QueryWorkersRequest( psession , & req , want_count ) ;
 	if( nret )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "app_QueryWorkersRequest failed[%d]" , nret );
@@ -93,7 +94,7 @@ int proto_QueryWorkersResponse( struct SocketSession *psession , query_workers_r
 	return 0;
 }
 
-int proto_ExecuteProgramRequest( struct SocketSession *psession , char *program , char *params )
+int proto_ExecuteProgramRequest( struct SocketSession *psession , char *program_and_params , execute_program_request *p_req )
 {
 	int				msg_len ;
 	
@@ -104,7 +105,7 @@ int proto_ExecuteProgramRequest( struct SocketSession *psession , char *program 
 	CleanSendBuffer( psession );
 	
 	DSCINIT_execute_program_request( & req );
-	nret = app_ExecuteProgramRequest( psession , & req , program , params ) ;
+	nret = app_ExecuteProgramRequest( psession , & req , program_and_params ) ;
 	if( nret )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "app_ExecuteProgramRequest failed[%d]" , nret );
@@ -132,6 +133,11 @@ int proto_ExecuteProgramRequest( struct SocketSession *psession , char *program 
 	FormatSendHead( psession , "EPQ" , msg_len );
 	
 	InfoLog( __FILE__ , __LINE__ , "output buffer [%d]bytes[%.*s]" , psession->total_send_len - LEN_COMMHEAD , psession->total_send_len - LEN_COMMHEAD , psession->send_buffer + LEN_COMMHEAD );
+	
+	if( p_req )
+	{
+		memcpy( p_req , & req , sizeof(execute_program_request) );
+	}
 	
 	return 0;
 }
@@ -203,7 +209,7 @@ int proto_DeployProgramResponse( struct SocketSession *psession , char *program 
 	fread( psession->send_buffer + LEN_COMMHEAD + LEN_MSGHEAD , sizeof(char) , filesize , fp );
 	fclose( fp );
 	
-	FormatSendHead( psession , "DPQ" , filesize );
+	FormatSendHead( psession , "DPP" , filesize );
 	
 	InfoLog( __FILE__ , __LINE__ , "output buffer [%d]bytes[%.*s]" , psession->total_send_len - LEN_COMMHEAD , psession->total_send_len - LEN_COMMHEAD , psession->send_buffer + LEN_COMMHEAD );
 	

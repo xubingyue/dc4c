@@ -885,6 +885,7 @@ BOOL AttachListNodeAfter( SList **pplistSource , SListNode *node , SListNode *no
 	{
 		node->next = nodeAttach ;
 		nodeAttach->prev = node ;
+		nodeAttach->next = NULL ;
 	}
 	else
 	{
@@ -905,6 +906,7 @@ BOOL AttachListNodeBefore( SList **pplistSource , SListNode *node , SListNode *n
 	if( node->prev == NULL )
 	{
 		node->prev = nodeAttach ;
+		nodeAttach->prev = NULL ;
 		nodeAttach->next = node ;
 		if( (*pplistSource) == node )
 			(*pplistSource) = nodeAttach ;

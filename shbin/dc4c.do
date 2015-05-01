@@ -20,8 +20,8 @@ case $1 in
 		call "rserver --rserver-ip-port 0.0.0.0:12001"
 		sleep 1
 		call "wserver --rserver-ip-port 0.0.0.0:12001 --wserver-ip-port 0.0.0.0:13001"
-		# call "wserver --rserver-ip-port 0.0.0.0:12001 --wserver-ip-port 0.0.0.0:13002"
-		# call "wserver --rserver-ip-port 0.0.0.0:12001 --wserver-ip-port 0.0.0.0:13003"
+		call "wserver --rserver-ip-port 0.0.0.0:12001 --wserver-ip-port 0.0.0.0:13002"
+		call "wserver --rserver-ip-port 0.0.0.0:12001 --wserver-ip-port 0.0.0.0:13003"
 		;;
 	stop)
 		PID=`ps -f -u $USER | grep -v grep | awk '{if($8=="wserver")print $2}'`
@@ -35,6 +35,15 @@ case $1 in
 		fi
 		;;
 	kill)
+		PID=`ps -f -u $USER | grep -v grep | awk '{if($8=="wserver")print $2}'`
+		if [ x"$PID" != x"" ] ; then
+			call "kill -9 $PID"
+		fi
+		sleep 1
+		PID=`ps -f -u $USER | grep -v grep | awk '{if($8=="rserver")print $2}'`
+		if [ x"$PID" != x"" ] ; then
+			call "kill -9 $PID"
+		fi
 		;;
 	status)
 		ps -f -u $USER | grep -v grep | awk '{if($8=="rserver")print $0}'
