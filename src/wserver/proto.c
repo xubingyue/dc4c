@@ -24,31 +24,23 @@
 #define NEWLINE_DSCLOG_worker_notice_request
 #include "IDL_worker_notice_request.dsc.LOG.c"
 
-int app_ExecuteProgramRequest( struct ServerEnv *penv , struct SocketSession *psession , execute_program_request *p_req );
-int app_DeployProgramResponse( struct ServerEnv *penv , struct SocketSession *psession );
-int app_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *psession , worker_notice_request *p_req );
-
 int proto_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *psession )
 {
+	struct utsname			uts ;
+	worker_register_request		req ;
 	int				msg_len ;
 	
 	int				nret = 0 ;
 	
-	worker_register_request		req ;
-	
 	CleanSendBuffer( psession );
 	
 	DSCINIT_worker_register_request( & req );
-	nret = app_WorkerRegisterRequest( penv , psession , & req ) ;
-	if( nret )
-	{
-		ErrorLog( __FILE__ , __LINE__ , "app_WorkerRegisterRequest failed[%d]" , nret );
-		return -1;
-	}
-	else
-	{
-		DebugLog( __FILE__ , __LINE__ , "app_WorkerRegisterRequest ok" );
-	}
+	uname( & uts );
+	strcpy( req.sysname , uts.sysname );
+	strcpy( req.release , uts.release );
+	req.bits = sizeof(long) * 8 ;
+	strcpy( req.ip , penv->param.wserver_ip );
+	req.port = penv->param.wserver_port ;
 	
 	DSCLOG_worker_register_request( & req );
 	
@@ -66,32 +58,29 @@ int proto_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *
 	
 	FormatSendHead( psession , "WRQ" , msg_len );
 	
-	InfoLog( __FILE__ , __LINE__ , "output buffer [%d]bytes[%.*s]" , psession->total_send_len - LEN_COMMHEAD , psession->total_send_len - LEN_COMMHEAD , psession->send_buffer + LEN_COMMHEAD );
+	InfoLog( __FILE__ , __LINE__ , "OUTPUT [%d]bytes[%.*s]" , psession->total_send_len - LEN_COMMHEAD , psession->total_send_len - LEN_COMMHEAD , psession->send_buffer + LEN_COMMHEAD );
 	
 	return 0;
 }
 
 int proto_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *psession )
 {
+	struct utsname			uts ;
+	worker_notice_request		req ;
 	int				msg_len ;
 	
 	int				nret = 0 ;
 	
-	worker_notice_request		req ;
-	
 	CleanSendBuffer( psession );
 	
 	DSCINIT_worker_notice_request( & req );
-	nret = app_WorkerNoticeRequest( penv , psession , & req ) ;
-	if( nret )
-	{
-		ErrorLog( __FILE__ , __LINE__ , "app_WorkerNoticeRequest failed[%d]" , nret );
-		return -1;
-	}
-	else
-	{
-		DebugLog( __FILE__ , __LINE__ , "app_WorkerNoticeRequest ok" );
-	}
+	uname( & uts );
+	strcpy( req.sysname , uts.sysname );
+	strcpy( req.release , uts.release );
+	req.bits = sizeof(long) * 8 ;
+	strcpy( req.ip , penv->param.wserver_ip );
+	req.port = penv->param.wserver_port ;
+	req.is_working = IsSocketEstablished( & (penv->alive_session) ) ;
 	
 	DSCLOG_worker_notice_request( & req );
 	
@@ -109,12 +98,12 @@ int proto_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *ps
 	
 	FormatSendHead( psession , "WNQ" , msg_len );
 	
-	InfoLog( __FILE__ , __LINE__ , "output buffer [%d]bytes[%.*s]" , psession->total_send_len - LEN_COMMHEAD , psession->total_send_len - LEN_COMMHEAD , psession->send_buffer + LEN_COMMHEAD );
+	InfoLog( __FILE__ , __LINE__ , "OUTPUT [%d]bytes[%.*s]" , psession->total_send_len - LEN_COMMHEAD , psession->total_send_len - LEN_COMMHEAD , psession->send_buffer + LEN_COMMHEAD );
 	
 	return 0;
 }
 
-int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession *psession , int status )
+int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession *psession , execute_program_request *p_epq , int status )
 {
 	int				msg_len ;
 	
@@ -125,6 +114,10 @@ int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession 
 	CleanSendBuffer( psession );
 	
 	DSCINIT_execute_program_response( & req );
+	if( p_epq )
+	{
+		strcpy( req.tid , p_epq->tid );
+	}
 	req.status = status ;
 	
 	DSCLOG_execute_program_response( & req );
@@ -143,7 +136,7 @@ int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession 
 	
 	FormatSendHead( psession , "EPP" , msg_len );
 	
-	InfoLog( __FILE__ , __LINE__ , "output buffer [%d]bytes[%.*s]" , psession->total_send_len - LEN_COMMHEAD , psession->total_send_len - LEN_COMMHEAD , psession->send_buffer + LEN_COMMHEAD );
+	InfoLog( __FILE__ , __LINE__ , "OUTPUT [%d]bytes[%.*s]" , psession->total_send_len - LEN_COMMHEAD , psession->total_send_len - LEN_COMMHEAD , psession->send_buffer + LEN_COMMHEAD );
 	
 	return 0;
 }
@@ -190,7 +183,10 @@ int proto( void *_penv , struct SocketSession *psession )
 	
 	CleanSendBuffer( psession );
 	
-	InfoLog( __FILE__ , __LINE__ , "input buffer [%d]bytes[%.*s]" , psession->recv_body_len , psession->recv_body_len , psession->recv_buffer + LEN_COMMHEAD );
+	if( STRNCMP( psession->recv_buffer + LEN_COMMHEAD , == , "DPP" , LEN_MSGHEAD_MSGTYPE ) )
+		InfoLog( __FILE__ , __LINE__ , "INPUT [%d]bytes[%.16s]" , psession->recv_body_len , psession->recv_buffer + LEN_COMMHEAD );
+	else
+		InfoLog( __FILE__ , __LINE__ , "INPUT [%d]bytes[%.*s]" , psession->recv_body_len , psession->recv_body_len , psession->recv_buffer + LEN_COMMHEAD );
 	
 	if( psession->recv_body_len < LEN_COMMHEAD )
 	{
@@ -236,42 +232,91 @@ int proto( void *_penv , struct SocketSession *psession )
 		DSCINIT_execute_program_request( & req );
 		DSCINIT_execute_program_response( & rsp );
 		
-		msg_len = psession->total_recv_len - LEN_COMMHEAD - LEN_MSGHEAD_MSGTYPE ;
-		nret = DSCDESERIALIZE_JSON_COMPACT_execute_program_request( NULL , psession->recv_buffer + LEN_COMMHEAD + LEN_MSGHEAD , & msg_len , & req ) ;
-		if( nret )
+		if( IsSocketEstablished( & (penv->alive_session) ) )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "DSCDESERIALIZE_JSON_COMPACT_execute_program_request failed[%d]" , nret );
-			return -1;
+			nret = proto_ExecuteProgramResponse( penv , psession , NULL , DC4C_RETURNSTATUS_ALREADY_EXECUTING<<8 ) ;
+			if( nret )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "proto_ExecuteProgramResponse failed[%d]" , nret );
+				return -1;
+			}
+			else
+			{
+				DebugLog( __FILE__ , __LINE__ , "proto_ExecuteProgramResponse ok" );
+			}
 		}
 		else
 		{
-			DebugLog( __FILE__ , __LINE__ , "DSCDESERIALIZE_JSON_COMPACT_execute_program_request ok" );
-		}
-		
-		DSCLOG_execute_program_request( & req );
-		
-		nret = app_ExecuteProgramRequest( penv , psession , & req ) ;
-		if( nret )
-		{
-			ErrorLog( __FILE__ , __LINE__ , "app_WorkerRegisterRequest failed[%d]" , nret );
-			return -1;
-		}
-		else
-		{
-			DebugLog( __FILE__ , __LINE__ , "app_WorkerRegisterRequest ok" );
+			msg_len = psession->total_recv_len - LEN_COMMHEAD - LEN_MSGHEAD_MSGTYPE ;
+			nret = DSCDESERIALIZE_JSON_COMPACT_execute_program_request( NULL , psession->recv_buffer + LEN_COMMHEAD + LEN_MSGHEAD , & msg_len , & req ) ;
+			if( nret )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "DSCDESERIALIZE_JSON_COMPACT_execute_program_request failed[%d]" , nret );
+				return -1;
+			}
+			else
+			{
+				DebugLog( __FILE__ , __LINE__ , "DSCDESERIALIZE_JSON_COMPACT_execute_program_request ok" );
+			}
+			
+			DSCLOG_execute_program_request( & req );
+			
+			nret = app_ExecuteProgramRequest( penv , psession , & req ) ;
+			if( nret )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "app_WorkerRegisterRequest failed[%d]" , nret );
+				return -1;
+			}
+			else
+			{
+				DebugLog( __FILE__ , __LINE__ , "app_WorkerRegisterRequest ok" );
+			}
 		}
 	}
 	else if( STRNCMP( psession->recv_buffer + LEN_COMMHEAD , == , "DPP" , LEN_MSGHEAD_MSGTYPE ) )
 	{
-		nret = app_DeployProgramResponse( penv , psession ) ;
+		if( IsSocketEstablished( & (penv->alive_session) ) )
+		{
+			nret = proto_ExecuteProgramResponse( penv , psession , NULL , DC4C_RETURNSTATUS_ALREADY_EXECUTING<<8 ) ;
+			if( nret )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "proto_ExecuteProgramResponse failed[%d]" , nret );
+				return -1;
+			}
+			else
+			{
+				DebugLog( __FILE__ , __LINE__ , "proto_ExecuteProgramResponse ok" );
+			}
+		}
+		else
+		{
+			nret = app_DeployProgramResponse( penv , psession ) ;
+			if( nret )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "app_DeployProgramResponse failed[%d]" , nret );
+				return -1;
+			}
+			else
+			{
+				DebugLog( __FILE__ , __LINE__ , "app_DeployProgramResponse ok" );
+			}
+		}
+	}
+	else if( STRNCMP( psession->recv_buffer + LEN_COMMHEAD , == , "HBQ" , LEN_MSGHEAD_MSGTYPE ) )
+	{
+		FormatSendHead( psession , "HBP" , 0 );
+	}
+	else if( STRNCMP( psession->recv_buffer + LEN_COMMHEAD , == , "HBP" , LEN_MSGHEAD_MSGTYPE ) )
+	{
+		nret = app_HeartBeatResponse( penv , psession ) ;
 		if( nret )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "app_DeployProgramResponse failed[%d]" , nret );
+			ErrorLog( __FILE__ , __LINE__ , "app_HeartBeatResponse failed[%d]" , nret );
 			return -1;
 		}
 		else
 		{
-			DebugLog( __FILE__ , __LINE__ , "app_DeployProgramResponse ok" );
+			DebugLog( __FILE__ , __LINE__ , "app_HeartBeatResponse ok" );
 		}
 	}
 	else
@@ -282,8 +327,20 @@ int proto( void *_penv , struct SocketSession *psession )
 	
 	if( psession->total_send_len )
 	{
-		InfoLog( __FILE__ , __LINE__ , "output buffer [%d]bytes[%.*s]" , psession->total_send_len - LEN_COMMHEAD , psession->total_send_len - LEN_COMMHEAD , psession->send_buffer + LEN_COMMHEAD );
+		InfoLog( __FILE__ , __LINE__ , "OUTPUT [%d]bytes[%.*s]" , psession->total_send_len - LEN_COMMHEAD , psession->total_send_len - LEN_COMMHEAD , psession->send_buffer + LEN_COMMHEAD );
 	}
 	
 	return 0;
 }
+
+int proto_HeartBeatRequest( struct ServerEnv *penv , struct SocketSession *psession )
+{
+	CleanSendBuffer( psession );
+	
+	FormatSendHead( psession , "HBQ" , 0 );
+	
+	InfoLog( __FILE__ , __LINE__ , "OUTPUT [%d]bytes[%.*s]" , psession->total_send_len - LEN_COMMHEAD , psession->total_send_len - LEN_COMMHEAD , psession->send_buffer + LEN_COMMHEAD );
+	
+	return 0;
+}
+

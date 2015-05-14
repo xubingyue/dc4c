@@ -89,21 +89,18 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 	{
 		os_type = GetNodeMember(os_type_node) ;
 		DebugLog( __FILE__ , __LINE__ , "os_type[%s][%s][%d]" , os_type->sysname , os_type->release , os_type->bits );
-		
 		if( STRCMP( os_type->sysname , == , p_req->sysname ) && STRCMP( os_type->release , == , p_req->release ) && os_type->bits == p_req->bits )
 		{
 			for( host_info_node = FindFirstListNode(os_type->host_info_list) ; host_info_node ; host_info_node = FindNextListNode(host_info_node) )
 			{
 				host_info = GetNodeMember(host_info_node) ;
 				DebugLog( __FILE__ , __LINE__ , "host_info[%s][%d][%d]" , host_info->ip , host_info->idler_count , host_info->working_count );
-				
 				if( STRCMP( host_info->ip , == , p_req->ip ) )
 				{
 					for( worker_info_node = FindFirstListNode(host_info->worker_info_list) ; worker_info_node ; worker_info_node = FindNextListNode(worker_info_node) )
 					{
 						worker_info = GetNodeMember(worker_info_node) ;
 						DebugLog( __FILE__ , __LINE__ , "worker_info[%d][%d][%ld]" , worker_info->port , worker_info->is_working , worker_info->access_timestamp );
-						
 						if( worker_info->port == p_req->port )
 						{
 							ErrorLog( __FILE__ , __LINE__ , "sysname[%s] release[%s] bits[%d] ip[%s] port[%d] duplicated" , p_req->sysname , p_req->release , p_req->bits , p_req->ip , p_req->port );
@@ -267,6 +264,8 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 		psession->p3 = worker_info_node ;
 	}
 	
+	psession->type = SESSIONTYPE_WORKER ;
+	
 	p_rsp->response_code = 0 ;
 	return 0;
 }
@@ -292,7 +291,6 @@ int app_QueryWorkersRequest( struct ServerEnv *penv , struct SocketSession *pses
 	{
 		os_type = GetNodeMember(os_type_node) ;
 		DebugLog( __FILE__ , __LINE__ , "os_type[%s][%s][%d]" , os_type->sysname , os_type->release , os_type->bits );
-		
 		if( STRCMP( os_type->sysname , == , p_req->sysname ) && STRCMP( os_type->release , == , p_req->release ) && os_type->bits == p_req->bits )
 		{
 			while
@@ -303,7 +301,7 @@ int app_QueryWorkersRequest( struct ServerEnv *penv , struct SocketSession *pses
 					( p_req->count != -1 && p_rsp->_nodes_count < p_req->count )
 				)
 				&&
-				p_rsp->_nodes_count <= p_rsp->_nodes_size
+				p_rsp->_nodes_count < p_rsp->_nodes_size
 			)
 			{
 				find_one = 0 ;
@@ -311,7 +309,6 @@ int app_QueryWorkersRequest( struct ServerEnv *penv , struct SocketSession *pses
 				{
 					host_info = GetNodeMember(host_info_node) ;
 					DebugLog( __FILE__ , __LINE__ , "host_info[%s][%d][%d]" , host_info->ip , host_info->idler_count , host_info->working_count );
-					
 					for( worker_info_node = FindFirstListNode(host_info->worker_info_list) ; worker_info_node ; worker_info_node = FindNextListNode(worker_info_node) )
 					{
 						worker_info = GetNodeMember(worker_info_node) ;
@@ -357,8 +354,6 @@ int app_QueryWorkersRequest( struct ServerEnv *penv , struct SocketSession *pses
 		return 0;
 	}
 	
-	p_rsp->count = p_rsp->_nodes_count ;
-	
 	return 0;
 }
 
@@ -385,25 +380,21 @@ int app_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *pses
 	{
 		os_type = GetNodeMember(os_type_node) ;
 		DebugLog( __FILE__ , __LINE__ , "os_type[%s][%s][%d]" , os_type->sysname , os_type->release , os_type->bits );
-		
 		if( STRCMP( os_type->sysname , == , p_req->sysname ) && STRCMP( os_type->release , == , p_req->release ) && os_type->bits == p_req->bits )
 		{
 			for( host_info_node = FindFirstListNode(os_type->host_info_list) ; host_info_node ; host_info_node = FindNextListNode(host_info_node) )
 			{
 				host_info = GetNodeMember(host_info_node) ;
 				DebugLog( __FILE__ , __LINE__ , "host_info[%s][%d][%d]" , host_info->ip , host_info->idler_count , host_info->working_count );
-				
 				if( STRCMP( host_info->ip , == , p_req->ip ) )
 				{
 					int		working_delta ;
-					
 					working_delta = 0 ;
 					host_info = GetNodeMember(host_info_node) ;
 					for( worker_info_node = FindFirstListNode(host_info->worker_info_list) ; worker_info_node ; worker_info_node = FindNextListNode(worker_info_node) )
 					{
 						worker_info = GetNodeMember(worker_info_node) ;
 						DebugLog( __FILE__ , __LINE__ , "worker_info[%d][%d][%ld]" , worker_info->port , worker_info->is_working , worker_info->access_timestamp );
-						
 						if( worker_info->port == p_req->port )
 						{
 							if( worker_info->is_working == 0 && p_req->is_working == 1 )
@@ -510,6 +501,55 @@ int app_WorkerUnregister( struct ServerEnv *penv , struct SocketSession *psessio
 	return 0;
 }
 
+int app_QueryAllOsTypes( struct ServerEnv *penv , struct SocketSession *psession )
+{
+	SListNode		*os_type_node = NULL ;
+	struct OsType		*os_type = NULL ;
+	
+	int			len ;
+	
+	for( os_type_node = FindFirstListNode(penv->os_type_list) ; os_type_node ; os_type_node = FindNextListNode(os_type_node) )
+	{
+		os_type = GetNodeMember(os_type_node) ;
+		len = (int)SNPRINTF( psession->send_buffer + psession->total_send_len
+			, psession->send_buffer_size-1 - psession->total_send_len
+			, "%s\t%s\t%d\r\n"
+			, os_type->sysname , os_type->release , os_type->bits );
+		if( len > 0 && psession->total_send_len + len < psession->send_buffer_size-1 )
+				psession->total_send_len += len ;
+	}
+	
+	return 0;
+}
+
+int app_QueryAllHosts( struct ServerEnv *penv , struct SocketSession *psession )
+{
+	SListNode		*os_type_node = NULL ;
+	struct OsType		*os_type = NULL ;
+	SListNode		*host_info_node = NULL ;
+	struct HostInfo		*host_info = NULL ;
+	
+	int			len ;
+	
+	for( os_type_node = FindFirstListNode(penv->os_type_list) ; os_type_node ; os_type_node = FindNextListNode(os_type_node) )
+	{
+		os_type = GetNodeMember(os_type_node) ;
+		for( host_info_node = FindFirstListNode(os_type->host_info_list) ; host_info_node ; host_info_node = FindNextListNode(host_info_node) )
+		{
+			host_info = GetNodeMember(host_info_node) ;
+			
+			len = (int)SNPRINTF( psession->send_buffer + psession->total_send_len
+				, psession->send_buffer_size-1 - psession->total_send_len
+				, "%s\t%s\t%d\t%s\t%d\t%d\r\n"
+				, os_type->sysname , os_type->release , os_type->bits , host_info->ip , host_info->idler_count , host_info->working_count );
+			if( len > 0 && psession->total_send_len + len < psession->send_buffer_size-1 )
+				psession->total_send_len += len ;
+		}
+	}
+	
+	return 0;
+}
+
 int app_QueryAllWorkers( struct ServerEnv *penv , struct SocketSession *psession )
 {
 	SListNode		*os_type_node = NULL ;
@@ -530,7 +570,6 @@ int app_QueryAllWorkers( struct ServerEnv *penv , struct SocketSession *psession
 			for( worker_info_node = FindFirstListNode(host_info->worker_info_list) ; worker_info_node ; worker_info_node = FindNextListNode(worker_info_node) )
 			{
 				worker_info = GetNodeMember(worker_info_node) ;
-				
 				len = (int)SNPRINTF( psession->send_buffer + psession->total_send_len
 					, psession->send_buffer_size-1 - psession->total_send_len
 					, "%s\t%s\t%d\t%s\t%d\t%d\r\n"
@@ -544,53 +583,49 @@ int app_QueryAllWorkers( struct ServerEnv *penv , struct SocketSession *psession
 	return 0;
 }
 
-int app_QueryAllHosts( struct ServerEnv *penv , struct SocketSession *psession )
+int app_HeartBeatRequest( struct ServerEnv *penv , long *p_now , long *p_epoll_timeout )
 {
-	SListNode		*os_type_node = NULL ;
-	struct OsType		*os_type = NULL ;
-	SListNode		*host_info_node = NULL ;
-	struct HostInfo		*host_info = NULL ;
+	struct SocketSession	*psession ;
+	int			wserver_index ;
+	long			try_timeout ;
 	
-	int			len ;
+	(*p_epoll_timeout) = SEND_HEARTBEAT_INTERVAL ;
 	
-	for( os_type_node = FindFirstListNode(penv->os_type_list) ; os_type_node ; os_type_node = FindNextListNode(os_type_node) )
+	for( wserver_index = 0 , psession = penv->accepted_session_array ; wserver_index < MAXCOUNT_ACCEPTED_SESSION ; wserver_index++ , psession++ )
 	{
-		os_type = GetNodeMember(os_type_node) ;
-		
-		for( host_info_node = FindFirstListNode(os_type->host_info_list) ; host_info_node ; host_info_node = FindNextListNode(host_info_node) )
+		if( psession->type == SESSIONTYPE_WORKER )
 		{
-			host_info = GetNodeMember(host_info_node) ;
+			if( psession->heartbeat_lost_count > MAXCNT_HEARTBEAT_LOST )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "heartbeat_lost_count[%d] > [%d]" , psession->heartbeat_lost_count , MAXCNT_HEARTBEAT_LOST );
+				comm_CloseAcceptedSocket( penv , psession );
+			}
 			
-			len = (int)SNPRINTF( psession->send_buffer + psession->total_send_len
-				, psession->send_buffer_size-1 - psession->total_send_len
-				, "%s\t%s\t%d\t%s\t%d\t%d\r\n"
-				, os_type->sysname , os_type->release , os_type->bits , host_info->ip , host_info->idler_count , host_info->working_count );
-			if( len > 0 && psession->total_send_len + len < psession->send_buffer_size-1 )
-				psession->total_send_len += len ;
+			if( (*p_now) - psession->alive_timestamp >= SEND_HEARTBEAT_INTERVAL )
+			{
+				proto_HeartBeatRequest( penv , psession );
+				ModifyOutputSockFromEpoll( penv->epoll_socks , psession );
+				
+				psession->alive_timestamp = (*p_now) ;
+				DebugLog( __FILE__ , __LINE__ , "heartbeat_lost_count[%d]->[%d]" , psession->heartbeat_lost_count , psession->heartbeat_lost_count + 1 );
+				psession->heartbeat_lost_count++;
+			}
+			else /* tt - psession->alive_timestamp < SEND_HEARTBEAT_INTERVAL */
+			{
+				try_timeout = SEND_HEARTBEAT_INTERVAL - ( (*p_now) - psession->alive_timestamp ) ;
+				if( try_timeout < (*p_epoll_timeout) )
+					(*p_epoll_timeout) = try_timeout ;
+			}
 		}
 	}
 	
 	return 0;
 }
 
-int app_QueryAllOsTypes( struct ServerEnv *penv , struct SocketSession *psession )
+int app_HeartBeatResponse( struct ServerEnv *penv , struct SocketSession *psession )
 {
-	SListNode		*os_type_node = NULL ;
-	struct OsType		*os_type = NULL ;
-	
-	int			len ;
-	
-	for( os_type_node = FindFirstListNode(penv->os_type_list) ; os_type_node ; os_type_node = FindNextListNode(os_type_node) )
-	{
-		os_type = GetNodeMember(os_type_node) ;
-		
-		len = (int)SNPRINTF( psession->send_buffer + psession->total_send_len
-			, psession->send_buffer_size-1 - psession->total_send_len
-			, "%s\t%s\t%d\r\n"
-			, os_type->sysname , os_type->release , os_type->bits );
-		if( len > 0 && psession->total_send_len + len < psession->send_buffer_size-1 )
-				psession->total_send_len += len ;
-	}
+	DebugLog( __FILE__ , __LINE__ , "heartbeat_lost_count[%d]->[%d]" , psession->heartbeat_lost_count , 0 );
+	psession->heartbeat_lost_count = 0 ;
 	
 	return 0;
 }

@@ -52,6 +52,8 @@
 #include "LOGC.h"
 #include "ListX.h"
 
+extern char *__DC4C_UTIL_VERSION ;
+
 #define DC4C_ERROR_TIMETOUT		-14
 #define DC4C_ERROR_SOCKET_EXPECTION	-15
 
@@ -72,8 +74,6 @@ struct SocketSession
 	struct sockaddr_in	addr ;
 	int			established_flag ;
 	
-	int			comm_protocol_mode ;
-	
 	int			recv_buffer_size ;
 	char			*recv_buffer ;
 	int			total_recv_len ;
@@ -84,8 +84,15 @@ struct SocketSession
 	int			total_send_len ;
 	int			send_len ;
 	
-	char			bak ;
-	char			*newline ;
+	int			type ;
+	int			comm_protocol_mode ;
+	int			progress ;
+	
+	long			alive_timestamp ;
+	long			alive_timeout ;
+	int			heartbeat_lost_count ;
+	
+	char			ch ;
 	void			*p1 ;
 	void			*p2 ;
 	void			*p3 ;
@@ -97,7 +104,6 @@ int InitSocketSession( struct SocketSession *psession );
 void CleanSocketSession( struct SocketSession *psession );
 void FreeSocketSession( struct SocketSession *psession );
 struct SocketSession *AllocSocketSession();
-void ResetSocketSession( struct SocketSession *psession );
 void CleanSendBuffer( struct SocketSession *psession );
 void CleanRecvBuffer( struct SocketSession *psession );
 int ReallocSendBuffer( struct SocketSession *psession , int new_buffer_size );
@@ -114,10 +120,15 @@ int BindListenSocket( char *ip , long port , struct SocketSession *psession );
 #define RETURN_CONNECTING_IN_PROGRESS		1
 int AcceptSocket( int listen_sock , struct SocketSession *psession );
 int AsyncConnectSocket( char *ip , long port , struct SocketSession *psession );
+int AsyncCompleteConnectedSocket( struct SocketSession *psession );
 int DiscardAcceptSocket( int listen_sock );
 void CloseSocket( struct SocketSession *psession );
+void SetSocketClosed( struct SocketSession *psession );
+void SetSocketOpened( struct SocketSession *psession );
+void SetSocketEstablished( struct SocketSession *psession );
+int IsSocketClosed( struct SocketSession *psession );
+int IsSocketOpened( struct SocketSession *psession );
 int IsSocketEstablished( struct SocketSession *psession );
-#define RETURN_CLOSE_PEER			1
 typedef int funcDoProtocol( void *_penv , struct SocketSession *psession );
 #define OPTION_ASYNC_CHANGE_MODE_FLAG		1
 #define RETURN_RECEIVING_IN_PROGRESS		1

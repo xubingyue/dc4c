@@ -7,13 +7,17 @@ int main( int argc , char *argv[] )
 	int			program_and_params_count ;
 	int			worker_count ;
 	int			i ;
+	
+	char			*program_and_params = NULL ;
 	int			status ;
 	
 	int			nret = 0 ;
 	
-	if( argc >= 1 + 4 )
+	printf( "dc4c_test_batch_master ( api v%s )\n" , __DC4C_API_VERSION );
+	
+	if( argc >= 1 + 3 )
 	{
-		nret = DC4CInitEnv( & penv , argv[1] , atoi(argv[2]) ) ;
+		nret = DC4CInitEnv( & penv , argv[1] ) ;
 		if( nret )
 		{
 			printf( "DC4CInitEnv failed[%d]\n" , nret );
@@ -24,19 +28,19 @@ int main( int argc , char *argv[] )
 			printf( "DC4CInitEnv ok\n" );
 		}
 		
-		DC4CSetTimeout( penv , 120 );
+		DC4CSetTimeout( penv , 60 );
 		
-		worker_count = atoi(argv[3]) ;
+		worker_count = atoi(argv[2]) ;
 		if( worker_count > 0 )
 		{
-			program_and_params_array = argv+1+3 ;
-			program_and_params_count = argc-1-3 ;
+			program_and_params_array = argv+1+2 ;
+			program_and_params_count = argc-1-2 ;
 		}
 		else if( worker_count == 0 )
 		{
-			worker_count = argc-1-3 ;
-			program_and_params_array = argv+1+3 ;
-			program_and_params_count = argc-1-3 ;
+			worker_count = argc-1-2 ;
+			program_and_params_array = argv+1+2 ;
+			program_and_params_count = argc-1-2 ;
 		}
 		else
 		{
@@ -53,7 +57,7 @@ int main( int argc , char *argv[] )
 			
 			for( i = 0 ; i < worker_count ; i++ )
 			{
-				program_and_params_array[i] = argv[4] ;
+				program_and_params_array[i] = argv[3] ;
 			}
 			
 			program_and_params_count = worker_count ;
@@ -68,10 +72,11 @@ int main( int argc , char *argv[] )
 		{
 			printf( "DC4CDoBatchTasks ok\n" );
 			
-			for( i = 1 ; i <= worker_count ; i++ )
+			for( i = 1 ; i <= program_and_params_count ; i++ )
 			{
+				DC4CGetBatchTasksProgramAndParam( penv , i , & program_and_params );
 				DC4CGetBatchTasksResponseStatus( penv , i , & status );
-				printf( "DC4CGetBatchTasksResponseStatus[%d] ok , status[%d]\n" , i , WEXITSTATUS(status) );
+				printf( "DC4CGetBatchTasksResponseStatus ok , [%d] - [%s] - status[%d]\n" , i , program_and_params , WEXITSTATUS(status) );
 			}
 		}
 		
@@ -80,7 +85,7 @@ int main( int argc , char *argv[] )
 	}
 	else
 	{
-		printf( "USAGE : dc4c_test_rserver_ip rserver_port master program_and_params_1 ...\n" );
+		printf( "USAGE : dc4c_test_batch_master rserver_ip:rserver_port program_and_params_1 ...\n" );
 		exit(7);
 	}
 	

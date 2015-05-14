@@ -1,5 +1,8 @@
 #include "dc4c_util.h"
 
+char __DC4C_UTIL_VERSION_1_0_0[] = "1.0.0" ;
+char *__DC4C_UTIL_VERSION = __DC4C_UTIL_VERSION_1_0_0 ;
+
 int ConvertToDaemonServer()
 {
 	int pid;
@@ -65,11 +68,7 @@ void CleanSocketSession( struct SocketSession *psession )
 {
 	if( psession )
 	{
-		if( psession->established_flag == 1 )
-		{
-			close( psession->sock );
-			psession->established_flag = 0 ;
-		}
+		CloseSocket( psession );
 		
 		if( psession->recv_buffer )
 		{
@@ -141,12 +140,6 @@ struct SocketSession *AllocSocketSession()
 	return psession;
 }
 
-void ResetSocketSession( struct SocketSession *psession )
-{
-	memset( psession->ip , 0x00 , sizeof(psession->ip) );
-	return;
-}
-
 void CleanSendBuffer( struct SocketSession *psession )
 {
 	memset( psession->send_buffer , 0x00 , psession->send_buffer_size );
@@ -193,7 +186,6 @@ int ReallocRecvBuffer( struct SocketSession *psession , int new_recv_buffer_size
 	new_recv_buffer = (char*) realloc( psession->recv_buffer , new_recv_buffer_size ) ;
 	if( new_recv_buffer == NULL )
 		return -1;
-	// memset( psession->recv_buffer + psession->total_recv_len , 0x00 , new_recv_buffer_size - psession->total_recv_len );
 	
 	psession->recv_buffer = new_recv_buffer ;
 	psession->recv_buffer_size = new_recv_buffer_size ;
@@ -332,6 +324,8 @@ int BindListenSocket( char *ip , long port , struct SocketSession *psession )
 		DebugLog( __FILE__ , __LINE__ , "listen[%s:%d] ok" , ip , port );
 	}
 	
+	SetSocketEstablished( psession );
+	
 	return 0;
 }
 
@@ -351,8 +345,9 @@ int AcceptSocket( int listen_sock , struct SocketSession *psession )
 	{
 		GetSocketAddr( & (psession->addr) , psession->ip , & (psession->port) );
 		InfoLog( __FILE__ , __LINE__ , "[%d]accept[%d] ok , from[%s:%d]" , listen_sock , psession->sock , psession->ip , psession->port );
-		psession->established_flag = 1 ;
 	}
+	
+	SetSocketEstablished( psession );
 	
 	return 0;
 }
@@ -377,6 +372,7 @@ int AsyncConnectSocket( char *ip , long port , struct SocketSession *psession )
 	strcpy( psession->ip , ip );
 	psession->port = port ;
 	SetSocketAddr( & (psession->addr) , psession->ip , psession->port );
+	SetSocketOpened( psession );
 	nret = connect( psession->sock , (struct sockaddr *) & (psession->addr) , sizeof(struct sockaddr) ) ;
 	if( nret )
 	{
@@ -394,9 +390,31 @@ int AsyncConnectSocket( char *ip , long port , struct SocketSession *psession )
 	}
 	else
 	{
-		DebugLog( __FILE__ , __LINE__ , "connect[%s:%d] ok" , psession->ip , psession->port );
-		psession->established_flag = 1 ;
+		InfoLog( __FILE__ , __LINE__ , "connect[%s:%d] ok" , psession->ip , psession->port );
 	}
+	
+	SetSocketEstablished( psession );
+	
+	return 0;
+}
+
+int AsyncCompleteConnectedSocket( struct SocketSession *psession )
+{
+#if ( defined __linux ) || ( defined __unix )
+	int			error , code ;
+#endif
+	_SOCKLEN_T		addr_len ;
+
+#if ( defined __linux ) || ( defined __unix )
+	addr_len = sizeof(int) ;
+	code = getsockopt( psession->sock , SOL_SOCKET , SO_ERROR , & error , & addr_len ) ;
+	if( code < 0 && error )
+#elif ( defined _WIN32 )
+	addr_len = sizeof(struct sockaddr_in) ;
+	nret = connect( p_forward_session_server->server_addr.sock , ( struct sockaddr *) & (p_forward_session_server->server_addr.netaddr.sockaddr) , addr_len ) ;
+	if( ! ( nret == -1 && _ERRNO == _EISCONN ) )
+#endif
+		return -1;
 	
 	return 0;
 }
@@ -418,10 +436,11 @@ int DiscardAcceptSocket( int listen_sock )
 	{
 		GetSocketAddr( & (session.addr) , session.ip , & (session.port) );
 		InfoLog( __FILE__ , __LINE__ , "[%d]accept[%d] ok , from[%s:%d]" , listen_sock , session.sock , session.ip , session.port );
-		session.established_flag = 1 ;
 	}
 	
-	InfoLog( __FILE__ , __LINE__ , "discard accepted sock[%d]" , session.sock );
+	SetSocketEstablished( & session );
+	
+	InfoLog( __FILE__ , __LINE__ , "but discard accepted sock[%d]" , session.sock );
 	CloseSocket( & session );
 	
 	return 0;
@@ -429,19 +448,62 @@ int DiscardAcceptSocket( int listen_sock )
 
 void CloseSocket( struct SocketSession *psession )
 {
-	if( psession->established_flag == 1 )
+	if( IsSocketOpened(psession) )
 	{
+		memset( psession->ip , 0x00 , sizeof(psession->ip) );
+		psession->port = 0 ;
 		InfoLog( __FILE__ , __LINE__ , "close sock[%d]" , psession->sock );
 		close( psession->sock );
-		psession->established_flag = 0 ;
+		memset( & (psession->addr) , 0x00 , sizeof(psession->addr) );
+		SetSocketClosed( psession );
+		
+		psession->type = 0 ;
+		psession->comm_protocol_mode = 0 ;
+		psession->progress = 0 ;
+		
+		psession->alive_timestamp = 0 ;
+		psession->heartbeat_lost_count = 0 ;
+		
+		psession->ch = '\0' ;
+		psession->p1 = NULL ;
+		psession->p2 = NULL ;
+		psession->p3 = NULL ;
 	}
 	
 	return;
 }
 
+void SetSocketClosed( struct SocketSession *psession )
+{
+	psession->established_flag = 0 ;
+	return;
+}
+
+void SetSocketOpened( struct SocketSession *psession )
+{
+	psession->established_flag = 2 ;
+	return;
+}
+
+void SetSocketEstablished( struct SocketSession *psession )
+{
+	psession->established_flag = 1 ;
+	return;
+}
+
+int IsSocketClosed( struct SocketSession *psession )
+{
+	return psession->established_flag==0?1:0;
+}
+
+int IsSocketOpened( struct SocketSession *psession )
+{
+	return psession->established_flag?1:0;
+}
+
 int IsSocketEstablished( struct SocketSession *psession )
 {
-	return psession->established_flag;
+	return psession->established_flag==1?1:0;
 }
 
 int AsyncReceiveSocketData( struct SocketSession *psession , int change_mode_flag )
@@ -537,7 +599,7 @@ int AsyncReceiveSocketData( struct SocketSession *psession , int change_mode_fla
 	{
 		if( psession->total_recv_len == LEN_COMMHEAD + psession->recv_body_len )
 		{
-			psession->bak = psession->recv_buffer[ LEN_COMMHEAD + psession->recv_body_len ] ;
+			psession->ch = psession->recv_buffer[ LEN_COMMHEAD + psession->recv_body_len ] ;
 			psession->recv_buffer[ LEN_COMMHEAD + psession->recv_body_len ] = '\0' ;
 			return 0;
 		}
@@ -556,7 +618,7 @@ int AfterDoProtocol( struct SocketSession *psession )
 	else
 	{
 		memmove( psession->recv_buffer , psession->recv_buffer + LEN_COMMHEAD + psession->recv_body_len , psession->total_recv_len - LEN_COMMHEAD - psession->recv_body_len );
-		psession->recv_buffer[0] = psession->bak ;
+		psession->recv_buffer[0] = psession->ch ;
 		psession->total_recv_len -= LEN_COMMHEAD + psession->recv_body_len ;
 		psession->recv_body_len = 0 ;
 		DebugHexLog( __FILE__ , __LINE__ , psession->recv_buffer , psession->total_recv_len , "recv buffer remain [%d]bytes" , psession->total_recv_len );
@@ -615,18 +677,18 @@ int AsyncReceiveCommand( struct SocketSession *psession , int skip_recv_flag )
 		}
 	}
 	
-	psession->newline = strchr( psession->recv_buffer , '\n' ) ;
-	if( psession->newline == NULL )
+	psession->p1 = strchr( psession->recv_buffer , '\n' ) ;
+	if( psession->p1 == NULL )
 		return RETURN_RECEIVING_IN_PROGRESS;
 	
-	*(psession->newline) = '\0' ;
+	*(char*)(psession->p1) = '\0' ;
 	
 	return 0;
 }
 	
 int AfterDoCommandProtocol( struct SocketSession *psession )
 {
-	if( *(psession->newline+1) == '\0' )
+	if( *((char*)(psession->p1)+1) == '\0' )
 	{
 		CleanRecvBuffer( psession );
 		DebugLog( __FILE__ , __LINE__ , "clean recv buffer" );
@@ -635,8 +697,8 @@ int AfterDoCommandProtocol( struct SocketSession *psession )
 	{
 		/* "command1\ncommand2\n" */
 		int	len ;
-		len = strlen(psession->newline+1) ;
-		strcpy( psession->recv_buffer , psession->newline+1 );
+		len = strlen((char*)(psession->p1)+1) ;
+		strcpy( psession->recv_buffer , (char*)(psession->p1)+1 );
 		psession->total_recv_len = len ;
 		DebugHexLog( __FILE__ , __LINE__ , psession->recv_buffer , psession->total_recv_len , "recv buffer remain [%d]bytes" , psession->total_recv_len );
 	}
@@ -699,18 +761,20 @@ int SyncConnectSocket( char *ip , long port , struct SocketSession *psession )
 	strcpy( psession->ip , ip );
 	psession->port = port ;
 	SetSocketAddr( & (psession->addr) , psession->ip , psession->port );
+	SetSocketOpened( psession );
 	nret = connect( psession->sock , (struct sockaddr *) & (psession->addr) , sizeof(struct sockaddr) ) ;
 	if( nret )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "connect[%s:%d] failed[%d]errno[%d]" , psession->ip , psession->port , psession->sock , errno );
-		close( psession->sock );
+		CloseSocket( psession );
 		return -1;
 	}
 	else
 	{
 		DebugLog( __FILE__ , __LINE__ , "connect[%s:%d] ok" , psession->ip , psession->port );
-		psession->established_flag = 1 ;
 	}
+	
+	SetSocketEstablished( psession );
 	
 	return 0;
 }

@@ -35,6 +35,7 @@ int app_ExecuteProgramRequest( struct SocketSession *psession , execute_program_
 {
 	char		program[ MAXLEN_FILENAME + 1 ] ;
 	char		pathfilename[ MAXLEN_FILENAME + 1 ] ;
+	struct timeval	tv ;
 	
 	int		nret = 0 ;
 	
@@ -51,6 +52,11 @@ int app_ExecuteProgramRequest( struct SocketSession *psession , execute_program_
 		ErrorLog( __FILE__ , __LINE__ , "FileMd5 failed[%d]" , nret );
 		return DC4C_ERROR_FILE_NOT_EXIST;
 	}
+	strcpy( p_req->ip , psession->ip );
+	p_req->port = psession->port ;
+	memset( & tv , 0x00 , sizeof(struct timeval) );
+	gettimeofday( & tv , NULL );
+	SNPRINTF( p_req->tid , sizeof(p_req->tid)-1 , "%010d%010d" , (int)(tv.tv_sec) , (int)(tv.tv_usec) );
 	
 	return 0;
 }

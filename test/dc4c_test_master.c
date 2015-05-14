@@ -1,15 +1,19 @@
-#include "dc4c_api.h"
+#include "dc4c_api.h"	
 
 int main( int argc , char *argv[] )
 {
 	struct Dc4cApiEnv	*penv = NULL ;
+	
+	char			*program_and_params = NULL ;
 	int			status ;
 	
 	int			nret = 0 ;
 	
-	if( argc == 1 + 3 )
+	printf( "dc4c_test_master ( api v%s )\n" , __DC4C_API_VERSION );
+	
+	if( argc == 1 + 2 )
 	{
-		nret = DC4CInitEnv( & penv , argv[1] , atoi(argv[2]) ) ;
+		nret = DC4CInitEnv( & penv , argv[1] ) ;
 		if( nret )
 		{
 			printf( "DC4CInitEnv failed[%d]\n" , nret );
@@ -22,7 +26,7 @@ int main( int argc , char *argv[] )
 		
 		DC4CSetTimeout( penv , 120 );
 		
-		nret = DC4CDoTask( penv , argv[3] ) ;
+		nret = DC4CDoTask( penv , argv[2] ) ;
 		if( nret )
 		{
 			printf( "DC4CDoTask failed[%d]\n" , nret );
@@ -32,8 +36,9 @@ int main( int argc , char *argv[] )
 		{
 			printf( "DC4CDoTask ok\n" );
 			
+			DC4CGetTaskProgramAndParam( penv , & program_and_params );
 			DC4CGetTaskResponseStatus( penv , & status );
-			printf( "DC4CGetTaskResponseStatus ok , status[%d]\n" , WEXITSTATUS(status) );
+			printf( "DC4CGetTaskResponseStatus ok , [%s] - status[%d]\n" , program_and_params , WEXITSTATUS(status) );
 		}
 		
 		DC4CCleanEnv( & penv );
@@ -41,7 +46,7 @@ int main( int argc , char *argv[] )
 	}
 	else
 	{
-		printf( "USAGE : dc4c_test_rserver_ip rserver_port master program_and_params\n" );
+		printf( "USAGE : dc4c_test_master rserver_ip:rserver_port program_and_params\n" );
 		exit(7);
 	}
 	

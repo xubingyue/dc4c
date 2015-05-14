@@ -8,6 +8,9 @@ if [ $# -eq 0 ] ; then
 	exit 7 ;
 fi
 
+action=$1
+shift
+
 function call()
 {
 	CMD=$1
@@ -15,39 +18,58 @@ function call()
 	$CMD
 }
 
-case $1 in
+case $action in
 	start)
-		call "rserver --rserver-ip-port 0.0.0.0:12001"
+		call "rserver -r 0.0.0.0:12001 $*"
+		call "rserver -r 0.0.0.0:12002 $*"
 		sleep 1
-		call "wserver --rserver-ip-port 0.0.0.0:12001 --wserver-ip-port 0.0.0.0:13001"
-		call "wserver --rserver-ip-port 0.0.0.0:12001 --wserver-ip-port 0.0.0.0:13002"
-		call "wserver --rserver-ip-port 0.0.0.0:12001 --wserver-ip-port 0.0.0.0:13003"
+		# call "wserver -r 0.0.0.0:12001 -w 0.0.0.0:13001 -c 1 $*"
+		# call "wserver -r 0.0.0.0:12001,0.0.0.0:12002 -w 0.0.0.0:13001 -c 1 $*"
+		call "wserver -r 0.0.0.0:12001,0.0.0.0:12002 -w 0.0.0.0:13001 -c 8 $*"
 		;;
 	stop)
-		PID=`ps -f -u $USER | grep -v grep | awk '{if($8=="wserver")print $2}'`
+		PID=`ps -f -u $USER | grep -v grep | awk '{if($3=="1"&&$8=="wserver")print $2}'`
+		if [ x"$PID" != x"" ] ; then
+			call "kill $PID"
+		fi
+		PID=`ps -f -u $USER | grep -v grep | awk '{if($3=="1"&&$8=="rserver")print $2}'`
 		if [ x"$PID" != x"" ] ; then
 			call "kill $PID"
 		fi
 		sleep 1
-		PID=`ps -f -u $USER | grep -v grep | awk '{if($8=="rserver")print $2}'`
+		PID=`ps -f -u $USER | grep -v grep | awk '{if($3!="1"&&$8=="wserver")print $2}'`
+		if [ x"$PID" != x"" ] ; then
+			call "kill $PID"
+		fi
+		PID=`ps -f -u $USER | grep -v grep | awk '{if($3!="1"&&$8=="rserver")print $2}'`
 		if [ x"$PID" != x"" ] ; then
 			call "kill $PID"
 		fi
 		;;
 	kill)
-		PID=`ps -f -u $USER | grep -v grep | awk '{if($8=="wserver")print $2}'`
+		PID=`ps -f -u $USER | grep -v grep | awk '{if($3=="1"&&$8=="wserver")print $2}'`
+		if [ x"$PID" != x"" ] ; then
+			call "kill -9 $PID"
+		fi
+		PID=`ps -f -u $USER | grep -v grep | awk '{if($3=="1"&&$8=="rserver")print $2}'`
 		if [ x"$PID" != x"" ] ; then
 			call "kill -9 $PID"
 		fi
 		sleep 1
-		PID=`ps -f -u $USER | grep -v grep | awk '{if($8=="rserver")print $2}'`
+		PID=`ps -f -u $USER | grep -v grep | awk '{if($3!="1"&&$8=="wserver")print $2}'`
+		if [ x"$PID" != x"" ] ; then
+			call "kill -9 $PID"
+		fi
+		PID=`ps -f -u $USER | grep -v grep | awk '{if($3!="1"&&$8=="rserver")print $2}'`
 		if [ x"$PID" != x"" ] ; then
 			call "kill -9 $PID"
 		fi
 		;;
 	status)
-		ps -f -u $USER | grep -v grep | awk '{if($8=="rserver")print $0}'
-		ps -f -u $USER | grep -v grep | awk '{if($8=="wserver")print $0}'
+		ps -f -u $USER | grep -v grep | awk '{if($3=="1"&&$8=="rserver")print $0}'
+		ps -f -u $USER | grep -v grep | awk '{if($3!="1"&&$8=="rserver")print $0}'
+		ps -f -u $USER | grep -v grep | awk '{if($3=="1"&&$8=="wserver")print $0}'
+		ps -f -u $USER | grep -v grep | awk '{if($3!="1"&&$8=="wserver")print $0}'
 		;;
 	*)
 		usage

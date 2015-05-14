@@ -211,7 +211,7 @@ int proto_DeployProgramResponse( struct SocketSession *psession , char *program 
 	
 	FormatSendHead( psession , "DPP" , filesize );
 	
-	InfoLog( __FILE__ , __LINE__ , "output buffer [%d]bytes[%.*s]" , psession->total_send_len - LEN_COMMHEAD , psession->total_send_len - LEN_COMMHEAD , psession->send_buffer + LEN_COMMHEAD );
+	InfoLog( __FILE__ , __LINE__ , "output buffer [%d]bytes[%.16s]" , psession->total_send_len - LEN_COMMHEAD , psession->send_buffer + LEN_COMMHEAD );
 	
 	return 0;
 }

@@ -16,16 +16,32 @@
 #include "dc4c_util.h"
 #include "dc4c_api.h"
 
+extern char *__DC4C_WSERVER_VERSION ;
+
 #define EPOLL_FD_COUNT			1024
 #define WAIT_EVENTS_COUNT		100
 
+#define RSERVER_ARRAYSIZE		2
+#define MAXCOUNT_WSERVERS		1000
+#define MAXCOUNT_ACCEPTED_SESSION	1000
+
+#define SEND_HEARTBEAT_INTERVAL		60
+#define MAXCNT_HEARTBEAT_LOST		3
+
 struct CommandParameter
 {
-	char				rserver_ip[ 40 + 1 ] ;
-	int				rserver_port ;
+	char				rserver_ip[ RSERVER_ARRAYSIZE ][ 40 + 1 ] ;
+	int				rserver_port[ RSERVER_ARRAYSIZE ] ;
 	char				wserver_ip[ 40 + 1 ] ;
 	int				wserver_port ;
+	int				wserver_port_base ;
+	int				wserver_count ;
+	int				loglevel_debug ;
 } ;
+
+#define CONNECT_SESSION_PROGRESS_CLOSED		0
+#define CONNECT_SESSION_PROGRESS_CONNECTED	1
+#define CONNECT_SESSION_PROGRESS_REGISTED	2
 
 struct ServerEnv
 {
@@ -33,43 +49,54 @@ struct ServerEnv
 	
 	int				epoll_socks ;
 	struct SocketSession		listen_session ;
-	int				connect_progress ;
-	struct SocketSession		connect_session ;
-	int				accepted_progress ;
-	struct SocketSession		accepted_session ;
-	int				exit_pipe[ 2 ] ;
-	struct SocketSession		program_session ;
+	struct SocketSession		*accepted_session_array ; /* sizeof(struct SocketSession) * MAXCOUNT_ACCEPTED_SESSION */
+	struct SocketSession		*p_slibing_accepted_session ;
+	struct SocketSession		connect_session[ RSERVER_ARRAYSIZE ] ;
+	int				alive_pipe[ 2 ] ;
+	struct SocketSession		alive_session ;
 	
+	int				rserver_count ;
+	
+	int				wserver_index ;
+	
+	int				is_working ;
 	execute_program_request		epq ;
 	pid_t				pid ;
 } ;
 
 int server( struct ServerEnv *penv );
 
-int comm_AsyncConnectToRegisterServer( struct ServerEnv *penv , int skip_connect_flag );
-int comm_OnConnectedSocketInput( struct ServerEnv *penv , struct SocketSession *p_event_session );
-int comm_OnConnectedSocketOutput( struct ServerEnv *penv , struct SocketSession *p_event_session );
-int comm_OnConnectedSocketError( struct ServerEnv *penv , struct SocketSession *p_event_session );
-int comm_OnListenSocketInput( struct ServerEnv *penv , struct SocketSession *p_event_session );
-int comm_OnAcceptedSocketInput( struct ServerEnv *penv , struct SocketSession *p_event_session );
-int comm_OnAcceptedSocketOutput( struct ServerEnv *penv , struct SocketSession *p_event_session );
-int comm_OnAcceptedSocketError( struct ServerEnv *penv , struct SocketSession *p_event_session );
+int comm_AsyncConnectToRegisterServer( struct ServerEnv *penv , struct SocketSession *psession , int skip_connect_flag );
+int comm_CloseConnectedSocket( struct ServerEnv *penv , struct SocketSession *psession );
+int comm_CloseAcceptedSocket( struct ServerEnv *penv , struct SocketSession *psession );
+int comm_OnConnectedSocketInput( struct ServerEnv *penv , struct SocketSession *psession );
+int comm_OnConnectedSocketOutput( struct ServerEnv *penv , struct SocketSession *psession );
+int comm_OnConnectedSocketError( struct ServerEnv *penv , struct SocketSession *psession );
+int comm_OnListenSocketInput( struct ServerEnv *penv , struct SocketSession *psession );
+int comm_OnAcceptedSocketInput( struct ServerEnv *penv , struct SocketSession *psession );
+int comm_OnAcceptedSocketOutput( struct ServerEnv *penv , struct SocketSession *psession );
+int comm_OnAcceptedSocketError( struct ServerEnv *penv , struct SocketSession *psession );
 
 int proto_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *psession );
-int proto_ProgramExitRequest( struct ServerEnv *penv , struct SocketSession *psession , int status );
+int proto_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *psession );
+int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession *psession , execute_program_request *p_epq , int status );
+int proto_DeployProgramRequest( struct ServerEnv *penv , struct SocketSession *psession , execute_program_request *p_req );
+#define RETURN_QUIT	1
 int proto( void *_penv , struct SocketSession *psession );
+int proto_HeartBeatRequest( struct ServerEnv *penv , struct SocketSession *psession );
 
-int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *psession , worker_register_request *p_req );
 int app_WorkerRegisterResponse( struct ServerEnv *penv , struct SocketSession *psession , worker_register_response *p_rsp );
-int app_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *psession , worker_notice_request *p_req );
+int app_WaitProgramExiting( struct ServerEnv *penv , struct SocketSession *psession );
 int app_ExecuteProgramRequest( struct ServerEnv *penv , struct SocketSession *psession , execute_program_request *p_req );
+int app_DeployProgramResponse( struct ServerEnv *penv , struct SocketSession *psession );
+int app_HeartBeatRequest( struct ServerEnv *penv , long *p_now , long *p_epoll_timeout );
+int app_HeartBeatResponse( struct ServerEnv *penv , struct SocketSession *psession );
 
 int AddInputSockToEpoll( int epoll_socks , struct SocketSession *psession );
 int AddOutputSockToEpoll( int epoll_socks , struct SocketSession *psession );
 int ModifyInputSockFromEpoll( int epoll_socks , struct SocketSession *psession );
 int ModifyOutputSockFromEpoll( int epoll_socks , struct SocketSession *psession );
 int DeleteSockFromEpoll( int epoll_socks , struct SocketSession *psession );
-
 int lock_file( int *p_fd );
 int unlock_file( int *p_fd );
 

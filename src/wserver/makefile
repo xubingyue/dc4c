@@ -24,6 +24,7 @@ CFLAGS		=	-I. \
 			-I$(HOME)/include/dc4c_proto \
 			-I$(HOME)/include/dc4c_util \
 			-I$(HOME)/include/dc4c_api \
+			-I/usr/include/fasterjson \
 
 ###### 链接选项
 LFLAGS		=	-L. \
@@ -31,6 +32,8 @@ LFLAGS		=	-L. \
 			-ldc4c_proto \
 			-ldc4c_util \
 			-ldc4c_api \
+			-L/usr/lib \
+			-lfasterjson \
 
 ###### 额外宏定义区
 CLEAN_ADDITION	=

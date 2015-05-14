@@ -1,82 +1,37 @@
 #include "wserver.h"
 
-int proto_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *psession );
-
-static void KillChildProcess( struct ServerEnv *penv )
+int comm_AsyncConnectToRegisterServer( struct ServerEnv *penv , struct SocketSession *psession , int skip_connect_flag )
 {
-	int		nret = 0 ;
+	int			rserver_index ;
 	
-	if( penv->accepted_progress == 2 )
-	{
-		nret = kill( penv->pid , SIGTERM ) ;
-		InfoLog( __FILE__ , __LINE__ , "kill [%ld] return[%d]errno[%d]" , penv->pid , errno );
-		
-		sleep(2);
-		
-		nret = kill( penv->pid , SIGKILL ) ;
-		InfoLog( __FILE__ , __LINE__ , "kill -9 [%ld] return[%d]errno[%d]" , penv->pid , errno );
-		
-		penv->pid = 0 ;
-	}
-	
-	return;
-}
-
-static int SendWorkerNotice( struct ServerEnv *penv )
-{
-	int		nret = 0 ;
-	
-	if( penv->connect_progress == 2 )
-	{
-		nret = proto_WorkerNoticeRequest( penv , & (penv->connect_session) ) ;
-		if( nret )
-		{
-			ErrorLog( __FILE__ , __LINE__ , "proto_WorkerNoticeRequest failed[%d]" , nret );
-			return -1;
-		}
-		else
-		{
-			DebugLog( __FILE__ , __LINE__ , "proto_WorkerNoticeRequest ok" );
-			ModifyOutputSockFromEpoll( penv->epoll_socks , & (penv->connect_session) );
-		}
-	}
-	else
-	{
-		return -2;
-	}
-	
-	return 0;
-}
-
-int comm_AsyncConnectToRegisterServer( struct ServerEnv *penv , int skip_connect_flag )
-{
 	int			nret = 0 ;
 	
-	penv->connect_progress = 0 ;
+	psession->progress = CONNECT_SESSION_PROGRESS_CLOSED ;
 	
 	if( skip_connect_flag == 0 )
 	{
-		nret = AsyncConnectSocket( penv->param.rserver_ip , penv->param.rserver_port , & (penv->connect_session) ) ;
+		rserver_index = psession - &(penv->connect_session[0]) ;
+		
+		nret = AsyncConnectSocket( penv->param.rserver_ip[rserver_index] , penv->param.rserver_port[rserver_index] , psession ) ;
 		if( nret == RETURN_CONNECTING_IN_PROGRESS )
 		{
-			InfoLog( __FILE__ , __LINE__ , "CreateConnectSocket[%s:%d] done , but connecting is progressing" , penv->param.rserver_ip , penv->param.rserver_port );
-			AddOutputSockToEpoll( penv->epoll_socks , & (penv->connect_session) );
+			InfoLog( __FILE__ , __LINE__ , "CreateConnectSocket[%s:%d] done , but connecting is progressing" , penv->param.rserver_ip[rserver_index] , penv->param.rserver_port[rserver_index] );
+			AddOutputSockToEpoll( penv->epoll_socks , psession );
 			return nret;
 		}
 		else if( nret )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "CreateConnectSocket[%s:%d] failed[%d]errno[%d]" , penv->param.rserver_ip , penv->param.rserver_port , nret , errno );
-			return nret;
+			ErrorLog( __FILE__ , __LINE__ , "CreateConnectSocket[%s:%d] failed[%d]errno[%d]" , penv->param.rserver_ip[rserver_index] , penv->param.rserver_port[rserver_index] , nret , errno );
+			return 0;
 		}
 		else
 		{
-			InfoLog( __FILE__ , __LINE__ , "CreateConnectSocket[%s:%d] ok" , penv->param.rserver_ip , penv->param.rserver_port );
+			InfoLog( __FILE__ , __LINE__ , "CreateConnectSocket[%s:%d] ok" , penv->param.rserver_ip[rserver_index] , penv->param.rserver_port[rserver_index] );
+			AddOutputSockToEpoll( penv->epoll_socks , psession );
 		}
 	}
 	
-	penv->connect_session.established_flag = 1 ;
-	
-	nret = proto_WorkerRegisterRequest( penv , & (penv->connect_session) ) ;
+	nret = proto_WorkerRegisterRequest( penv , psession ) ;
 	if( nret )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "proto_WorkerRegisterRequest failed[%d]errno[%d]" , nret , errno );
@@ -84,12 +39,50 @@ int comm_AsyncConnectToRegisterServer( struct ServerEnv *penv , int skip_connect
 	}
 	else
 	{
-		InfoLog( __FILE__ , __LINE__ , "proto_WorkerRegisterRequest ok" );
+		DebugLog( __FILE__ , __LINE__ , "proto_WorkerRegisterRequest ok" );
 	}
 	
-	AddOutputSockToEpoll( penv->epoll_socks , & (penv->connect_session) );
+	psession->progress = CONNECT_SESSION_PROGRESS_CONNECTED ;
 	
-	penv->connect_progress = 1 ;
+	return 0;
+}
+
+int comm_CloseConnectedSocket( struct ServerEnv *penv , struct SocketSession *psession )
+{
+	DeleteSockFromEpoll( penv->epoll_socks , psession );
+	CloseSocket( psession );
+	
+	psession->progress = CONNECT_SESSION_PROGRESS_CLOSED ;
+	
+	return 0;
+}
+
+static void KillChildProcess( struct ServerEnv *penv , struct SocketSession *psession )
+{
+	int		nret = 0 ;
+	
+	if( psession->p1 == & (penv->alive_session) && IsSocketEstablished( & (penv->alive_session) ) )
+	{
+		nret = kill( penv->pid , SIGTERM ) ;
+		InfoLog( __FILE__ , __LINE__ , "kill [%ld] return errno[%d]" , penv->pid , errno );
+		
+		sleep(2);
+		
+		nret = kill( penv->pid , SIGKILL ) ;
+		InfoLog( __FILE__ , __LINE__ , "kill -9 [%ld] return errno[%d]" , penv->pid , errno );
+		
+		penv->pid = 0 ;
+	}
+	
+	return;
+}
+
+int comm_CloseAcceptedSocket( struct ServerEnv *penv , struct SocketSession *psession )
+{
+	KillChildProcess( penv , psession );
+	
+	DeleteSockFromEpoll( penv->epoll_socks , psession );
+	CloseSocket( psession );
 	
 	return 0;
 }
@@ -98,82 +91,54 @@ int comm_OnConnectedSocketInput( struct ServerEnv *penv , struct SocketSession *
 {
 	int			nret = 0 ;
 	
-	nret = AsyncReceiveSocketData( psession , OPTION_ASYNC_CHANGE_MODE_FLAG ) ;
+	nret = AsyncReceiveSocketData( psession , 0 ) ;
 	if( nret == RETURN_RECEIVING_IN_PROGRESS )
 	{
-		InfoLog( __FILE__ , __LINE__ , "AsyncReceiveSocketData ok" );
+		DebugLog( __FILE__ , __LINE__ , "AsyncReceiveSocketData ok" );
 		return 0;
 	}
 	else if( nret == RETURN_PEER_CLOSED )
 	{
-		InfoLog( __FILE__ , __LINE__ , "AsyncReceiveSocketData done" );
-_GOTO_RECONNECTING :
-		DeleteSockFromEpoll( penv->epoll_socks , psession );
-		CloseSocket( psession );
-		ResetSocketSession( psession );
-		
-		penv->connect_progress = 0 ;
-		
-		nret = comm_AsyncConnectToRegisterServer( penv , 0 ) ;
-		if( nret == RETURN_CONNECTING_IN_PROGRESS )
-		{
-			InfoLog( __FILE__ , __LINE__ , "comm_AsyncConnectToRegisterServer[%s:%d] done , but connecting is progressing" , penv->param.rserver_ip , penv->param.rserver_port );
-			return 0;
-		}
-		else if( nret )
-		{
-			ErrorLog( __FILE__ , __LINE__ , "comm_AsyncConnectToRegisterServer[%s:%d] failed[%d] , errno[%d]" , penv->param.rserver_ip , penv->param.rserver_port , nret , errno );
-			return -1;
-		}
-		else
-		{
-			InfoLog( __FILE__ , __LINE__ , "comm_AsyncConnectToRegisterServer[%s:%d] ok" , penv->param.rserver_ip , penv->param.rserver_port );
-		}
-		
+		DebugLog( __FILE__ , __LINE__ , "AsyncReceiveSocketData done" );
+		comm_CloseConnectedSocket( penv , psession );
 		return 0;
 	}
 	else if( nret )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "AsyncReceiveSocketData failed[%d] , errno[%d]" , nret , errno );
-		goto _GOTO_RECONNECTING;
+		comm_CloseConnectedSocket( penv , psession );
 	}
 	else
 	{
-		InfoLog( __FILE__ , __LINE__ , "AsyncReceiveSocketData ok , call proto" );
+		DebugLog( __FILE__ , __LINE__ , "AsyncReceiveSocketData ok , call proto" );
 		
 		nret = proto( penv , psession ) ;
-		if( nret == RETURN_CLOSE_PEER )
-		{
-			InfoLog( __FILE__ , __LINE__ , "proto done , disconnect socket" );
-			DeleteSockFromEpoll( penv->epoll_socks , psession );
-			CloseSocket( psession );
-			ResetSocketSession( psession );
-			return 0;
-		}
-		else if( nret < 0 )
+		if( nret < 0 )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "proto return failed[%d]" , nret );
-			return -1;
+			comm_CloseConnectedSocket( penv , psession );
+			return 0;
 		}
 		else
 		{
-			InfoLog( __FILE__ , __LINE__ , "proto ok" );
+			DebugLog( __FILE__ , __LINE__ , "proto ok" );
 		}
 		
 		nret = AfterDoProtocol( psession ) ;
 		if( nret == RETURN_NO_SEND_RESPONSE )
 		{
-			InfoLog( __FILE__ , __LINE__ , "AfterDoProtocol done" );
+			DebugLog( __FILE__ , __LINE__ , "AfterDoProtocol done" );
 			return 0;
 		}
 		else if( nret )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "AfterDoProtocol return failed[%d]" , nret );
-			return -1;
+			comm_CloseConnectedSocket( penv , psession );
+			return 0;
 		}
 		else
 		{
-			InfoLog( __FILE__ , __LINE__ , "AfterDoProtocol ok" );
+			DebugLog( __FILE__ , __LINE__ , "AfterDoProtocol ok" );
 			ModifyOutputSockFromEpoll( penv->epoll_socks , psession );
 		}
 	}
@@ -185,61 +150,30 @@ int comm_OnConnectedSocketOutput( struct ServerEnv *penv , struct SocketSession 
 {
 	int			nret = 0 ;
 	
-	if( penv->connect_progress == 0 )
+	if( psession->progress == CONNECT_SESSION_PROGRESS_CLOSED )
 	{
-#if ( defined __linux ) || ( defined __unix )
-		int			error , code ;
-#endif
-		_SOCKLEN_T		addr_len ;
-
-#if ( defined __linux ) || ( defined __unix )
-		addr_len = sizeof(int) ;
-		code = getsockopt( psession->sock , SOL_SOCKET , SO_ERROR , & error , & addr_len ) ;
-		if( code < 0 && error )
-#elif ( defined _WIN32 )
-		addr_len = sizeof(struct sockaddr_in) ;
-		nret = connect( p_forward_session_server->server_addr.sock , ( struct sockaddr *) & (p_forward_session_server->server_addr.netaddr.sockaddr) , addr_len ) ;
-		if( ! ( nret == -1 && _ERRNO == _EISCONN ) )
-#endif
+		nret = AsyncCompleteConnectedSocket( psession ) ;
+		if( nret )
 		{
-			DeleteSockFromEpoll( penv->epoll_socks , psession );
-			CloseSocket( psession );
-			ResetSocketSession( psession );
-			
-			sleep(1);
-			
-			nret = comm_AsyncConnectToRegisterServer( penv , 0 ) ;
-			if( nret == RETURN_CONNECTING_IN_PROGRESS )
-			{
-				InfoLog( __FILE__ , __LINE__ , "comm_AsyncConnectToRegisterServer[%s:%d] done , but connecting is progressing" , penv->param.rserver_ip , penv->param.rserver_port );
-			}
-			else if( nret )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "comm_AsyncConnectToRegisterServer[%s:%d] failed[%d] , errno[%d]" , penv->param.rserver_ip , penv->param.rserver_port , nret , errno );
-				return -1;
-			}
-			else
-			{
-				InfoLog( __FILE__ , __LINE__ , "comm_AsyncConnectToRegisterServer[%s:%d] ok" , penv->param.rserver_ip , penv->param.rserver_port );
-			}
-			
+			ErrorLog( __FILE__ , __LINE__ , "AsyncCompleteConnectedSocket failed[%d]" , nret );
+			comm_CloseConnectedSocket( penv , psession );
 			return 0;
 		}
 		else
 		{
-			nret = comm_AsyncConnectToRegisterServer( penv , 1 ) ;
+			InfoLog( __FILE__ , __LINE__ , "AsyncCompleteConnectedSocket ok" );
+			nret = comm_AsyncConnectToRegisterServer( penv , psession , 1 );
 			if( nret == RETURN_CONNECTING_IN_PROGRESS )
 			{
-				InfoLog( __FILE__ , __LINE__ , "comm_AsyncConnectToRegisterServer[%s:%d] done , but connecting is progressing" , penv->param.rserver_ip , penv->param.rserver_port );
+				InfoLog( __FILE__ , __LINE__ , "comm_AsyncConnectToRegisterServer done" );
 			}
 			else if( nret )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "comm_AsyncConnectToRegisterServer[%s:%d] failed[%d] , errno[%d]" , penv->param.rserver_ip , penv->param.rserver_port , nret , errno );
-				return -1;
+				ErrorLog( __FILE__ , __LINE__ , "comm_AsyncConnectToRegisterServer failed[%d]" , nret );
 			}
 			else
 			{
-				InfoLog( __FILE__ , __LINE__ , "comm_AsyncConnectToRegisterServer[%s:%d] ok" , penv->param.rserver_ip , penv->param.rserver_port );
+				InfoLog( __FILE__ , __LINE__ , "comm_AsyncConnectToRegisterServer ok" );
 			}
 		}
 	}
@@ -249,30 +183,12 @@ int comm_OnConnectedSocketOutput( struct ServerEnv *penv , struct SocketSession 
 		if( nret )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "AsyncSendSocketData failed[%d] , errno[%d]" , nret , errno );
-			DeleteSockFromEpoll( penv->epoll_socks , psession );
-			CloseSocket( psession );
-			ResetSocketSession( psession );
-			
-			nret = comm_AsyncConnectToRegisterServer( penv , 0 ) ;
-			if( nret == RETURN_CONNECTING_IN_PROGRESS )
-			{
-				InfoLog( __FILE__ , __LINE__ , "comm_AsyncConnectToRegisterServer[%s:%d] done , but connecting is progressing" , penv->param.rserver_ip , penv->param.rserver_port );
-			}
-			else if( nret )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "comm_AsyncConnectToRegisterServer[%s:%d] failed[%d] , errno[%d]" , penv->param.rserver_ip , penv->param.rserver_port , nret , errno );
-				return -1;
-			}
-			else
-			{
-				InfoLog( __FILE__ , __LINE__ , "comm_AsyncConnectToRegisterServer[%s:%d] ok" , penv->param.rserver_ip , penv->param.rserver_port );
-			}
-			
+			comm_CloseConnectedSocket( penv , psession );
 			return 0;
 		}
 		else
 		{
-			InfoLog( __FILE__ , __LINE__ , "AsyncSendSocketData ok" );
+			DebugLog( __FILE__ , __LINE__ , "AsyncSendSocketData ok" );
 		}
 		
 		if( psession->send_len == psession->total_send_len )
@@ -287,55 +203,24 @@ int comm_OnConnectedSocketOutput( struct ServerEnv *penv , struct SocketSession 
 
 int comm_OnConnectedSocketError( struct ServerEnv *penv , struct SocketSession *psession )
 {
-	int		nret = 0 ;
-	
 	ErrorLog( __FILE__ , __LINE__ , "detected sock[%d] error , errno[%d]" , psession->sock , errno );
-	DeleteSockFromEpoll( penv->epoll_socks , psession );
-	CloseSocket( psession );
-	
-	penv->connect_progress = 0 ;
-	
-	sleep(1);
-	
-	nret = comm_AsyncConnectToRegisterServer( penv , 0 ) ;
-	if( nret == RETURN_CONNECTING_IN_PROGRESS )
-	{
-		InfoLog( __FILE__ , __LINE__ , "comm_AsyncConnectToRegisterServer[%s:%d] done , but connecting is progressing" , penv->param.rserver_ip , penv->param.rserver_port );
-	}
-	else if( nret )
-	{
-		ErrorLog( __FILE__ , __LINE__ , "comm_AsyncConnectToRegisterServer[%s:%d] failed[%d] , errno[%d]" , penv->param.rserver_ip , penv->param.rserver_port , nret , errno );
-		return -1;
-	}
-	else
-	{
-		InfoLog( __FILE__ , __LINE__ , "comm_AsyncConnectToRegisterServer[%s:%d] ok" , penv->param.rserver_ip , penv->param.rserver_port );
-	}
-	
+	comm_CloseConnectedSocket( penv , psession );
 	return 0;
 }
 
 int comm_OnListenSocketInput( struct ServerEnv *penv , struct SocketSession *psession )
 {
+	struct SocketSession	*p_new_session = NULL ;
+	
 	int			nret = 0 ;
 	
-	if( penv->accepted_progress != 0 )
+	p_new_session = GetUnusedSocketSession( penv->accepted_session_array , MAXCOUNT_ACCEPTED_SESSION , & (penv->p_slibing_accepted_session) ) ;
+	if( p_new_session == NULL )
 	{
-		nret = DiscardAcceptSocket( psession->sock ) ;
-		if( nret )
-		{
-			ErrorLog( __FILE__ , __LINE__ , "DiscardAcceptSocket failed[%d] , errno[%d]" , nret , errno );
-			return nret;
-		}
-		else
-		{
-			InfoLog( __FILE__ , __LINE__ , "DiscardAcceptSocket ok" );
-		}
-		
-		return 0;
+		ErrorLog( __FILE__ , __LINE__ , "GetUnusedSocketSession failed , too many sessions" );
 	}
 	
-	nret = AcceptSocket( psession->sock , & (penv->accepted_session) ) ;
+	nret = AcceptSocket( psession->sock , p_new_session ) ;
 	if( nret )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "AcceptSocket failed[%d] , errno[%d]" , nret , errno );
@@ -343,16 +228,12 @@ int comm_OnListenSocketInput( struct ServerEnv *penv , struct SocketSession *pse
 	}
 	else
 	{
-		InfoLog( __FILE__ , __LINE__ , "AcceptSocket ok" );
+		DebugLog( __FILE__ , __LINE__ , "AcceptSocket ok" );
 	}
 	
-	SetNonBlocking( penv->accepted_session.sock );
+	SetNonBlocking( p_new_session->sock );
 	
-	AddInputSockToEpoll( penv->epoll_socks , & (penv->accepted_session) );
-	
-	penv->accepted_progress = 1 ;
-	
-	SendWorkerNotice( penv );
+	AddInputSockToEpoll( penv->epoll_socks , p_new_session );
 	
 	return 0;
 }
@@ -364,89 +245,58 @@ int comm_OnAcceptedSocketInput( struct ServerEnv *penv , struct SocketSession *p
 	nret = AsyncReceiveSocketData( psession , OPTION_ASYNC_CHANGE_MODE_FLAG ) ;
 	if( nret == RETURN_RECEIVING_IN_PROGRESS )
 	{
-		InfoLog( __FILE__ , __LINE__ , "AsyncReceiveSocketData ok" );
+		DebugLog( __FILE__ , __LINE__ , "AsyncReceiveSocketData ok" );
 		return 0;
 	}
 	else if( nret == RETURN_PEER_CLOSED )
 	{
-		InfoLog( __FILE__ , __LINE__ , "AsyncReceiveSocketData done" );
-		DeleteSockFromEpoll( penv->epoll_socks , psession );
-		CloseSocket( psession );
-		ResetSocketSession( psession );
-		
-		penv->accepted_progress = 0 ;
-		
-		KillChildProcess( penv );
-		SendWorkerNotice( penv );
-		
+		DebugLog( __FILE__ , __LINE__ , "AsyncReceiveSocketData done" );
+		comm_CloseAcceptedSocket( penv , psession );
 		return 0;
 	}
 	else if( nret )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "AsyncReceiveSocketData failed[%d] , errno[%d]" , nret , errno );
-		DeleteSockFromEpoll( penv->epoll_socks , psession );
-		CloseSocket( psession );
-		ResetSocketSession( psession );
-		
-		penv->accepted_progress = 0 ;
-		
-		KillChildProcess( penv );
-		SendWorkerNotice( penv );
-		
+		comm_CloseAcceptedSocket( penv , psession );
 		return 0;
 	}
 	else
 	{
-		InfoLog( __FILE__ , __LINE__ , "AsyncReceiveSocketData ok , call proto" );
+		DebugLog( __FILE__ , __LINE__ , "AsyncReceiveSocketData ok , call proto" );
 		
 		nret = proto( penv , psession ) ;
-		if( nret == RETURN_CLOSE_PEER )
+		if( nret == RETURN_QUIT )
 		{
-			InfoLog( __FILE__ , __LINE__ , "proto done , disconnect socket" );
-			DeleteSockFromEpoll( penv->epoll_socks , psession );
-			CloseSocket( psession );
-			ResetSocketSession( psession );
-			
-			penv->accepted_progress = 0 ;
-			
-			KillChildProcess( penv );
-			SendWorkerNotice( penv );
-			
+			InfoLog( __FILE__ , __LINE__ , "proto return ok" );
+			comm_CloseAcceptedSocket( penv , psession );
 			return 0;
 		}
-		else if( nret < 0 )
+		else if( nret )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "proto return failed[%d]" , nret );
-			return -1;
+			comm_CloseAcceptedSocket( penv , psession );
+			return 0;
 		}
 		else
 		{
-			InfoLog( __FILE__ , __LINE__ , "proto ok" );
+			DebugLog( __FILE__ , __LINE__ , "proto ok" );
 		}
 		
 		nret = AfterDoProtocol( psession ) ;
 		if( nret == RETURN_NO_SEND_RESPONSE )
 		{
-			InfoLog( __FILE__ , __LINE__ , "AfterDoProtocol done" );
+			DebugLog( __FILE__ , __LINE__ , "AfterDoProtocol done" );
 			return 0;
 		}
 		else if( nret )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "AfterDoProtocol return failed[%d]" , nret );
-			DeleteSockFromEpoll( penv->epoll_socks , psession );
-			CloseSocket( psession );
-			ResetSocketSession( psession );
-			
-			penv->accepted_progress = 0 ;
-			
-			KillChildProcess( penv );
-			SendWorkerNotice( penv );
-			
+			comm_CloseAcceptedSocket( penv , psession );
 			return 0;
 		}
 		else
 		{
-			InfoLog( __FILE__ , __LINE__ , "AfterDoProtocol ok" );
+			DebugLog( __FILE__ , __LINE__ , "AfterDoProtocol ok" );
 			ModifyOutputSockFromEpoll( penv->epoll_socks , psession );
 		}
 	}
@@ -462,19 +312,12 @@ int comm_OnAcceptedSocketOutput( struct ServerEnv *penv , struct SocketSession *
 	if( nret )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "AsyncSendSocketData failed[%d] , errno[%d]" , nret , errno );
-		DeleteSockFromEpoll( penv->epoll_socks , psession );
-		CloseSocket( psession );
-		ResetSocketSession( psession );
-		
-		penv->accepted_progress = 0 ;
-		
-		SendWorkerNotice( penv );
-		
-		return -1;
+		comm_CloseAcceptedSocket( penv , psession );
+		return 0;
 	}
 	else
 	{
-		InfoLog( __FILE__ , __LINE__ , "AsyncSendSocketData ok" );
+		DebugLog( __FILE__ , __LINE__ , "AsyncSendSocketData ok" );
 	}
 	
 	if( psession->send_len == psession->total_send_len )
@@ -489,13 +332,7 @@ int comm_OnAcceptedSocketOutput( struct ServerEnv *penv , struct SocketSession *
 int comm_OnAcceptedSocketError( struct ServerEnv *penv , struct SocketSession *psession )
 {
 	ErrorLog( __FILE__ , __LINE__ , "detected sock[%d] error , errno[%d]" , psession->sock , errno );
-	DeleteSockFromEpoll( penv->epoll_socks , psession );
-	CloseSocket( psession );
-	
-	penv->accepted_progress = 0 ;
-	
-	SendWorkerNotice( penv );
-	
+	comm_CloseAcceptedSocket( penv , psession );
 	return 0;
 }
 

@@ -10,8 +10,13 @@
 #include "dc4c_util.h"
 #include "dc4c_api.h"
 
+extern char *__DC4C_RSERVER_VERSION ;
+
 #define EPOLL_FD_COUNT			1024
 #define WAIT_EVENTS_COUNT		100
+
+#define SEND_HEARTBEAT_INTERVAL		60
+#define MAXCNT_HEARTBEAT_LOST		3
 
 #define MAXCOUNT_ACCEPTED_SESSION	1000
 
@@ -47,9 +52,11 @@ struct CommandParameter
 {
 	char				rserver_ip[ 40 + 1 ] ;
 	int				rserver_port ;
-	char				manage_ip[ 40 + 1 ] ;
-	int				manage_port ;
+	int				loglevel_debug ;
 } ;
+
+#define SESSIONTYPE_WORKER		1
+#define SESSIONTYPE_MASTER		2
 
 struct ServerEnv
 {
@@ -69,20 +76,26 @@ struct ServerEnv
 
 int server( struct ServerEnv *penv );
 
-int comm_OnListenSocketInput( struct ServerEnv *penv , struct SocketSession *p_event_session );
-int comm_OnAcceptedSocketInput( struct ServerEnv *penv , struct SocketSession *p_event_session );
-int comm_OnAcceptedSocketOutput( struct ServerEnv *penv , struct SocketSession *p_event_session );
-int comm_OnAcceptedSocketError( struct ServerEnv *penv , struct SocketSession *p_event_session );
+int comm_CloseAcceptedSocket( struct ServerEnv *penv , struct SocketSession *psession );
+int comm_OnListenSocketInput( struct ServerEnv *penv , struct SocketSession *psession );
+int comm_OnAcceptedSocketInput( struct ServerEnv *penv , struct SocketSession *psession );
+int comm_OnAcceptedSocketOutput( struct ServerEnv *penv , struct SocketSession *psession );
+int comm_OnAcceptedSocketError( struct ServerEnv *penv , struct SocketSession *psession );
 
+int proto_CommandLine( struct ServerEnv *penv , struct SocketSession *psession );
+#define RETURN_QUIT	1
 int proto( void *_penv , struct SocketSession *psession );
+int proto_HeartBeatRequest( struct ServerEnv *penv , struct SocketSession *psession );
 
 int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *psession , worker_register_request *p_req , worker_register_response *p_rsp );
 int app_QueryWorkersRequest( struct ServerEnv *penv , struct SocketSession *psession , query_workers_request *p_req , query_workers_response *p_rsp );
 int app_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *psession , worker_notice_request *p_req );
-
-int app_QueryAllWorkers( struct ServerEnv *penv , struct SocketSession *psession );
-int app_QueryAllHosts( struct ServerEnv *penv , struct SocketSession *psession );
+int app_WorkerUnregister( struct ServerEnv *penv , struct SocketSession *psession );
 int app_QueryAllOsTypes( struct ServerEnv *penv , struct SocketSession *psession );
+int app_QueryAllHosts( struct ServerEnv *penv , struct SocketSession *psession );
+int app_QueryAllWorkers( struct ServerEnv *penv , struct SocketSession *psession );
+int app_HeartBeatRequest( struct ServerEnv *penv , long *p_tt , long *p_epoll_timeout );
+int app_HeartBeatResponse( struct ServerEnv *penv , struct SocketSession *psession );
 
 int AddInputSockToEpoll( int epoll_socks , struct SocketSession *psession );
 int AddOutputSockToEpoll( int epoll_socks , struct SocketSession *psession );
