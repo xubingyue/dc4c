@@ -24,6 +24,9 @@ int DSCSERIALIZE_JSON_COMPACT_execute_program_response( execute_program_response
 	JSONESCAPE_EXPAND(pst->tid,strlen(pst->tid),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,","); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"\"response_code\":"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"%d",pst->response_code); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,","); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\"status\":"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"%d",pst->status); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"}"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
@@ -57,6 +60,9 @@ int CallbackOnJsonNode_execute_program_response( int type , char *jpath , int jp
 		/* tid */
 		if( jpath_len == 4 && strncmp( jpath , "/tid" , jpath_len ) == 0 )
 		{JSONUNESCAPE_FOLD(content,content_len,pst->tid,len,sizeof(pst->tid)-1); if(len<0)return -7;}
+		/* response_code */
+		if( jpath_len == 14 && strncmp( jpath , "/response_code" , jpath_len ) == 0 )
+		{NATOI(content,content_len,pst->response_code);}
 		/* status */
 		if( jpath_len == 7 && strncmp( jpath , "/status" , jpath_len ) == 0 )
 		{NATOI(content,content_len,pst->status);}

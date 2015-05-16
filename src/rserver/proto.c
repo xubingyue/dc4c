@@ -1,3 +1,12 @@
+/*
+ * dc4c - Distributed computing framework
+ * author	: calvin
+ * email	: calvinwilliams@163.com
+ * LastVersion	: v1.0.0
+ *
+ * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
+ */
+
 #include "rserver.h"
 
 #define PREFIX_DSCLOG_worker_register_request	DebugLog( __FILE__ , __LINE__ , 
@@ -19,10 +28,6 @@
 #define PREFIX_DSCLOG_worker_notice_request	DebugLog( __FILE__ , __LINE__ , 
 #define NEWLINE_DSCLOG_worker_notice_request
 #include "IDL_worker_notice_request.dsc.LOG.c"
-
-#define PREFIX_DSCLOG_worker_notice_response	DebugLog( __FILE__ , __LINE__ , 
-#define NEWLINE_DSCLOG_worker_notice_response
-#include "IDL_worker_notice_response.dsc.LOG.c"
 
 int proto_CommandLine( struct ServerEnv *penv , struct SocketSession *psession )
 {

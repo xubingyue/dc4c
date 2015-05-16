@@ -84,6 +84,7 @@
 typedef struct
 {
 	char	tid[ 20 + 1 ] ;
+	int	response_code ;
 	int	status ;
 } execute_program_response ;
 

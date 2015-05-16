@@ -5,6 +5,10 @@ int main( int argc , char *argv[] )
 	struct Dc4cApiEnv	*penv = NULL ;
 	
 	char			*program_and_params = NULL ;
+	char			*tid = NULL ;
+	char			*ip = NULL ;
+	long			port ;
+	int			response_code ;
 	int			status ;
 	
 	int			nret = 0 ;
@@ -37,8 +41,12 @@ int main( int argc , char *argv[] )
 			printf( "DC4CDoTask ok\n" );
 			
 			DC4CGetTaskProgramAndParam( penv , & program_and_params );
-			DC4CGetTaskResponseStatus( penv , & status );
-			printf( "DC4CGetTaskResponseStatus ok , [%s] - status[%d]\n" , program_and_params , WEXITSTATUS(status) );
+			DC4CGetTaskTid( penv , & tid );
+			DC4CGetTaskIp( penv , & ip );
+			DC4CGetTaskPort( penv , & port );
+			DC4CGetTaskResponseCode( penv , & response_code );
+			DC4CGetTaskStatus( penv , & status );
+			printf( "DC4CGetTaskResponseStatus - [%s] [%s] - [%s] [%ld] - [%d] [%d]\n" , program_and_params , tid , ip , port , response_code , WEXITSTATUS(status) );
 		}
 		
 		DC4CCleanEnv( & penv );

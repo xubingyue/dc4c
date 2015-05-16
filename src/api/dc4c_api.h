@@ -1,3 +1,12 @@
+/*
+ * dc4c - Distributed computing framework
+ * author	: calvin
+ * email	: calvinwilliams@163.com
+ * LastVersion	: v1.0.0
+ *
+ * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
+ */
+
 #ifndef _H_DC4C_API_
 #define _H_DC4C_API_
 
@@ -41,10 +50,11 @@ void DC4CSetTimeout( struct Dc4cApiEnv *penv , long timeout );
 int DC4CDoTask( struct Dc4cApiEnv *penv , char *program_and_params );
 
 int DC4CGetTaskProgramAndParam( struct Dc4cApiEnv *penv , char **pp_program_and_params );
+int DC4CGetTaskTid( struct Dc4cApiEnv *penv , char **pp_tid );
 int DC4CGetTaskIp( struct Dc4cApiEnv *penv , char **pp_ip );
 int DC4CGetTaskPort( struct Dc4cApiEnv *penv , long *p_port );
-int DC4CGetTaskTid( struct Dc4cApiEnv *penv , char **pp_tid );
-int DC4CGetTaskResponseStatus( struct Dc4cApiEnv *penv , int *p_status );
+int DC4CGetTaskResponseCode( struct Dc4cApiEnv *penv , int *p_response_code );
+int DC4CGetTaskStatus( struct Dc4cApiEnv *penv , int *p_status );
 
 int DC4CDoBatchTasks( struct Dc4cApiEnv *penv , int worker_count , char **program_and_params_array , int program_and_params_count );
 
@@ -57,10 +67,11 @@ int DC4CGetRunningTaskCount( struct Dc4cApiEnv *penv );
 int DC4CGetFinishedTaskCount( struct Dc4cApiEnv *penv );
 
 int DC4CGetBatchTasksProgramAndParam( struct Dc4cApiEnv *penv , int index , char **pp_program_and_params ); /* index based 1 */
+int DC4CGetBatchTasksTid( struct Dc4cApiEnv *penv , int index , char **pp_tid );
 int DC4CGetBatchTasksIp( struct Dc4cApiEnv *penv , int index , char **pp_ip );
 int DC4CGetBatchTasksPort( struct Dc4cApiEnv *penv , int index , long *p_port );
-int DC4CGetBatchTasksTid( struct Dc4cApiEnv *penv , int index , char **pp_tid );
-int DC4CGetBatchTasksResponseStatus( struct Dc4cApiEnv *penv , int index , int *p_status );
+int DC4CGetBatchTasksResponseCode( struct Dc4cApiEnv *penv , int index , int *p_response_code );
+int DC4CGetBatchTasksStatus( struct Dc4cApiEnv *penv , int index , int *p_status );
 
 void DC4CSetAppLogFile();
 

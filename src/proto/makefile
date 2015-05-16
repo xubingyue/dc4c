@@ -28,11 +28,11 @@ HDERINST	=	$(HOME)/include/dc4c_proto
 
 ###### 编译选项
 CFLAGS		=	-I. \
-			-I/usr/include/fasterjson \
+			-I$(HOME)/include/fasterjson \
 
 ###### 链接选项
 LFLAGS		=	-L. \
-			-L/usr/lib \
+			-L$(HOME)/lib \
 			-lfasterjson \
 
 ###### 额外宏定义区

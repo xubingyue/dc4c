@@ -1,3 +1,12 @@
+/*
+ * dc4c - Distributed computing framework
+ * author	: calvin
+ * email	: calvinwilliams@163.com
+ * LastVersion	: v1.0.0
+ *
+ * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
+ */
+
 #include "wserver.h"
 
 #define PREFIX_DSCLOG_worker_register_request	DebugLog( __FILE__ , __LINE__ , 
@@ -103,7 +112,7 @@ int proto_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *ps
 	return 0;
 }
 
-int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession *psession , execute_program_request *p_epq , int status )
+int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession *psession , execute_program_request *p_epq , int response_code , int status )
 {
 	int				msg_len ;
 	
@@ -118,6 +127,7 @@ int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession 
 	{
 		strcpy( req.tid , p_epq->tid );
 	}
+	req.response_code = response_code ;
 	req.status = status ;
 	
 	DSCLOG_execute_program_response( & req );
@@ -234,7 +244,7 @@ int proto( void *_penv , struct SocketSession *psession )
 		
 		if( IsSocketEstablished( & (penv->alive_session) ) )
 		{
-			nret = proto_ExecuteProgramResponse( penv , psession , NULL , DC4C_RETURNSTATUS_ALREADY_EXECUTING<<8 ) ;
+			nret = proto_ExecuteProgramResponse( penv , psession , NULL , DC4C_RETURNSTATUS_ALREADY_EXECUTING , 0 ) ;
 			if( nret )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "proto_ExecuteProgramResponse failed[%d]" , nret );
@@ -277,7 +287,7 @@ int proto( void *_penv , struct SocketSession *psession )
 	{
 		if( IsSocketEstablished( & (penv->alive_session) ) )
 		{
-			nret = proto_ExecuteProgramResponse( penv , psession , NULL , DC4C_RETURNSTATUS_ALREADY_EXECUTING<<8 ) ;
+			nret = proto_ExecuteProgramResponse( penv , psession , NULL , DC4C_RETURNSTATUS_ALREADY_EXECUTING , 0 ) ;
 			if( nret )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "proto_ExecuteProgramResponse failed[%d]" , nret );

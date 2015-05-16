@@ -1,3 +1,12 @@
+/*
+ * dc4c - Distributed computing framework
+ * author	: calvin
+ * email	: calvinwilliams@163.com
+ * LastVersion	: v1.0.0
+ *
+ * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
+ */
+
 #include "rserver.h"
 
 static struct WorkerInfo *AllocWorkerInfo()
@@ -601,18 +610,18 @@ int app_HeartBeatRequest( struct ServerEnv *penv , long *p_now , long *p_epoll_t
 				comm_CloseAcceptedSocket( penv , psession );
 			}
 			
-			if( (*p_now) - psession->alive_timestamp >= SEND_HEARTBEAT_INTERVAL )
+			if( (*p_now) - psession->active_timestamp >= SEND_HEARTBEAT_INTERVAL )
 			{
 				proto_HeartBeatRequest( penv , psession );
 				ModifyOutputSockFromEpoll( penv->epoll_socks , psession );
 				
-				psession->alive_timestamp = (*p_now) ;
+				psession->active_timestamp = (*p_now) ;
 				DebugLog( __FILE__ , __LINE__ , "heartbeat_lost_count[%d]->[%d]" , psession->heartbeat_lost_count , psession->heartbeat_lost_count + 1 );
 				psession->heartbeat_lost_count++;
 			}
-			else /* tt - psession->alive_timestamp < SEND_HEARTBEAT_INTERVAL */
+			else /* tt - psession->active_timestamp < SEND_HEARTBEAT_INTERVAL */
 			{
-				try_timeout = SEND_HEARTBEAT_INTERVAL - ( (*p_now) - psession->alive_timestamp ) ;
+				try_timeout = SEND_HEARTBEAT_INTERVAL - ( (*p_now) - psession->active_timestamp ) ;
 				if( try_timeout < (*p_epoll_timeout) )
 					(*p_epoll_timeout) = try_timeout ;
 			}

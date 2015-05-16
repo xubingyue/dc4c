@@ -12,7 +12,6 @@ DIROBJS		= \
 			api \
 			rserver \
 			wserver \
-			test \
 
 ###### ╪стьmktplдё╟Е©Б
 #@ FILESYSTEM

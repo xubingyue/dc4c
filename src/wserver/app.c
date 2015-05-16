@@ -1,3 +1,12 @@
+/*
+ * dc4c - Distributed computing framework
+ * author	: calvin
+ * email	: calvinwilliams@163.com
+ * LastVersion	: v1.0.0
+ *
+ * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
+ */
+
 #include "wserver.h"
 
 int app_WorkerRegisterResponse( struct ServerEnv *penv , struct SocketSession *psession , worker_register_response *p_rsp )
@@ -50,7 +59,7 @@ static int ExecuteProgram( struct ServerEnv *penv , struct SocketSession *psessi
 	if( nret )
 	{
 		FatalLog( __FILE__ , __LINE__ , "pipe failed , errno[%d]" , errno );
-		nret = proto_ExecuteProgramResponse( penv , psession , & (penv->epq) , DC4C_RETURNSTATUS_CREATEPIPE<<8 ) ;
+		nret = proto_ExecuteProgramResponse( penv , psession , & (penv->epq) , DC4C_RETURNSTATUS_CREATEPIPE , 0 ) ;
 		return -1;
 	}
 	
@@ -60,7 +69,7 @@ static int ExecuteProgram( struct ServerEnv *penv , struct SocketSession *psessi
 		FatalLog( __FILE__ , __LINE__ , "fork failed , errno[%d]" , errno );
 		close( penv->alive_pipe[0] );
 		close( penv->alive_pipe[1] );
-		nret = proto_ExecuteProgramResponse( penv , psession , & (penv->epq) , DC4C_RETURNSTATUS_FORK<<8 ) ;
+		nret = proto_ExecuteProgramResponse( penv , psession , & (penv->epq) , DC4C_RETURNSTATUS_FORK , 0 ) ;
 		return -1;
 	}
 	else if( pid == 0 )
@@ -159,7 +168,7 @@ int app_WaitProgramExiting( struct ServerEnv *penv , struct SocketSession *p_ali
 	p_accepted_session = p_alive_session->p1 ;
 	if( p_accepted_session && IsSocketEstablished( p_accepted_session ) )
 	{
-		nret = proto_ExecuteProgramResponse( penv , p_accepted_session , & (penv->epq) , status ) ;
+		nret = proto_ExecuteProgramResponse( penv , p_accepted_session , & (penv->epq) , 0 , status ) ;
 		if( nret )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "proto_ExecuteProgramResponse failed[%d]" , nret );
@@ -245,7 +254,7 @@ int app_DeployProgramResponse( struct ServerEnv *penv , struct SocketSession *ps
 	if( fp == NULL )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "fopen[%s] failed , errno[%d]" , pathfilename , errno );
-		proto_ExecuteProgramResponse( penv , psession , NULL , DC4C_RETURNSTATUS_OPENFILE<<8 );
+		proto_ExecuteProgramResponse( penv , psession , NULL , DC4C_RETURNSTATUS_OPENFILE , 0 );
 		unlock_file( & lock_fd );
 		return 0;
 	}
@@ -258,7 +267,7 @@ int app_DeployProgramResponse( struct ServerEnv *penv , struct SocketSession *ps
 	if( len != psession->total_recv_len - LEN_COMMHEAD - LEN_MSGHEAD )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "filesize[%d] != writed[%d]bytes , errno[%d]" , psession->total_recv_len - LEN_COMMHEAD - LEN_MSGHEAD , len , errno );
-		proto_ExecuteProgramResponse( penv , psession , NULL , DC4C_RETURNSTATUS_WRITEFILE<<8 );
+		proto_ExecuteProgramResponse( penv , psession , NULL , DC4C_RETURNSTATUS_WRITEFILE , 0 );
 		unlock_file( & lock_fd );
 		return 0;
 	}
@@ -284,18 +293,18 @@ int app_HeartBeatRequest( struct ServerEnv *penv , long *p_now , long *p_epoll_t
 			comm_CloseConnectedSocket( penv , psession );
 		}
 		
-		if( (*p_now) - psession->alive_timestamp >= SEND_HEARTBEAT_INTERVAL )
+		if( (*p_now) - psession->active_timestamp >= SEND_HEARTBEAT_INTERVAL )
 		{
 			proto_HeartBeatRequest( penv , psession );
 			ModifyOutputSockFromEpoll( penv->epoll_socks , psession );
 			
-			psession->alive_timestamp = (*p_now) ;
+			psession->active_timestamp = (*p_now) ;
 			DebugLog( __FILE__ , __LINE__ , "heartbeat_lost_count[%d]->[%d]" , psession->heartbeat_lost_count , psession->heartbeat_lost_count + 1 );
 			psession->heartbeat_lost_count++;
 		}
-		else /* tt - psession->alive_timestamp < SEND_HEARTBEAT_INTERVAL */
+		else /* tt - psession->active_timestamp < SEND_HEARTBEAT_INTERVAL */
 		{
-			try_timeout = SEND_HEARTBEAT_INTERVAL - ( (*p_now) - psession->alive_timestamp ) ;
+			try_timeout = SEND_HEARTBEAT_INTERVAL - ( (*p_now) - psession->active_timestamp ) ;
 			if( try_timeout < (*p_epoll_timeout) )
 				(*p_epoll_timeout) = try_timeout ;
 		}

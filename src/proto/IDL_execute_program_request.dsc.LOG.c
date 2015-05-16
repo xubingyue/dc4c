@@ -18,8 +18,8 @@ int FUNCNAME_DSCLOG_execute_program_request( execute_program_request *pst )
 	int	index[10] = { 0 } ; index[0] = 0 ;
 	PREFIX_DSCLOG_execute_program_request "execute_program_request.program_and_params[%s]" NEWLINE_DSCLOG_execute_program_request , pst->program_and_params );
 	PREFIX_DSCLOG_execute_program_request "execute_program_request.program_md5_exp[%s]" NEWLINE_DSCLOG_execute_program_request , pst->program_md5_exp );
+	PREFIX_DSCLOG_execute_program_request "execute_program_request.tid[%s]" NEWLINE_DSCLOG_execute_program_request , pst->tid );
 	PREFIX_DSCLOG_execute_program_request "execute_program_request.ip[%s]" NEWLINE_DSCLOG_execute_program_request , pst->ip );
 	PREFIX_DSCLOG_execute_program_request "execute_program_request.port[%d]" NEWLINE_DSCLOG_execute_program_request , pst->port );
-	PREFIX_DSCLOG_execute_program_request "execute_program_request.tid[%s]" NEWLINE_DSCLOG_execute_program_request , pst->tid );
 	return 0;
 }

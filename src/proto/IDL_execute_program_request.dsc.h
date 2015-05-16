@@ -85,9 +85,9 @@ typedef struct
 {
 	char	program_and_params[ 256 + 1 ] ;
 	char	program_md5_exp[ 32 + 1 ] ;
+	char	tid[ 20 + 1 ] ;
 	char	ip[ 40 + 1 ] ;
 	int	port ;
-	char	tid[ 20 + 1 ] ;
 } execute_program_request ;
 
 _WINDLL_FUNC int DSCINIT_execute_program_request( execute_program_request *pst );

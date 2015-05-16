@@ -1,3 +1,12 @@
+/*
+ * dc4c - Distributed computing framework
+ * author	: calvin
+ * email	: calvinwilliams@163.com
+ * LastVersion	: v1.0.0
+ *
+ * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
+ */
+
 #include "rserver.h"
 
 int		g_server_exit_flag = 0 ;
@@ -94,7 +103,6 @@ int server( struct ServerEnv *penv )
 		for( epoll_ready_index = 0 , pevent = & (events[0]) ; epoll_ready_index < epoll_ready_count ; epoll_ready_index++ , pevent++ )
 		{
 			psession = pevent->data.ptr ;
-			psession->alive_timestamp = now ;
 			
 			if( psession == & (penv->listen_session) )
 			{

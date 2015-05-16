@@ -1,3 +1,12 @@
+/*
+ * dc4c - Distributed computing framework
+ * author	: calvin
+ * email	: calvinwilliams@163.com
+ * LastVersion	: v1.0.0
+ *
+ * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
+ */
+
 #include "dc4c_util.h"
 
 char __DC4C_UTIL_VERSION_1_0_0[] = "1.0.0" ;
@@ -326,6 +335,9 @@ int BindListenSocket( char *ip , long port , struct SocketSession *psession )
 	
 	SetSocketEstablished( psession );
 	
+	time( & (psession->alive_timestamp) );
+	time( & (psession->active_timestamp) );
+	
 	return 0;
 }
 
@@ -348,6 +360,9 @@ int AcceptSocket( int listen_sock , struct SocketSession *psession )
 	}
 	
 	SetSocketEstablished( psession );
+	
+	time( & (psession->alive_timestamp) );
+	time( & (psession->active_timestamp) );
 	
 	return 0;
 }
@@ -395,6 +410,9 @@ int AsyncConnectSocket( char *ip , long port , struct SocketSession *psession )
 	
 	SetSocketEstablished( psession );
 	
+	time( & (psession->alive_timestamp) );
+	time( & (psession->active_timestamp) );
+	
 	return 0;
 }
 
@@ -415,6 +433,9 @@ int AsyncCompleteConnectedSocket( struct SocketSession *psession )
 	if( ! ( nret == -1 && _ERRNO == _EISCONN ) )
 #endif
 		return -1;
+	
+	time( & (psession->alive_timestamp) );
+	time( & (psession->active_timestamp) );
 	
 	return 0;
 }
@@ -462,6 +483,8 @@ void CloseSocket( struct SocketSession *psession )
 		psession->progress = 0 ;
 		
 		psession->alive_timestamp = 0 ;
+		psession->active_timestamp = 0 ;
+		psession->alive_timeout = 0 ;
 		psession->heartbeat_lost_count = 0 ;
 		
 		psession->ch = '\0' ;
@@ -520,6 +543,7 @@ int AsyncReceiveSocketData( struct SocketSession *psession , int change_mode_fla
 	{
 		len = (int)recv( psession->sock , psession->recv_buffer + psession->total_recv_len , LEN_COMMHEAD + psession->recv_body_len - psession->total_recv_len , 0 ) ;
 	}
+	time( & (psession->active_timestamp) );
 	if( len < 0 )
 	{
 		if( _ERRNO == _EWOULDBLOCK )
@@ -643,6 +667,7 @@ int AsyncReceiveCommand( struct SocketSession *psession , int skip_recv_flag )
 	if( ! ( skip_recv_flag == OPTION_ASYNC_SKIP_RECV_FLAG ) )
 	{
 		len = (int)recv( psession->sock , psession->recv_buffer + psession->total_recv_len , psession->recv_buffer_size-1 - psession->total_recv_len , 0 ) ;
+		time( & (psession->active_timestamp) );
 		if( len < 0 )
 		{
 			if( _ERRNO == _EWOULDBLOCK )
@@ -720,6 +745,7 @@ int AsyncSendSocketData( struct SocketSession *psession )
 	int			len ;
 	
 	len = (int)send( psession->sock , psession->send_buffer + psession->send_len , psession->total_send_len - psession->send_len , 0 ) ;
+	time( & (psession->active_timestamp) );
 	if( len < 0 )
 	{
 		if( _ERRNO == _EWOULDBLOCK )
@@ -776,6 +802,9 @@ int SyncConnectSocket( char *ip , long port , struct SocketSession *psession )
 	
 	SetSocketEstablished( psession );
 	
+	time( & (psession->alive_timestamp) );
+	time( & (psession->active_timestamp) );
+	
 	return 0;
 }
 
@@ -822,6 +851,7 @@ int SyncReceiveSocketData( struct SocketSession *psession , long *p_timeout )
 		}
 		
 		len = (int)recv( psession->sock , psession->recv_buffer + psession->total_recv_len , 8 - psession->total_recv_len , 0 ) ;
+		time( & (psession->active_timestamp) );
 		if( len < 0 )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "detected sock[%d] error on receiving data" , psession->sock );
@@ -887,6 +917,7 @@ int SyncReceiveSocketData( struct SocketSession *psession , long *p_timeout )
 		}
 		
 		len = (int)recv( psession->sock , psession->recv_buffer + psession->total_recv_len , 8 + psession->recv_body_len - psession->total_recv_len , 0 ) ;
+		time( & (psession->active_timestamp) );
 		if( len < 0 )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "detected sock[%d] error on receiving data" , psession->sock );
@@ -954,6 +985,7 @@ int SyncSendSocketData( struct SocketSession *psession , long *p_timeout )
 		}
 		
 		len = (int)send( psession->sock , psession->send_buffer + psession->send_len , psession->total_send_len - psession->send_len , 0 ) ;
+		time( & (psession->active_timestamp) );
 		if( len < 0 )
 		{
 			if( _ERRNO == _EWOULDBLOCK )

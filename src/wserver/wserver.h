@@ -1,3 +1,12 @@
+/*
+ * dc4c - Distributed computing framework
+ * author	: calvin
+ * email	: calvinwilliams@163.com
+ * LastVersion	: v1.0.0
+ *
+ * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
+ */
+
 #ifndef _H_WSERVER_
 #define _H_WSERVER_
 
@@ -79,7 +88,7 @@ int comm_OnAcceptedSocketError( struct ServerEnv *penv , struct SocketSession *p
 
 int proto_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *psession );
 int proto_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *psession );
-int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession *psession , execute_program_request *p_epq , int status );
+int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession *psession , execute_program_request *p_epq , int response_code , int status );
 int proto_DeployProgramRequest( struct ServerEnv *penv , struct SocketSession *psession , execute_program_request *p_req );
 #define RETURN_QUIT	1
 int proto( void *_penv , struct SocketSession *psession );

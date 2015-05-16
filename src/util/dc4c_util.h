@@ -1,3 +1,12 @@
+/*
+ * dc4c - Distributed computing framework
+ * author	: calvin
+ * email	: calvinwilliams@163.com
+ * LastVersion	: v1.0.0
+ *
+ * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
+ */
+
 #ifndef _H_DC4C_UTIL_
 #define _H_DC4C_UTIL_
 
@@ -88,8 +97,9 @@ struct SocketSession
 	int			comm_protocol_mode ;
 	int			progress ;
 	
-	long			alive_timestamp ;
+	time_t			alive_timestamp ;
 	long			alive_timeout ;
+	time_t			active_timestamp ;
 	int			heartbeat_lost_count ;
 	
 	char			ch ;

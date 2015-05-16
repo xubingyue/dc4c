@@ -9,6 +9,10 @@ int main( int argc , char *argv[] )
 	int			i ;
 	
 	char			*program_and_params = NULL ;
+	char			*tid = NULL ;
+	char			*ip = NULL ;
+	long			port ;
+	int			response_code ;
 	int			status ;
 	
 	int			nret = 0 ;
@@ -28,7 +32,7 @@ int main( int argc , char *argv[] )
 			printf( "DC4CInitEnv ok\n" );
 		}
 		
-		DC4CSetTimeout( penv , 60 );
+		DC4CSetTimeout( penv , 5 );
 		
 		worker_count = atoi(argv[2]) ;
 		if( worker_count > 0 )
@@ -75,8 +79,12 @@ int main( int argc , char *argv[] )
 			for( i = 1 ; i <= program_and_params_count ; i++ )
 			{
 				DC4CGetBatchTasksProgramAndParam( penv , i , & program_and_params );
-				DC4CGetBatchTasksResponseStatus( penv , i , & status );
-				printf( "DC4CGetBatchTasksResponseStatus ok , [%d] - [%s] - status[%d]\n" , i , program_and_params , WEXITSTATUS(status) );
+				DC4CGetBatchTasksTid( penv , i , & tid );
+				DC4CGetBatchTasksIp( penv , i , & ip );
+				DC4CGetBatchTasksPort( penv , i , & port );
+				DC4CGetBatchTasksResponseCode( penv , i , & response_code );
+				DC4CGetBatchTasksStatus( penv , i , & status );
+				printf( "DC4CGetBatchTasksResponseStatus - [%d] - [%s] [%s] - [%s] [%ld] - [%d] [%d]\n" , i , program_and_params , tid , ip , port , response_code , WEXITSTATUS(status) );
 			}
 		}
 		
