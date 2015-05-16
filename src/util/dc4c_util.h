@@ -98,7 +98,7 @@ struct SocketSession
 	int			progress ;
 	
 	time_t			alive_timestamp ;
-	long			alive_timeout ;
+	int			alive_timeout ;
 	time_t			active_timestamp ;
 	int			heartbeat_lost_count ;
 	
@@ -153,8 +153,8 @@ int AfterDoCommandProtocol( struct SocketSession *psession );
 #define RETURN_SENDING_IN_PROGRESS		1
 int AsyncSendSocketData( struct SocketSession *psession );
 int SyncConnectSocket( char *ip , long port , struct SocketSession *psession );
-int SyncReceiveSocketData( struct SocketSession *psession , long *p_timeout );
-int SyncSendSocketData( struct SocketSession *psession , long *p_timeout );
+int SyncReceiveSocketData( struct SocketSession *psession , int *p_timeout );
+int SyncSendSocketData( struct SocketSession *psession , int *p_timeout );
 
 /********* proto *********/
 

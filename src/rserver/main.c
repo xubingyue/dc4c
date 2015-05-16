@@ -7,7 +7,7 @@
  * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
  */
 
-#include "rserver.h"
+#include "server.h"
 
 char __DC4C_RSERVER_VERSION_1_0_0[] = "1.0.0" ;
 char *__DC4C_RSERVER_VERSION = __DC4C_RSERVER_VERSION_1_0_0 ;
@@ -88,7 +88,7 @@ int main( int argc , char *argv[] )
 	if( nret )
 		return -nret;
 	
-	SetLogFile( "%s/log/rserver_m_%s:%d.log" , getenv("HOME") , penv->param.rserver_ip , penv->param.rserver_port );
+	SetLogFile( "%s/log/dc4c_rserver_m_%s:%d.log" , getenv("HOME") , penv->param.rserver_ip , penv->param.rserver_port );
 	if( penv->param.loglevel_debug == 1 )
 		SetLogLevel( LOGLEVEL_DEBUG );
 	else

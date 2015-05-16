@@ -808,11 +808,11 @@ int SyncConnectSocket( char *ip , long port , struct SocketSession *psession )
 	return 0;
 }
 
-int SyncReceiveSocketData( struct SocketSession *psession , long *p_timeout )
+int SyncReceiveSocketData( struct SocketSession *psession , int *p_timeout )
 {
 	fd_set			read_fds , expt_fds ;
 	struct timeval		tv ;
-	long			tt1 , tt2 ;
+	time_t			tt1 , tt2 ;
 	int			len ;
 	
 	int			nret = 0 ;
@@ -944,11 +944,11 @@ int SyncReceiveSocketData( struct SocketSession *psession , long *p_timeout )
 	return 0;
 }
 
-int SyncSendSocketData( struct SocketSession *psession , long *p_timeout )
+int SyncSendSocketData( struct SocketSession *psession , int *p_timeout )
 {
 	fd_set			read_fds , expt_fds ;
 	struct timeval		tv ;
-	long			tt1 , tt2 ;
+	time_t			tt1 , tt2 ;
 	int			len ;
 	
 	int			nret = 0 ;

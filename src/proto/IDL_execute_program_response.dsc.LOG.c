@@ -17,6 +17,7 @@ int FUNCNAME_DSCLOG_execute_program_response( execute_program_response *pst )
 {
 	int	index[10] = { 0 } ; index[0] = 0 ;
 	PREFIX_DSCLOG_execute_program_response "execute_program_response.tid[%s]" NEWLINE_DSCLOG_execute_program_response , pst->tid );
+	PREFIX_DSCLOG_execute_program_response "execute_program_response.elapse[%d]" NEWLINE_DSCLOG_execute_program_response , pst->elapse );
 	PREFIX_DSCLOG_execute_program_response "execute_program_response.response_code[%d]" NEWLINE_DSCLOG_execute_program_response , pst->response_code );
 	PREFIX_DSCLOG_execute_program_response "execute_program_response.status[%d]" NEWLINE_DSCLOG_execute_program_response , pst->status );
 	return 0;

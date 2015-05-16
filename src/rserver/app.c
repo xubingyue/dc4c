@@ -7,7 +7,7 @@
  * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
  */
 
-#include "rserver.h"
+#include "server.h"
 
 static struct WorkerInfo *AllocWorkerInfo()
 {
@@ -340,6 +340,14 @@ int app_QueryWorkersRequest( struct ServerEnv *penv , struct SocketSession *pses
 								DetachListNode( & (host_info->worker_info_list) , worker_info_node );
 								AttachListNodeAfter( & (host_info->worker_info_list) , last_node , worker_info_node );
 							}
+							
+							last_node = FindLastListNode(os_type->host_info_list) ;
+							if( last_node != host_info_node )
+							{
+								DetachListNode( & (os_type->host_info_list) , host_info_node );
+								AttachListNodeAfter( & (os_type->host_info_list) , last_node , host_info_node );
+							}
+							
 							find_one = 1 ;
 							break;
 						}

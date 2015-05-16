@@ -16,7 +16,7 @@ c_FILE		=	\
 			util.c \
 
 ###### 目标文件、安装目录配置区
-BIN		=	rserver
+BIN		=	dc4c_rserver
 BININST		=	$(HOME)/bin
 
 ###### 编译选项
@@ -48,6 +48,6 @@ CLEAN_ADDITION	=
 include $(MKTPLDIR)/makeobj_$(MKTPLOS).inc
 
 ###### 目标文件依赖关系
-rserver	:	$(c_FILE_o)
+dc4c_rserver	:	$(c_FILE_o)
 	$(CC) $(ESOFLAGS) -o $@ $(c_FILE_o) $(LFLAGS)
 

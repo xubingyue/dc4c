@@ -7,7 +7,7 @@
  * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
  */
 
-#include "rserver.h"
+#include "server.h"
 
 int AddInputSockToEpoll( int epoll_socks , struct SocketSession *psession )
 {

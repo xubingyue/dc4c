@@ -7,7 +7,7 @@
  * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
  */
 
-#include "rserver.h"
+#include "server.h"
 
 int		g_server_exit_flag = 0 ;
 
@@ -32,7 +32,7 @@ int server( struct ServerEnv *penv )
 	
 	int			nret = 0 ;
 	
-	SetLogFile( "%s/log/rserver_1_%s:%d.log" , getenv("HOME") , penv->param.rserver_ip , penv->param.rserver_port );
+	SetLogFile( "%s/log/dc4c_rserver_1_%s:%d.log" , getenv("HOME") , penv->param.rserver_ip , penv->param.rserver_port );
 	if( penv->param.loglevel_debug == 1 )
 		SetLogLevel( LOGLEVEL_DEBUG );
 	else

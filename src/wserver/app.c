@@ -7,7 +7,7 @@
  * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
  */
 
-#include "wserver.h"
+#include "server.h"
 
 int app_WorkerRegisterResponse( struct ServerEnv *penv , struct SocketSession *psession , worker_register_response *p_rsp )
 {
@@ -124,6 +124,7 @@ static int ExecuteProgram( struct ServerEnv *penv , struct SocketSession *psessi
 		InfoLog( __FILE__ , __LINE__ , "[%d]fork[%d] ok" , (int)getpid() , (int)pid );
 		
 		penv->pid = pid ;
+		time( & (penv->begin_timestamp) );
 	}
 	
 	SendWorkerNotice( penv );

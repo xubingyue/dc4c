@@ -7,7 +7,7 @@
  * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
  */
 
-#include "wserver.h"
+#include "server.h"
 
 int		g_server_exit_flag = 0 ;
 
@@ -32,7 +32,7 @@ int server( struct ServerEnv *penv )
 	
 	int			nret = 0 ;
 	
-	SetLogFile( "%s/log/wserver_%d_%s:%d.log" , getenv("HOME") , penv->wserver_index+1 , penv->param.wserver_ip , penv->param.wserver_port );
+	SetLogFile( "%s/log/dc4c_wserver_%d_%s:%d.log" , getenv("HOME") , penv->wserver_index+1 , penv->param.wserver_ip , penv->param.wserver_port );
 	if( penv->param.loglevel_debug == 1 )
 		SetLogLevel( LOGLEVEL_DEBUG );
 	else

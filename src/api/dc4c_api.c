@@ -29,7 +29,7 @@ char *__DC4C_API_VERSION = __DC4C_API_VERSION_1_0_0 ;
 
 int proto_QueryWorkersRequest( struct SocketSession *psession , int want_count );
 int proto_QueryWorkersResponse( struct SocketSession *psession , query_workers_response *p_rsp );
-int proto_ExecuteProgramRequest( struct SocketSession *psession , char *program_and_params , execute_program_request *p_req );
+int proto_ExecuteProgramRequest( struct SocketSession *psession , char *program_and_params , int timeout , execute_program_request *p_req );
 int proto_ExecuteProgramResponse( struct SocketSession *psession , execute_program_response *p_rsp );
 int proto_DeployProgramRequest( struct SocketSession *psession , deploy_program_request *p_rsp );
 int proto_DeployProgramResponse( struct SocketSession *psession , char *program );
@@ -42,40 +42,40 @@ struct Dc4cApiEnv
 	int				rserver_index ;
 	struct SocketSession		rserver_session ;
 	
-	int				program_and_params_count ;
-	int				worker_count ;
+	int				tasks_count ;
+	int				workers_count ;
 	
 	struct SocketSession		*task_session_array ;
 	execute_program_request		*task_request_array ;
 	execute_program_response	*task_response_array ;
 	int				task_array_size ;
 	
-	long				timeout ;
+	int				timeout ;
 	
 	int				prepare_count ;
 	int				running_count ;
 	int				finished_count ;
 } ;
 
-static int PerformTasksArray( struct Dc4cApiEnv *penv , int program_and_params_count )
+static int PerformTasksArray( struct Dc4cApiEnv *penv , int tasks_count )
 {
 	int			i ;
 	
 	int			nret = 0 ;
 	
-	if( program_and_params_count <= penv->task_array_size )
+	if( tasks_count <= penv->task_array_size )
 	{
-		for( i = 0 ; i < program_and_params_count ; i++ )
+		for( i = 0 ; i < tasks_count ; i++ )
 		{
 			DSCINIT_execute_program_request( & (penv->task_request_array[i]) );
 		}
 		
-		for( i = 0 ; i < program_and_params_count ; i++ )
+		for( i = 0 ; i < tasks_count ; i++ )
 		{
 			DSCINIT_execute_program_response( & (penv->task_response_array[i]) );
 		}
 		
-		for( i = 0 ; i < program_and_params_count ; i++ )
+		for( i = 0 ; i < tasks_count ; i++ )
 		{
 			CloseSocket( & (penv->task_session_array[i]) );
 		}
@@ -86,29 +86,29 @@ static int PerformTasksArray( struct Dc4cApiEnv *penv , int program_and_params_c
 		execute_program_request		*task_request_array ;
 		execute_program_response	*task_response_array ;
 		
-		task_request_array = (execute_program_request *)realloc( penv->task_request_array , sizeof(execute_program_request) * program_and_params_count ) ;
+		task_request_array = (execute_program_request *)realloc( penv->task_request_array , sizeof(execute_program_request) * tasks_count ) ;
 		if( task_request_array == NULL )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "alloc failed , errno[%d]" , errno );
 			return DC4C_ERROR_ALLOC;
 		}
-		for( i = 0 ; i < program_and_params_count ; i++ )
+		for( i = 0 ; i < tasks_count ; i++ )
 		{
 			DSCINIT_execute_program_request( & (task_request_array[i]) );
 		}
 		
-		task_response_array = (execute_program_response *)realloc( penv->task_response_array , sizeof(execute_program_response) * program_and_params_count ) ;
+		task_response_array = (execute_program_response *)realloc( penv->task_response_array , sizeof(execute_program_response) * tasks_count ) ;
 		if( task_response_array == NULL )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "alloc failed , errno[%d]" , errno );
 			return DC4C_ERROR_ALLOC;
 		}
-		for( i = 0 ; i < program_and_params_count ; i++ )
+		for( i = 0 ; i < tasks_count ; i++ )
 		{
 			DSCINIT_execute_program_response( & (task_response_array[i]) );
 		}
 		
-		task_session_array = (struct SocketSession *)realloc( penv->task_session_array , sizeof(struct SocketSession) * program_and_params_count ) ;
+		task_session_array = (struct SocketSession *)realloc( penv->task_session_array , sizeof(struct SocketSession) * tasks_count ) ;
 		if( task_session_array == NULL )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "alloc failed , errno[%d]" , errno );
@@ -116,7 +116,7 @@ static int PerformTasksArray( struct Dc4cApiEnv *penv , int program_and_params_c
 			return DC4C_ERROR_ALLOC;
 		}
 		
-		for( i = 0 ; i < program_and_params_count ; i++ )
+		for( i = 0 ; i < tasks_count ; i++ )
 		{
 			nret = InitSocketSession( & (task_session_array[i]) ) ;
 			if( nret )
@@ -136,7 +136,7 @@ static int PerformTasksArray( struct Dc4cApiEnv *penv , int program_and_params_c
 		penv->task_response_array = task_response_array ;
 		penv->task_session_array = task_session_array ;
 		
-		penv->task_array_size = program_and_params_count ;
+		penv->task_array_size = tasks_count ;
 	}
 	
 	return 0;
@@ -280,25 +280,25 @@ int DC4CInitEnv( struct Dc4cApiEnv **ppenv , char *rserver_ip_port )
 	return 0;
 }
 
-void DC4CSetTimeout( struct Dc4cApiEnv *penv , long timeout )
+void DC4CSetTimeout( struct Dc4cApiEnv *penv , int timeout )
 {
 	penv->timeout = timeout ;
 	return;
 }
 
-int DC4CDoTask( struct Dc4cApiEnv *penv , char *program_and_params )
+int DC4CGetTimeout( struct Dc4cApiEnv *penv )
 {
-	return DC4CDoBatchTasks( penv , 1 , & program_and_params , 1 );
+	return penv->timeout;
 }
 
-int DC4CGetTaskProgramAndParam( struct Dc4cApiEnv *penv , char **pp_program_and_params )
+int DC4CDoTask( struct Dc4cApiEnv *penv , char *program_and_params , int timeout )
 {
-	return DC4CGetBatchTasksProgramAndParam( penv , 1 , pp_program_and_params );
-}
-
-int DC4CGetTaskTid( struct Dc4cApiEnv *penv , char **pp_tid )
-{
-	return DC4CGetBatchTasksTid( penv , 1 , pp_tid );
+	struct Dc4cBatchTask	task ;
+	
+	strcpy( task.program_and_params , program_and_params );
+	task.timeout = timeout ;
+	
+	return DC4CDoBatchTasks( penv , 1 , & task , 1 );
 }
 
 int DC4CGetTaskIp( struct Dc4cApiEnv *penv , char **pp_ip )
@@ -309,6 +309,26 @@ int DC4CGetTaskIp( struct Dc4cApiEnv *penv , char **pp_ip )
 int DC4CGetTaskPort( struct Dc4cApiEnv *penv , long *p_port )
 {
 	return DC4CGetBatchTasksPort( penv , 1 , p_port );
+}
+
+int DC4CGetTaskTid( struct Dc4cApiEnv *penv , char **pp_tid )
+{
+	return DC4CGetBatchTasksTid( penv , 1 , pp_tid );
+}
+
+int DC4CGetTaskProgramAndParam( struct Dc4cApiEnv *penv , char **pp_program_and_params )
+{
+	return DC4CGetBatchTasksProgramAndParam( penv , 1 , pp_program_and_params );
+}
+
+int DC4CGetTaskTimeout( struct Dc4cApiEnv *penv , int *p_timeout )
+{
+	return DC4CGetBatchTasksTimeout( penv , 1 , p_timeout );
+}
+
+int DC4CGetTaskElapse( struct Dc4cApiEnv *penv , int *p_elapse )
+{
+	return DC4CGetBatchTasksElapse( penv , 1 , p_elapse );
 }
 
 int DC4CGetTaskResponseCode( struct Dc4cApiEnv *penv , int *p_response_code )
@@ -345,11 +365,11 @@ int DC4CGetTaskStatus( struct Dc4cApiEnv *penv , int *p_status )
 	DebugLog( __FILE__ , __LINE__ , "COUNT finished_count[%d]->[%d]" , penv->finished_count , penv->finished_count-1 );	\
 	penv->finished_count--;													\
 
-int DC4CDoBatchTasks( struct Dc4cApiEnv *penv , int worker_count , char **program_and_params_array , int program_and_params_count )
+int DC4CDoBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cBatchTask *p_tasks , int tasks_count )
 {
 	int		nret = 0 ;
 	
-	nret = DC4CBeginBatchTasks( penv , worker_count , program_and_params_array , program_and_params_count ) ;
+	nret = DC4CBeginBatchTasks( penv , workers_count , p_tasks , tasks_count ) ;
 	if( nret )
 		return nret;
 	
@@ -373,18 +393,19 @@ int DC4CDoBatchTasks( struct Dc4cApiEnv *penv , int worker_count , char **progra
 	return 0;
 }
 
-int DC4CBeginBatchTasks( struct Dc4cApiEnv *penv , int worker_count , char **program_and_params_array , int program_and_params_count )
+int DC4CBeginBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cBatchTask *p_tasks , int tasks_count )
 {
+	struct Dc4cBatchTask		*p_task = NULL ;
 	int				i ;
 	int				c ;
 	
 	int				nret = 0 ;
 	
-	InfoLog( __FILE__ , __LINE__ , "worker_count[%d] program_and_params_count[%d]" , worker_count , program_and_params_count );
+	InfoLog( __FILE__ , __LINE__ , "workers_count[%d] tasks_count[%d]" , workers_count , tasks_count );
 	
-	penv->program_and_params_count = program_and_params_count ;
+	penv->tasks_count = tasks_count ;
 	
-	nret = PerformTasksArray( penv , penv->program_and_params_count ) ;
+	nret = PerformTasksArray( penv , penv->tasks_count ) ;
 	if( nret )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "PerformTasksArray failed[%d] , errno[%d]" , nret , errno );
@@ -395,22 +416,25 @@ int DC4CBeginBatchTasks( struct Dc4cApiEnv *penv , int worker_count , char **pro
 		DebugLog( __FILE__ , __LINE__ , "PerformTasksArray ok" );
 	}
 	
-	for( i = 0 ; i < penv->program_and_params_count ; i++ )
+	for( i = 0 , p_task = p_tasks ; i < penv->tasks_count ; i++ , p_task++ )
 	{
-		strcpy( penv->task_request_array[i].program_and_params , program_and_params_array[i] );
-		InfoLog( __FILE__ , __LINE__ , "TASK[%d] [%s]" , i , penv->task_request_array[i].program_and_params );
+		strcpy( penv->task_request_array[i].program_and_params , p_task->program_and_params );
+		penv->task_request_array[i].timeout = p_task->timeout ;
+		if( penv->timeout > penv->task_request_array[i].timeout )
+			penv->task_request_array[i].timeout = penv->timeout ;
+		InfoLog( __FILE__ , __LINE__ , "TASK[%d] [%s] [%d]" , i , penv->task_request_array[i].program_and_params , penv->task_request_array[i].timeout );
 	}
 	
-	if( worker_count == DC4C_WORKER_COUNT_UNLIMITED || worker_count > penv->program_and_params_count )
+	if( workers_count == DC4C_WORKER_COUNT_UNLIMITED || workers_count > penv->tasks_count )
 	{
-		penv->worker_count = penv->program_and_params_count ;
+		penv->workers_count = penv->tasks_count ;
 	}
 	else
 	{
-		penv->worker_count = worker_count ;
+		penv->workers_count = workers_count ;
 	}
 	
-	penv->prepare_count = penv->program_and_params_count ;
+	penv->prepare_count = penv->tasks_count ;
 	penv->running_count = 0 ;
 	penv->finished_count = 0 ;
 	
@@ -447,7 +471,7 @@ int DC4CSetBatchTasksFds( struct Dc4cApiEnv *penv , fd_set *p_read_fds , fd_set 
 	int				task_idx ;
 	
 	for( task_request_ptr = penv->task_request_array , task_response_ptr = penv->task_response_array , task_session_ptr = penv->task_session_array , task_idx = 0
-		; task_idx < penv->program_and_params_count
+		; task_idx < penv->tasks_count
 		; task_request_ptr++ , task_response_ptr++ , task_session_ptr++ , task_idx++ )
 	{
 		if( task_session_ptr->progress == WSERVER_SESSION_PROGRESS_EXECUTING )
@@ -482,8 +506,8 @@ int DC4CPerformBatchTasks( struct Dc4cApiEnv *penv )
 	int				nret = 0 ;
 	
 	query_count = penv->prepare_count ;
-	if( query_count > penv->worker_count )
-		query_count = penv->worker_count ;
+	if( query_count > penv->workers_count )
+		query_count = penv->workers_count ;
 	
 	if( query_count > 0 )
 	{
@@ -564,7 +588,7 @@ int DC4CPerformBatchTasks( struct Dc4cApiEnv *penv )
 	max_fd = -1 ;
 	
 	for( task_request_ptr = penv->task_request_array , task_response_ptr = penv->task_response_array , task_session_ptr = penv->task_session_array , task_idx = 0
-		; task_idx < penv->program_and_params_count
+		; task_idx < penv->tasks_count
 		; task_request_ptr++ , task_response_ptr++ , task_session_ptr++ , task_idx++ )
 	{
 		if( task_session_ptr->progress == WSERVER_SESSION_PROGRESS_EXECUTING )
@@ -577,7 +601,7 @@ int DC4CPerformBatchTasks( struct Dc4cApiEnv *penv )
 	}
 	
 	for( task_request_ptr = penv->task_request_array , task_response_ptr = penv->task_response_array , task_session_ptr = penv->task_session_array , task_idx = 0
-		; task_idx < penv->program_and_params_count && query_count_used < qwp._nodes_count && penv->running_count < penv->worker_count
+		; task_idx < penv->tasks_count && query_count_used < qwp._nodes_count && penv->running_count < penv->workers_count
 		; task_request_ptr++ , task_response_ptr++ , task_session_ptr++ , task_idx++ )
 	{
 		if( task_session_ptr->progress == WSERVER_SESSION_PROGRESS_WAITFOR_CONNECTING )
@@ -593,9 +617,9 @@ _GOTO_CONNECT :
 				goto _GOTO_CONNECT;
 			}
 			
-			task_session_ptr->alive_timeout = penv->timeout ;
+			task_session_ptr->alive_timeout = task_request_ptr->timeout ;
 			
-			nret = proto_ExecuteProgramRequest( task_session_ptr , task_request_ptr->program_and_params , task_request_ptr ) ;
+			nret = proto_ExecuteProgramRequest( task_session_ptr , task_request_ptr->program_and_params , task_request_ptr->timeout , task_request_ptr ) ;
 			if( nret )
 			{
 				WarnLog( __FILE__ , __LINE__ , "proto_ExecuteProgramRequest failed[%d]errno[%d]" , nret , errno );
@@ -643,7 +667,7 @@ _GOTO_CONNECT :
 	if( select_return_count > 0 )
 	{
 		for( task_request_ptr = penv->task_request_array , task_response_ptr = penv->task_response_array , task_session_ptr = penv->task_session_array , task_idx = 0
-			; task_idx < penv->program_and_params_count
+			; task_idx < penv->tasks_count
 			; task_request_ptr++ , task_response_ptr++ , task_session_ptr++ , task_idx++ )
 		{
 			if( FD_ISSET( task_session_ptr->sock , & read_fds ) && IsSocketEstablished( task_session_ptr ) && task_session_ptr->progress == WSERVER_SESSION_PROGRESS_EXECUTING )
@@ -763,7 +787,7 @@ _GOTO_CONNECT :
 	}
 	
 	for( task_request_ptr = penv->task_request_array , task_response_ptr = penv->task_response_array , task_session_ptr = penv->task_session_array , task_idx = 0
-		; task_idx < penv->program_and_params_count
+		; task_idx < penv->tasks_count
 		; task_request_ptr++ , task_response_ptr++ , task_session_ptr++ , task_idx++ )
 	{
 		if( IsSocketEstablished( task_session_ptr ) )
@@ -805,24 +829,6 @@ int DC4CGetFinishedTaskCount( struct Dc4cApiEnv *penv )
 	return penv->finished_count;
 }
 
-int DC4CGetBatchTasksProgramAndParam( struct Dc4cApiEnv *penv , int index , char **pp_program_and_params )
-{
-	if( index > penv->task_array_size )
-		return -1;
-	
-	(*pp_program_and_params) = penv->task_request_array[index-1].program_and_params ;
-	return 0;
-}
-
-int DC4CGetBatchTasksTid( struct Dc4cApiEnv *penv , int index , char **pp_tid )
-{
-	if( index > penv->task_array_size )
-		return -1;
-	
-	(*pp_tid) = penv->task_request_array[index-1].tid ;
-	return 0;
-}
-
 int DC4CGetBatchTasksIp( struct Dc4cApiEnv *penv , int index , char **pp_ip )
 {
 	if( index > penv->task_array_size )
@@ -838,6 +844,42 @@ int DC4CGetBatchTasksPort( struct Dc4cApiEnv *penv , int index , long *p_port )
 		return -1;
 	
 	(*p_port) = penv->task_request_array[index-1].port ;
+	return 0;
+}
+
+int DC4CGetBatchTasksTid( struct Dc4cApiEnv *penv , int index , char **pp_tid )
+{
+	if( index > penv->task_array_size )
+		return -1;
+	
+	(*pp_tid) = penv->task_request_array[index-1].tid ;
+	return 0;
+}
+
+int DC4CGetBatchTasksProgramAndParam( struct Dc4cApiEnv *penv , int index , char **pp_program_and_params )
+{
+	if( index > penv->task_array_size )
+		return -1;
+	
+	(*pp_program_and_params) = penv->task_request_array[index-1].program_and_params ;
+	return 0;
+}
+
+int DC4CGetBatchTasksTimeout( struct Dc4cApiEnv *penv , int index , int *p_timeout )
+{
+	if( index > penv->task_array_size )
+		return -1;
+	
+	(*p_timeout) = penv->task_request_array[index-1].timeout ;
+	return 0;
+}
+
+int DC4CGetBatchTasksElapse( struct Dc4cApiEnv *penv , int index , int *p_elapse )
+{
+	if( index > penv->task_array_size )
+		return -1;
+	
+	(*p_elapse) = penv->task_response_array[index-1].elapse ;
 	return 0;
 }
 
@@ -859,7 +901,7 @@ int DC4CGetBatchTasksStatus( struct Dc4cApiEnv *penv , int index , int *p_status
 	return 0;
 }
 
-void DC4CSetAppLogFile()
+void DC4CSetAppLogFile( char *program )
 {
 	char	*WSERVER_INDEX = NULL ;
 	int	wserver_index ;
@@ -875,6 +917,8 @@ void DC4CSetAppLogFile()
 	if( WSERVER_IP_PORT == NULL )
 		WSERVER_IP_PORT = "0.0.0.0:0" ;
 	
-	SetLogFile( "%s/log/wserver_%d_%s.dc4c_test_worker_sleep.log" , getenv("HOME") , wserver_index , WSERVER_IP_PORT );
+	SetLogFile( "%s/log/dc4c_wserver_%d_%s.%s.log" , getenv("HOME") , wserver_index , WSERVER_IP_PORT , program );
+	InfoLog( __FILE__ , __LINE__ , "%s ( api v%s )" , program , __DC4C_API_VERSION );
+	
 	return;
 }

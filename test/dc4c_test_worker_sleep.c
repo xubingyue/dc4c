@@ -8,11 +8,12 @@
 
 int main( int argc , char *argv[] )
 {
-	DC4CSetAppLogFile();
+	struct timeval		tv ;
 	
-	srand( (unsigned)time( NULL ) );
+	DC4CSetAppLogFile( "dc4c_test_worker_sleep" );
 	
-	InfoLog( __FILE__ , __LINE__ , "dc4c_test_worker_sleep ( api v%s )" , __DC4C_API_VERSION );
+	gettimeofday( & tv , NULL );
+	srand( (unsigned int)(tv.tv_sec*tv.tv_usec) );
 	
 	if( argc == 1 + 1 )
 	{
@@ -28,6 +29,6 @@ int main( int argc , char *argv[] )
 		InfoLog( __FILE__ , __LINE__ , "END SLEEP [%d]seconds" , seconds );
 	}
 	
-	return 1;
+	return 0;
 }
 

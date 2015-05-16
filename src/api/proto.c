@@ -31,7 +31,7 @@
 #include "IDL_deploy_program_request.dsc.LOG.c"
 
 int app_QueryWorkersRequest( struct SocketSession *psession , query_workers_request *p_req , int want_count );
-int app_ExecuteProgramRequest( struct SocketSession *psession , execute_program_request *p_req , char *program_and_params );
+int app_ExecuteProgramRequest( struct SocketSession *psession , execute_program_request *p_req , char *program_and_params , int timeout );
 
 int proto_QueryWorkersRequest( struct SocketSession *psession , int want_count )
 {
@@ -103,7 +103,7 @@ int proto_QueryWorkersResponse( struct SocketSession *psession , query_workers_r
 	return 0;
 }
 
-int proto_ExecuteProgramRequest( struct SocketSession *psession , char *program_and_params , execute_program_request *p_req )
+int proto_ExecuteProgramRequest( struct SocketSession *psession , char *program_and_params , int timeout , execute_program_request *p_req )
 {
 	int				msg_len ;
 	
@@ -114,7 +114,7 @@ int proto_ExecuteProgramRequest( struct SocketSession *psession , char *program_
 	CleanSendBuffer( psession );
 	
 	DSCINIT_execute_program_request( & req );
-	nret = app_ExecuteProgramRequest( psession , & req , program_and_params ) ;
+	nret = app_ExecuteProgramRequest( psession , & req , program_and_params , timeout ) ;
 	if( nret )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "app_ExecuteProgramRequest failed[%d]" , nret );

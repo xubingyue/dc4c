@@ -7,7 +7,7 @@
  * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
  */
 
-#include "rserver.h"
+#include "server.h"
 
 #define PREFIX_DSCLOG_worker_register_request	DebugLog( __FILE__ , __LINE__ , 
 #define NEWLINE_DSCLOG_worker_register_request

@@ -45,20 +45,29 @@ struct Dc4cApiEnv ;
 int DC4CInitEnv( struct Dc4cApiEnv **ppenv , char *rserver_ip_port );
 int DC4CCleanEnv( struct Dc4cApiEnv **ppenv );
 
-void DC4CSetTimeout( struct Dc4cApiEnv *penv , long timeout );
+void DC4CSetTimeout( struct Dc4cApiEnv *penv , int timeout );
+int DC4CGetTimeout( struct Dc4cApiEnv *penv );
 
-int DC4CDoTask( struct Dc4cApiEnv *penv , char *program_and_params );
+int DC4CDoTask( struct Dc4cApiEnv *penv , char *program_and_params , int timeout );
 
-int DC4CGetTaskProgramAndParam( struct Dc4cApiEnv *penv , char **pp_program_and_params );
-int DC4CGetTaskTid( struct Dc4cApiEnv *penv , char **pp_tid );
 int DC4CGetTaskIp( struct Dc4cApiEnv *penv , char **pp_ip );
 int DC4CGetTaskPort( struct Dc4cApiEnv *penv , long *p_port );
+int DC4CGetTaskTid( struct Dc4cApiEnv *penv , char **pp_tid );
+int DC4CGetTaskProgramAndParam( struct Dc4cApiEnv *penv , char **pp_program_and_params );
+int DC4CGetTaskTimeout( struct Dc4cApiEnv *penv , int *p_timeout );
+int DC4CGetTaskElapse( struct Dc4cApiEnv *penv , int *p_elapse );
 int DC4CGetTaskResponseCode( struct Dc4cApiEnv *penv , int *p_response_code );
 int DC4CGetTaskStatus( struct Dc4cApiEnv *penv , int *p_status );
 
-int DC4CDoBatchTasks( struct Dc4cApiEnv *penv , int worker_count , char **program_and_params_array , int program_and_params_count );
+struct Dc4cBatchTask
+{
+	char	program_and_params[ 256 + 1 ] ;
+	int	timeout ;
+} ;
 
-int DC4CBeginBatchTasks( struct Dc4cApiEnv *penv , int worker_count , char **program_and_params_array , int program_and_params_count );
+int DC4CDoBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cBatchTask *p_tasks , int tasks_count );
+
+int DC4CBeginBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cBatchTask *p_tasks , int tasks_count );
 int DC4CSetBatchTasksFds( struct Dc4cApiEnv *penv , fd_set *read_fds , fd_set *write_fds , fd_set *expect_fds , int *p_max_fd );
 int DC4CPerformBatchTasks( struct Dc4cApiEnv *penv );
 
@@ -66,13 +75,16 @@ int DC4CGetPrepareTaskCount( struct Dc4cApiEnv *penv );
 int DC4CGetRunningTaskCount( struct Dc4cApiEnv *penv );
 int DC4CGetFinishedTaskCount( struct Dc4cApiEnv *penv );
 
-int DC4CGetBatchTasksProgramAndParam( struct Dc4cApiEnv *penv , int index , char **pp_program_and_params ); /* index based 1 */
-int DC4CGetBatchTasksTid( struct Dc4cApiEnv *penv , int index , char **pp_tid );
+/* index based 1 */
 int DC4CGetBatchTasksIp( struct Dc4cApiEnv *penv , int index , char **pp_ip );
 int DC4CGetBatchTasksPort( struct Dc4cApiEnv *penv , int index , long *p_port );
+int DC4CGetBatchTasksTid( struct Dc4cApiEnv *penv , int index , char **pp_tid );
+int DC4CGetBatchTasksProgramAndParam( struct Dc4cApiEnv *penv , int index , char **pp_program_and_params );
+int DC4CGetBatchTasksTimeout( struct Dc4cApiEnv *penv , int index , int *p_timeout );
+int DC4CGetBatchTasksElapse( struct Dc4cApiEnv *penv , int index , int *p_elapse );
 int DC4CGetBatchTasksResponseCode( struct Dc4cApiEnv *penv , int index , int *p_response_code );
 int DC4CGetBatchTasksStatus( struct Dc4cApiEnv *penv , int index , int *p_status );
 
-void DC4CSetAppLogFile();
+void DC4CSetAppLogFile( char *program );
 
 #endif

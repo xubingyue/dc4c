@@ -7,7 +7,7 @@
  * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
  */
 
-#include "wserver.h"
+#include "server.h"
 
 char __DC4C_WSERVER_VERSION_1_0_0[] = "1.0.0" ;
 char *__DC4C_WSERVER_VERSION = __DC4C_WSERVER_VERSION_1_0_0 ;
@@ -121,7 +121,7 @@ int main( int argc , char *argv[] )
 	if( nret )
 		return -nret;
 	
-	SetLogFile( "%s/log/wserver_m_%s:%d.log" , getenv("HOME") , penv->param.wserver_ip , penv->param.wserver_port );
+	SetLogFile( "%s/log/dc4c_wserver_m_%s:%d.log" , getenv("HOME") , penv->param.wserver_ip , penv->param.wserver_port );
 	if( penv->param.loglevel_debug == 1 )
 		SetLogLevel( LOGLEVEL_DEBUG );
 	else

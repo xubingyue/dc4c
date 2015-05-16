@@ -7,7 +7,7 @@
  * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
  */
 
-#include "wserver.h"
+#include "server.h"
 
 #define PREFIX_DSCLOG_worker_register_request	DebugLog( __FILE__ , __LINE__ , 
 #define NEWLINE_DSCLOG_worker_register_request
@@ -114,26 +114,28 @@ int proto_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *ps
 
 int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession *psession , execute_program_request *p_epq , int response_code , int status )
 {
+	execute_program_response	rsp ;
+	time_t				end_timestamp ;
 	int				msg_len ;
-	
-	execute_program_response	req ;
 	
 	int				nret = 0 ;
 	
 	CleanSendBuffer( psession );
 	
-	DSCINIT_execute_program_response( & req );
+	DSCINIT_execute_program_response( & rsp );
 	if( p_epq )
 	{
-		strcpy( req.tid , p_epq->tid );
+		strcpy( rsp.tid , p_epq->tid );
 	}
-	req.response_code = response_code ;
-	req.status = status ;
+	time( & end_timestamp );
+	rsp.elapse = end_timestamp - penv->begin_timestamp ;
+	rsp.response_code = response_code ;
+	rsp.status = status ;
 	
-	DSCLOG_execute_program_response( & req );
+	DSCLOG_execute_program_response( & rsp );
 	
 	msg_len = psession->send_buffer_size-1 - LEN_COMMHEAD - LEN_MSGHEAD_MSGTYPE ;
-	nret = DSCSERIALIZE_JSON_COMPACT_execute_program_response( & req , NULL , psession->send_buffer + LEN_COMMHEAD + LEN_MSGHEAD , & msg_len ) ;
+	nret = DSCSERIALIZE_JSON_COMPACT_execute_program_response( & rsp , NULL , psession->send_buffer + LEN_COMMHEAD + LEN_MSGHEAD , & msg_len ) ;
 	if( nret )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "DSCSERIALIZE_JSON_COMPACT_execute_program_response failed[%d]" , nret );
