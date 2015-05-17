@@ -103,10 +103,11 @@ int server( struct ServerEnv *penv )
 		for( epoll_ready_index = 0 , pevent = & (events[0]) ; epoll_ready_index < epoll_ready_count ; epoll_ready_index++ , pevent++ )
 		{
 			psession = pevent->data.ptr ;
+			DebugLog( __FILE__ , __LINE__ , "psession[%p] pevent->events[%d]" , psession , pevent->events );
 			
 			if( psession == & (penv->listen_session) )
 			{
-				if( pevent->events & EPOLLIN )
+				if( pevent->events & EPOLLIN || pevent->events & EPOLLHUP )
 				{
 					DebugLog( __FILE__ , __LINE__ , "EPOLLIN on listen sock[%d]" , psession->sock );
 					
@@ -129,7 +130,7 @@ int server( struct ServerEnv *penv )
 			}
 			else
 			{
-				if( pevent->events & EPOLLIN )
+				if( pevent->events & EPOLLIN || pevent->events & EPOLLHUP )
 				{
 					DebugLog( __FILE__ , __LINE__ , "EPOLLIN on accepted sock[%d]" , psession->sock );
 					

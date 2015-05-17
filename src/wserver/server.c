@@ -147,10 +147,11 @@ int server( struct ServerEnv *penv )
 		for( epoll_ready_index = 0 , pevent = & (events[0]) ; epoll_ready_index < epoll_ready_count ; epoll_ready_index++ , pevent++ )
 		{
 			psession = pevent->data.ptr ;
+			DebugLog( __FILE__ , __LINE__ , "psession[%p] pevent->events[%d]" , psession , pevent->events );
 			
 			if( psession == & (penv->listen_session) )
 			{
-				if( pevent->events & EPOLLIN )
+				if( pevent->events & EPOLLIN || pevent->events & EPOLLHUP )
 				{
 					DebugLog( __FILE__ , __LINE__ , "EPOLLIN on listen sock[%d]" , psession->sock );
 					
@@ -174,7 +175,7 @@ int server( struct ServerEnv *penv )
 			}
 			else if( & (penv->connect_session[0]) <= psession && psession <= & (penv->connect_session[RSERVER_ARRAYSIZE-1]) )
 			{
-				if( pevent->events & EPOLLIN )
+				if( pevent->events & EPOLLIN || pevent->events & EPOLLHUP )
 				{
 					DebugLog( __FILE__ , __LINE__ , "EPOLLIN on connected sock[%d]" , psession->sock );
 					
@@ -199,14 +200,32 @@ int server( struct ServerEnv *penv )
 						return nret;
 				}
 			}
-			else if( psession == & (penv->alive_session) )
+			else if( psession == & (penv->info_session) )
 			{
-				/* 为什么这时候的pevent->events是16(0x10)？ */
-				DebugLog( __FILE__ , __LINE__ , "EPOLLALL on exit sock[%d]" , psession->sock );
-				
-				nret = app_WaitProgramExiting( penv , psession ) ;
-				if( nret < 0 )
-					return nret;
+				if( pevent->events & EPOLLIN || pevent->events & EPOLLHUP )
+				{
+					DebugLog( __FILE__ , __LINE__ , "EPOLLIN on info pipe[%d]" , psession->sock );
+					
+					nret = comm_OnInfoPipeInput( penv , psession ) ;
+					if( nret < 0 )
+						return nret;
+				}
+				else if( pevent->events & EPOLLOUT )
+				{
+					DebugLog( __FILE__ , __LINE__ , "EPOLLOUT on info pipe[%d]" , psession->sock );
+					
+					nret = comm_OnInfoPipeError( penv , psession ) ;
+					if( nret < 0 )
+						return nret;
+				}
+				else if( pevent->events & EPOLLERR )
+				{
+					DebugLog( __FILE__ , __LINE__ , "EPOLLERR on info pipe[%d]" , psession->sock );
+					
+					nret = comm_OnInfoPipeError( penv , psession ) ;
+					if( nret < 0 )
+						return nret;
+				}
 			}
 			else
 			{
@@ -226,7 +245,7 @@ int server( struct ServerEnv *penv )
 					if( nret < 0 )
 						return nret;
 				}
-				else if( pevent->events & EPOLLERR )
+				else if( pevent->events & EPOLLERR || pevent->events & EPOLLHUP )
 				{
 					DebugLog( __FILE__ , __LINE__ , "EPOLLERR on accepted sock[%d]" , psession->sock );
 					

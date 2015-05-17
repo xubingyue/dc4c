@@ -19,8 +19,8 @@ int DSCSERIALIZE_JSON_COMPACT_worker_register_response( worker_register_response
 	remain_len = (*p_len) ;
 	memset( tabs , '\t' , 10 );
 	len=SNPRINTF(buf,remain_len,"{"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	len=SNPRINTF(buf,remain_len,"\"response_code\":"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	len=SNPRINTF(buf,remain_len,"%d",pst->response_code); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"\"error\":"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"%d",pst->error); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"}"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	
 	if( p_len ) (*p_len) = (*p_len) - remain_len ;
@@ -49,9 +49,9 @@ int CallbackOnJsonNode_worker_register_response( int type , char *jpath , int jp
 	}
 	else if( type & FASTERJSON_NODE_LEAF )
 	{
-		/* response_code */
-		if( jpath_len == 14 && strncmp( jpath , "/response_code" , jpath_len ) == 0 )
-		{NATOI(content,content_len,pst->response_code);}
+		/* error */
+		if( jpath_len == 6 && strncmp( jpath , "/error" , jpath_len ) == 0 )
+		{NATOI(content,content_len,pst->error);}
 	}
 	
 	return 0;

@@ -16,6 +16,6 @@
 int FUNCNAME_DSCLOG_worker_register_response( worker_register_response *pst )
 {
 	int	index[10] = { 0 } ; index[0] = 0 ;
-	PREFIX_DSCLOG_worker_register_response "worker_register_response.response_code[%d]" NEWLINE_DSCLOG_worker_register_response , pst->response_code );
+	PREFIX_DSCLOG_worker_register_response "worker_register_response.error[%d]" NEWLINE_DSCLOG_worker_register_response , pst->error );
 	return 0;
 }

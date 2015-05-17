@@ -1,3 +1,10 @@
+ver 1.0.1	2015-05-17	calvin
+		* 计算节点能回复信息给用户节点了
+		  ，计算节点调用函数DC4CSetReplyInfo生成信息
+		  ，用户节点调用函数DC4CGetTaskInfo,DC4CGetBatchTasksInfo获取
+		* 新增函数DC4CPerformMultiBatchTasks用于多批量任务处理
+		  ，同步新增示例代码dc4c_test_multi_batch_master.c
+
 ver 1.0.0	2015-05-15	calvin
 		* 发布第一版
 

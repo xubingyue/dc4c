@@ -14,8 +14,9 @@ int main( int argc , char *argv[] )
 	char			*program_and_params = NULL ;
 	int			timeout ;
 	int			elapse ;
-	int			response_code ;
+	int			error ;
 	int			status ;
+	char			*info = NULL ;
 	
 	int			nret = 0 ;
 	
@@ -52,9 +53,10 @@ int main( int argc , char *argv[] )
 			DC4CGetTaskProgramAndParam( penv , & program_and_params );
 			DC4CGetTaskTimeout( penv , & timeout );
 			DC4CGetTaskElapse( penv , & elapse );
-			DC4CGetTaskResponseCode( penv , & response_code );
+			DC4CGetTaskError( penv , & error );
 			DC4CGetTaskStatus( penv , & status );
-			printf( "DC4CGetTaskResponseStatus - [%s] [%ld] - [%s] [%s] [%d] [%d] - [%d] [%d]\n" , ip , port , tid , program_and_params , timeout , elapse , response_code , WEXITSTATUS(status) );
+			DC4CGetTaskInfo( penv , & info );
+			printf( "DC4CGetTaskResponseStatus - [%s] [%ld] - [%s] [%s] [%d] [%d] - [%d] [%d] [%s]\n" , ip , port , tid , program_and_params , timeout , elapse , error , WEXITSTATUS(status) , info );
 		}
 		
 		DC4CCleanEnv( & penv );

@@ -23,8 +23,8 @@ int DSCSERIALIZE_JSON_COMPACT_query_workers_response( query_workers_response *ps
 	remain_len = (*p_len) ;
 	memset( tabs , '\t' , 10 );
 	len=SNPRINTF(buf,remain_len,"{"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	len=SNPRINTF(buf,remain_len,"\"response_code\":"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	len=SNPRINTF(buf,remain_len,"%d",pst->response_code); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"\"error\":"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"%d",pst->error); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,","); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\"nodes\":"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"["); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
@@ -79,9 +79,9 @@ int CallbackOnJsonNode_query_workers_response( int type , char *jpath , int jpat
 	}
 	else if( type & FASTERJSON_NODE_LEAF )
 	{
-		/* response_code */
-		if( jpath_len == 14 && strncmp( jpath , "/response_code" , jpath_len ) == 0 )
-		{NATOI(content,content_len,pst->response_code);}
+		/* error */
+		if( jpath_len == 6 && strncmp( jpath , "/error" , jpath_len ) == 0 )
+		{NATOI(content,content_len,pst->error);}
 				/* ip */
 				if( jpath_len == 14 && strncmp( jpath , "/nodes/node/ip" , jpath_len ) == 0 )
 				{JSONUNESCAPE_FOLD(content,content_len,pst->nodes[pst->_nodes_count].node.ip,len,sizeof(pst->nodes[pst->_nodes_count].node.ip)-1); if(len<0)return -7;}

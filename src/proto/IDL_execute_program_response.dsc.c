@@ -27,11 +27,16 @@ int DSCSERIALIZE_JSON_COMPACT_execute_program_response( execute_program_response
 	len=SNPRINTF(buf,remain_len,"\"elapse\":"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"%d",pst->elapse); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,","); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	len=SNPRINTF(buf,remain_len,"\"response_code\":"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	len=SNPRINTF(buf,remain_len,"%d",pst->response_code); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"\"error\":"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"%d",pst->error); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,","); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\"status\":"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"%d",pst->status); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,","); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"\"info\":"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	JSONESCAPE_EXPAND(pst->info,strlen(pst->info),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"}"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	
 	if( p_len ) (*p_len) = (*p_len) - remain_len ;
@@ -66,12 +71,15 @@ int CallbackOnJsonNode_execute_program_response( int type , char *jpath , int jp
 		/* elapse */
 		if( jpath_len == 7 && strncmp( jpath , "/elapse" , jpath_len ) == 0 )
 		{NATOI(content,content_len,pst->elapse);}
-		/* response_code */
-		if( jpath_len == 14 && strncmp( jpath , "/response_code" , jpath_len ) == 0 )
-		{NATOI(content,content_len,pst->response_code);}
+		/* error */
+		if( jpath_len == 6 && strncmp( jpath , "/error" , jpath_len ) == 0 )
+		{NATOI(content,content_len,pst->error);}
 		/* status */
 		if( jpath_len == 7 && strncmp( jpath , "/status" , jpath_len ) == 0 )
 		{NATOI(content,content_len,pst->status);}
+		/* info */
+		if( jpath_len == 5 && strncmp( jpath , "/info" , jpath_len ) == 0 )
+		{JSONUNESCAPE_FOLD(content,content_len,pst->info,len,sizeof(pst->info)-1); if(len<0)return -7;}
 	}
 	
 	return 0;

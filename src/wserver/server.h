@@ -61,8 +61,8 @@ struct ServerEnv
 	struct SocketSession		*accepted_session_array ; /* sizeof(struct SocketSession) * MAXCOUNT_ACCEPTED_SESSION */
 	struct SocketSession		*p_slibing_accepted_session ;
 	struct SocketSession		connect_session[ RSERVER_ARRAYSIZE ] ;
-	int				alive_pipe[ 2 ] ;
-	struct SocketSession		alive_session ;
+	int				info_pipe[ 2 ] ;
+	struct SocketSession		info_session ;
 	
 	int				rserver_count ;
 	
@@ -70,6 +70,7 @@ struct ServerEnv
 	
 	int				is_working ;
 	execute_program_request		epq ;
+	execute_program_response	epp ;
 	pid_t				pid ;
 	time_t				begin_timestamp ;
 } ;
@@ -82,6 +83,8 @@ int comm_CloseAcceptedSocket( struct ServerEnv *penv , struct SocketSession *pse
 int comm_OnConnectedSocketInput( struct ServerEnv *penv , struct SocketSession *psession );
 int comm_OnConnectedSocketOutput( struct ServerEnv *penv , struct SocketSession *psession );
 int comm_OnConnectedSocketError( struct ServerEnv *penv , struct SocketSession *psession );
+int comm_OnInfoPipeInput( struct ServerEnv *penv , struct SocketSession *psession );
+int comm_OnInfoPipeError( struct ServerEnv *penv , struct SocketSession *psession );
 int comm_OnListenSocketInput( struct ServerEnv *penv , struct SocketSession *psession );
 int comm_OnAcceptedSocketInput( struct ServerEnv *penv , struct SocketSession *psession );
 int comm_OnAcceptedSocketOutput( struct ServerEnv *penv , struct SocketSession *psession );
@@ -89,7 +92,7 @@ int comm_OnAcceptedSocketError( struct ServerEnv *penv , struct SocketSession *p
 
 int proto_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *psession );
 int proto_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *psession );
-int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession *psession , execute_program_request *p_epq , int response_code , int status );
+int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession *psession , int error , int status );
 int proto_DeployProgramRequest( struct ServerEnv *penv , struct SocketSession *psession , execute_program_request *p_req );
 #define RETURN_QUIT	1
 int proto( void *_penv , struct SocketSession *psession );

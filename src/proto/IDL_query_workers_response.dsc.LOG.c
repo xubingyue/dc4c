@@ -16,7 +16,7 @@
 int FUNCNAME_DSCLOG_query_workers_response( query_workers_response *pst )
 {
 	int	index[10] = { 0 } ; index[0] = 0 ;
-	PREFIX_DSCLOG_query_workers_response "query_workers_response.response_code[%d]" NEWLINE_DSCLOG_query_workers_response , pst->response_code );
+	PREFIX_DSCLOG_query_workers_response "query_workers_response.error[%d]" NEWLINE_DSCLOG_query_workers_response , pst->error );
 		PREFIX_DSCLOG_query_workers_response "query_workers_response._nodes_count[%d]" NEWLINE_DSCLOG_query_workers_response , pst->_nodes_count );
 		for( index[1] = 0 ; index[1] < pst->_nodes_count ; index[1]++ )
 		{

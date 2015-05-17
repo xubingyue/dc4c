@@ -85,8 +85,9 @@ typedef struct
 {
 	char	tid[ 20 + 1 ] ;
 	int	elapse ;
-	int	response_code ;
+	int	error ;
 	int	status ;
+	char	info[ 256 + 1 ] ;
 } execute_program_response ;
 
 _WINDLL_FUNC int DSCINIT_execute_program_response( execute_program_response *pst );

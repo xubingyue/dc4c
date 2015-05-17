@@ -11,9 +11,9 @@
 
 int app_WorkerRegisterResponse( struct ServerEnv *penv , struct SocketSession *psession , worker_register_response *p_rsp )
 {
-	if( p_rsp->response_code )
+	if( p_rsp->error )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "response_code[%d]" , p_rsp->response_code );
+		ErrorLog( __FILE__ , __LINE__ , "error[%d]" , p_rsp->error );
 		return -1;
 	}
 	
@@ -55,11 +55,11 @@ static int ExecuteProgram( struct ServerEnv *penv , struct SocketSession *psessi
 	
 	int		nret = 0 ;
 	
-	nret = pipe( penv->alive_pipe ) ;
+	nret = pipe( penv->info_pipe ) ;
 	if( nret )
 	{
 		FatalLog( __FILE__ , __LINE__ , "pipe failed , errno[%d]" , errno );
-		nret = proto_ExecuteProgramResponse( penv , psession , & (penv->epq) , DC4C_RETURNSTATUS_CREATEPIPE , 0 ) ;
+		nret = proto_ExecuteProgramResponse( penv , psession , DC4C_ERROR_CREATEPIPE , 0 ) ;
 		return -1;
 	}
 	
@@ -67,9 +67,9 @@ static int ExecuteProgram( struct ServerEnv *penv , struct SocketSession *psessi
 	if( pid < 0 )
 	{
 		FatalLog( __FILE__ , __LINE__ , "fork failed , errno[%d]" , errno );
-		close( penv->alive_pipe[0] );
-		close( penv->alive_pipe[1] );
-		nret = proto_ExecuteProgramResponse( penv , psession , & (penv->epq) , DC4C_RETURNSTATUS_FORK , 0 ) ;
+		close( penv->info_pipe[0] );
+		close( penv->info_pipe[1] );
+		nret = proto_ExecuteProgramResponse( penv , psession , DC4C_ERROR_FORK , 0 ) ;
 		return -1;
 	}
 	else if( pid == 0 )
@@ -77,9 +77,10 @@ static int ExecuteProgram( struct ServerEnv *penv , struct SocketSession *psessi
 		char		*args[ 64 + 1 ] = { NULL } ;
 		char		*pc = NULL ;
 		int		i ;
-		char		envbuf[ 1024 + 1 ] ;
+		char		envbuf[ 100 + 1 ] ;
 		
-		close( penv->alive_pipe[0] );
+		close( penv->info_pipe[0] );
+		SetNonBlocking( penv->info_pipe[1] );
 		
 		InfoLog( __FILE__ , __LINE__ , "[%d]fork[%d] ok" , (int)getppid() , (int)getpid() );
 		
@@ -101,28 +102,35 @@ static int ExecuteProgram( struct ServerEnv *penv , struct SocketSession *psessi
 		
 		memset( envbuf , 0x00 , sizeof(envbuf) );
 		SNPRINTF( envbuf , sizeof(envbuf)-1 , "%d" , penv->wserver_index+1 );
-		setenv( "WSERVER_INDEX" , envbuf , penv->wserver_index+1 );
+		setenv( "WSERVER_INDEX" , envbuf , 1 );
 		
 		memset( envbuf , 0x00 , sizeof(envbuf) );
 		SNPRINTF( envbuf , sizeof(envbuf)-1 , "%s:%d" , penv->param.wserver_ip , penv->param.wserver_port );
 		setenv( "WSERVER_IP_PORT" , envbuf , 1 );
+		
+		memset( envbuf , 0x00 , sizeof(envbuf) );
+		SNPRINTF( envbuf , sizeof(envbuf)-1 , "%d" , penv->info_pipe[1] );
+		setenv( "WSERVER_INFO_PIPE" , envbuf , 1 );
 		
 		InfoLog( __FILE__ , __LINE__ , "execvp [%s] [%s] [%s] [%s] ..." , args[0]?args[0]:"" , args[1]?args[1]:"" , args[2]?args[2]:"" , args[3]?args[3]:"" );
 		return execvp( args[0] , args );
 	}
 	else
 	{
-		close( penv->alive_pipe[1] );
+		close( penv->info_pipe[1] );
+		SetNonBlocking( penv->info_pipe[0] );
 		
-		penv->alive_session.sock = penv->alive_pipe[0] ;
-		DebugLog( __FILE__ , __LINE__ , "alive_pipe[%d]" , penv->alive_pipe[0] );
-		SetSocketEstablished( & (penv->alive_session) );
-		psession->p1 = & (penv->alive_session) ;
-		penv->alive_session.p1 = psession ;
-		AddInputSockToEpoll( penv->epoll_socks , & (penv->alive_session) );
+		penv->info_session.sock = penv->info_pipe[0] ;
+		DebugLog( __FILE__ , __LINE__ , "info_pipe[%d]" , penv->info_pipe[0] );
+		SetSocketEstablished( & (penv->info_session) );
+		psession->p1 = & (penv->info_session) ;
+		penv->info_session.p1 = psession ;
+		AddInputSockToEpoll( penv->epoll_socks , & (penv->info_session) );
 		
 		InfoLog( __FILE__ , __LINE__ , "[%d]fork[%d] ok" , (int)getpid() , (int)pid );
 		
+		memcpy( & (penv->epq) , p_req , sizeof(execute_program_request) );
+		memset( & (penv->epp) , 0x00 , sizeof(execute_program_response) );
 		penv->pid = pid ;
 		time( & (penv->begin_timestamp) );
 	}
@@ -135,6 +143,7 @@ static int ExecuteProgram( struct ServerEnv *penv , struct SocketSession *psessi
 int app_WaitProgramExiting( struct ServerEnv *penv , struct SocketSession *p_alive_session )
 {
 	pid_t			pid ;
+	int			error ;
 	int			status ;
 	
 	struct SocketSession	*p_accepted_session = NULL ;
@@ -152,24 +161,32 @@ int app_WaitProgramExiting( struct ServerEnv *penv , struct SocketSession *p_ali
 	if( WTERMSIG(status) )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "child[%d] terminated" , (int)pid );
+		error = DC4C_ERROR_TERMSIG ;
 	}
 	else if( WIFSIGNALED(status) )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "child[%d] signaled" , (int)pid );
+		error = DC4C_ERROR_SIGNALED ;
 	}
 	else if( WIFSTOPPED(status) )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "child[%d] stoped" , (int)pid );
+		error = DC4C_ERROR_STOPPED ;
 	}
 	else if( WIFEXITED(status) )
 	{
 		InfoLog( __FILE__ , __LINE__ , "child[%d] exit[%d]" , (int)pid , WEXITSTATUS(status) );
+		error = 0 ;
+	}
+	else
+	{
+		error = DC4C_ERROR_UNKNOW_QUIT ;
 	}
 	
 	p_accepted_session = p_alive_session->p1 ;
 	if( p_accepted_session && IsSocketEstablished( p_accepted_session ) )
 	{
-		nret = proto_ExecuteProgramResponse( penv , p_accepted_session , & (penv->epq) , 0 , status ) ;
+		nret = proto_ExecuteProgramResponse( penv , p_accepted_session , error , status ) ;
 		if( nret )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "proto_ExecuteProgramResponse failed[%d]" , nret );
@@ -207,6 +224,21 @@ int app_ExecuteProgramRequest( struct ServerEnv *penv , struct SocketSession *ps
 	char		program_md5_exp[ sizeof(((execute_program_request*)NULL)->program_md5_exp) ] ;
 	
 	int		nret = 0 ;
+	
+	if( IsSocketEstablished( & (penv->info_session) ) )
+	{
+		nret = proto_ExecuteProgramResponse( penv , psession , DC4C_INFO_ALREADY_EXECUTING , 0 ) ;
+		if( nret )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "proto_ExecuteProgramResponse failed[%d]" , nret );
+			return -1;
+		}
+		else
+		{
+			DebugLog( __FILE__ , __LINE__ , "proto_ExecuteProgramResponse ok" );
+		}
+		return 0;
+	}
 	
 	lock_file( & lock_fd );
 	
@@ -255,7 +287,7 @@ int app_DeployProgramResponse( struct ServerEnv *penv , struct SocketSession *ps
 	if( fp == NULL )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "fopen[%s] failed , errno[%d]" , pathfilename , errno );
-		proto_ExecuteProgramResponse( penv , psession , NULL , DC4C_RETURNSTATUS_OPENFILE , 0 );
+		proto_ExecuteProgramResponse( penv , psession , DC4C_ERROR_OPENFILE , 0 );
 		unlock_file( & lock_fd );
 		return 0;
 	}
@@ -268,7 +300,7 @@ int app_DeployProgramResponse( struct ServerEnv *penv , struct SocketSession *ps
 	if( len != psession->total_recv_len - LEN_COMMHEAD - LEN_MSGHEAD )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "filesize[%d] != writed[%d]bytes , errno[%d]" , psession->total_recv_len - LEN_COMMHEAD - LEN_MSGHEAD , len , errno );
-		proto_ExecuteProgramResponse( penv , psession , NULL , DC4C_RETURNSTATUS_WRITEFILE , 0 );
+		proto_ExecuteProgramResponse( penv , psession , DC4C_ERROR_WRITEFILE , 0 );
 		unlock_file( & lock_fd );
 		return 0;
 	}

@@ -113,7 +113,7 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 						if( worker_info->port == p_req->port )
 						{
 							ErrorLog( __FILE__ , __LINE__ , "sysname[%s] release[%s] bits[%d] ip[%s] port[%d] duplicated" , p_req->sysname , p_req->release , p_req->bits , p_req->ip , p_req->port );
-							p_rsp->response_code = 1 ;
+							p_rsp->error = 1 ;
 							return 0;
 						}
 					}
@@ -123,7 +123,7 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 						if( worker_info == NULL )
 						{
 							ErrorLog( __FILE__ , __LINE__ , "alloc failed , errno[%d]" , errno );
-							p_rsp->response_code = 11 ;
+							p_rsp->error = 11 ;
 							return 0;
 						}
 						
@@ -135,7 +135,7 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 						if( worker_info_node == NULL )
 						{
 							ErrorLog( __FILE__ , __LINE__ , "AddListNode failed , errno[%d]" , errno );
-							p_rsp->response_code = 11 ;
+							p_rsp->error = 11 ;
 							return 0;
 						}
 						
@@ -157,7 +157,7 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 				if( worker_info == NULL )
 				{
 					ErrorLog( __FILE__ , __LINE__ , "alloc failed , errno[%d]" , errno );
-					p_rsp->response_code = 11 ;
+					p_rsp->error = 11 ;
 					return 0;
 				}
 				
@@ -169,7 +169,7 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 				if( host_info == NULL )
 				{
 					ErrorLog( __FILE__ , __LINE__ , "alloc failed , errno[%d]" , errno );
-					p_rsp->response_code = 11 ;
+					p_rsp->error = 11 ;
 					return 0;
 				}
 				
@@ -180,7 +180,7 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 				if( worker_info_node == NULL )
 				{
 					ErrorLog( __FILE__ , __LINE__ , "AddListNode failed , errno[%d]" , errno );
-					p_rsp->response_code = 11 ;
+					p_rsp->error = 11 ;
 					return 0;
 				}
 				
@@ -188,7 +188,7 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 				if( host_info_node == NULL )
 				{
 					ErrorLog( __FILE__ , __LINE__ , "AddListNode failed , errno[%d]" , errno );
-					p_rsp->response_code = 11 ;
+					p_rsp->error = 11 ;
 					return 0;
 				}
 				
@@ -210,7 +210,7 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 		if( worker_info == NULL )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "alloc failed , errno[%d]" , errno );
-			p_rsp->response_code = 11 ;
+			p_rsp->error = 11 ;
 			return 0;
 		}
 		
@@ -222,7 +222,7 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 		if( host_info == NULL )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "alloc failed , errno[%d]" , errno );
-			p_rsp->response_code = 11 ;
+			p_rsp->error = 11 ;
 			return 0;
 		}
 		
@@ -233,7 +233,7 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 		if( worker_info_node == NULL )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "AddListNode failed , errno[%d]" , errno );
-			p_rsp->response_code = 11 ;
+			p_rsp->error = 11 ;
 			return 0;
 		}
 		
@@ -241,7 +241,7 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 		if( os_type == NULL )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "alloc failed , errno[%d]" , errno );
-			p_rsp->response_code = 11 ;
+			p_rsp->error = 11 ;
 			return 0;
 		}
 		
@@ -252,7 +252,7 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 		if( host_info_node == NULL )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "AddListNode failed , errno[%d]" , errno );
-			p_rsp->response_code = 11 ;
+			p_rsp->error = 11 ;
 			return 0;
 		}
 		
@@ -260,7 +260,7 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 		if( os_type_node == NULL )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "AddListNode failed , errno[%d]" , errno );
-			p_rsp->response_code = 11 ;
+			p_rsp->error = 11 ;
 			return 0;
 		}
 		
@@ -275,7 +275,7 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 	
 	psession->type = SESSIONTYPE_WORKER ;
 	
-	p_rsp->response_code = 0 ;
+	p_rsp->error = 0 ;
 	return 0;
 }
 
@@ -367,7 +367,7 @@ int app_QueryWorkersRequest( struct ServerEnv *penv , struct SocketSession *pses
 	if( os_type_node == NULL )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "os[%s] main_version[%s] bits[%d] not found" , p_req->sysname , p_req->release , p_req->bits );
-		p_rsp->response_code = 1 ;
+		p_rsp->error = 1 ;
 		return 0;
 	}
 	

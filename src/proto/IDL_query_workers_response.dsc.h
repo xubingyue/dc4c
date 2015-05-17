@@ -83,7 +83,7 @@
 
 typedef struct
 {
-	int	response_code ;
+	int	error ;
 	struct
 	{
 		struct

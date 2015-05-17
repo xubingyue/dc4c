@@ -1,3 +1,10 @@
+ver 1.0.1	2015-05-17	calvin
+		* Now , computing node send info to user node
+		  , computing node generating info by function DC4CSetReplyInfo
+		  , user node fetch info by function DC4CGetTaskInfo,DC4CGetBatchTasksInfo
+		* Add function DC4CPerformMultiBatchTasks for multi-batch
+		  , and add demo dc4c_test_multi_batch_master.c
+
 ver 1.0.0	2015-05-15	calvin
 		* Published the first edition
 

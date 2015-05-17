@@ -83,7 +83,7 @@
 
 typedef struct
 {
-	int	response_code ;
+	int	error ;
 } worker_register_response ;
 
 _WINDLL_FUNC int DSCINIT_worker_register_response( worker_register_response *pst );

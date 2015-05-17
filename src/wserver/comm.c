@@ -70,7 +70,7 @@ static void KillChildProcess( struct ServerEnv *penv , struct SocketSession *pse
 {
 	int		nret = 0 ;
 	
-	if( psession->p1 == & (penv->alive_session) && IsSocketEstablished( & (penv->alive_session) ) )
+	if( psession->p1 == & (penv->info_session) && IsSocketEstablished( & (penv->info_session) ) )
 	{
 		nret = kill( penv->pid , SIGTERM ) ;
 		InfoLog( __FILE__ , __LINE__ , "kill [%ld] return errno[%d]" , penv->pid , errno );
@@ -214,6 +214,32 @@ int comm_OnConnectedSocketError( struct ServerEnv *penv , struct SocketSession *
 {
 	ErrorLog( __FILE__ , __LINE__ , "detected sock[%d] error , errno[%d]" , psession->sock , errno );
 	comm_CloseConnectedSocket( penv , psession );
+	return 0;
+}
+
+int comm_OnInfoPipeInput( struct ServerEnv *penv , struct SocketSession *psession )
+{
+	execute_program_response	rsp ;
+	int				size ;
+	
+	memset( & rsp , 0x00 , sizeof(execute_program_response) );
+	size = (int)read( psession->sock , rsp.info , sizeof(rsp.info)-1 ) ;
+	if( size == 0 )
+	{
+		InfoLog( __FILE__ , __LINE__ , "detected info pipe[%d] close" , psession->sock );
+		app_WaitProgramExiting( penv , psession );
+		return 0;
+	}
+	
+	strncat( penv->epp.info , rsp.info , sizeof(penv->epp.info)-1 - strlen(penv->epp.info) );
+	
+	return 0;
+}
+
+int comm_OnInfoPipeError( struct ServerEnv *penv , struct SocketSession *psession )
+{
+	ErrorLog( __FILE__ , __LINE__ , "detected info pipe[%d] error , errno[%d]" , psession->sock , errno );
+	app_WaitProgramExiting( penv , psession );
 	return 0;
 }
 

@@ -1,6 +1,6 @@
 STRUCT	query_workers_response
 {
-	INT	4	response_code
+	INT	4	error
 	STRUCT	nodes	ARRAY	100
 	{
 		STRUCT	node

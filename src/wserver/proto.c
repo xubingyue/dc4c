@@ -89,7 +89,7 @@ int proto_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *ps
 	req.bits = sizeof(long) * 8 ;
 	strcpy( req.ip , penv->param.wserver_ip );
 	req.port = penv->param.wserver_port ;
-	req.is_working = IsSocketEstablished( & (penv->alive_session) ) ;
+	req.is_working = IsSocketEstablished( & (penv->info_session) ) ;
 	
 	DSCLOG_worker_notice_request( & req );
 	
@@ -112,7 +112,7 @@ int proto_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *ps
 	return 0;
 }
 
-int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession *psession , execute_program_request *p_epq , int response_code , int status )
+int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession *psession , int error , int status )
 {
 	execute_program_response	rsp ;
 	time_t				end_timestamp ;
@@ -123,14 +123,18 @@ int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession 
 	CleanSendBuffer( psession );
 	
 	DSCINIT_execute_program_response( & rsp );
-	if( p_epq )
+	if( error == 0 )
 	{
-		strcpy( rsp.tid , p_epq->tid );
+		strcpy( rsp.tid , penv->epq.tid );
 	}
 	time( & end_timestamp );
 	rsp.elapse = end_timestamp - penv->begin_timestamp ;
-	rsp.response_code = response_code ;
+	rsp.error = error ;
 	rsp.status = status ;
+	if( error == 0 )
+	{
+		strcpy( rsp.info , penv->epp.info );
+	}
 	
 	DSCLOG_execute_program_response( & rsp );
 	
@@ -239,57 +243,39 @@ int proto( void *_penv , struct SocketSession *psession )
 	else if( STRNCMP( psession->recv_buffer + LEN_COMMHEAD , == , "EPQ" , LEN_MSGHEAD_MSGTYPE ) )
 	{
 		execute_program_request		req ;
-		execute_program_response	rsp ;
 		
 		DSCINIT_execute_program_request( & req );
-		DSCINIT_execute_program_response( & rsp );
 		
-		if( IsSocketEstablished( & (penv->alive_session) ) )
+		msg_len = psession->total_recv_len - LEN_COMMHEAD - LEN_MSGHEAD_MSGTYPE ;
+		nret = DSCDESERIALIZE_JSON_COMPACT_execute_program_request( NULL , psession->recv_buffer + LEN_COMMHEAD + LEN_MSGHEAD , & msg_len , & req ) ;
+		if( nret )
 		{
-			nret = proto_ExecuteProgramResponse( penv , psession , NULL , DC4C_RETURNSTATUS_ALREADY_EXECUTING , 0 ) ;
-			if( nret )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "proto_ExecuteProgramResponse failed[%d]" , nret );
-				return -1;
-			}
-			else
-			{
-				DebugLog( __FILE__ , __LINE__ , "proto_ExecuteProgramResponse ok" );
-			}
+			ErrorLog( __FILE__ , __LINE__ , "DSCDESERIALIZE_JSON_COMPACT_execute_program_request failed[%d]" , nret );
+			return -1;
 		}
 		else
 		{
-			msg_len = psession->total_recv_len - LEN_COMMHEAD - LEN_MSGHEAD_MSGTYPE ;
-			nret = DSCDESERIALIZE_JSON_COMPACT_execute_program_request( NULL , psession->recv_buffer + LEN_COMMHEAD + LEN_MSGHEAD , & msg_len , & req ) ;
-			if( nret )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "DSCDESERIALIZE_JSON_COMPACT_execute_program_request failed[%d]" , nret );
-				return -1;
-			}
-			else
-			{
-				DebugLog( __FILE__ , __LINE__ , "DSCDESERIALIZE_JSON_COMPACT_execute_program_request ok" );
-			}
-			
-			DSCLOG_execute_program_request( & req );
-			
-			nret = app_ExecuteProgramRequest( penv , psession , & req ) ;
-			if( nret )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "app_WorkerRegisterRequest failed[%d]" , nret );
-				return -1;
-			}
-			else
-			{
-				DebugLog( __FILE__ , __LINE__ , "app_WorkerRegisterRequest ok" );
-			}
+			DebugLog( __FILE__ , __LINE__ , "DSCDESERIALIZE_JSON_COMPACT_execute_program_request ok" );
+		}
+		
+		DSCLOG_execute_program_request( & req );
+		
+		nret = app_ExecuteProgramRequest( penv , psession , & req ) ;
+		if( nret )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "app_WorkerRegisterRequest failed[%d]" , nret );
+			return -1;
+		}
+		else
+		{
+			DebugLog( __FILE__ , __LINE__ , "app_WorkerRegisterRequest ok" );
 		}
 	}
 	else if( STRNCMP( psession->recv_buffer + LEN_COMMHEAD , == , "DPP" , LEN_MSGHEAD_MSGTYPE ) )
 	{
-		if( IsSocketEstablished( & (penv->alive_session) ) )
+		if( IsSocketEstablished( & (penv->info_session) ) )
 		{
-			nret = proto_ExecuteProgramResponse( penv , psession , NULL , DC4C_RETURNSTATUS_ALREADY_EXECUTING , 0 ) ;
+			nret = proto_ExecuteProgramResponse( penv , psession , DC4C_INFO_ALREADY_EXECUTING , 0 ) ;
 			if( nret )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "proto_ExecuteProgramResponse failed[%d]" , nret );

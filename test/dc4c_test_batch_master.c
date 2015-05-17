@@ -22,8 +22,9 @@ int main( int argc , char *argv[] )
 	char			*program_and_params = NULL ;
 	int			timeout ;
 	int			elapse ;
-	int			response_code ;
+	int			error ;
 	int			status ;
+	char			*info = NULL ;
 	
 	int			nret = 0 ;
 	
@@ -42,7 +43,7 @@ int main( int argc , char *argv[] )
 			printf( "DC4CInitEnv ok\n" );
 		}
 		
-		DC4CSetTimeout( penv , 60);
+		DC4CSetTimeout( penv , 60 );
 		
 		workers_count = atoi(argv[2]) ;
 		tasks_count = atoi(argv[3]) ;
@@ -80,6 +81,7 @@ int main( int argc , char *argv[] )
 		}
 		
 		nret = DC4CDoBatchTasks( penv , workers_count , p_tasks , tasks_count ) ;
+		free( p_tasks );
 		if( nret )
 		{
 			printf( "DC4CDoBatchTasks failed[%d]\n" , nret );
@@ -89,6 +91,7 @@ int main( int argc , char *argv[] )
 		{
 			printf( "DC4CDoBatchTasks ok\n" );
 			
+			tasks_count = DC4CGetTasksCount( penv ) ;
 			for( i = 1 ; i <= tasks_count ; i++ )
 			{
 				DC4CGetBatchTasksIp( penv , i , & ip );
@@ -97,9 +100,10 @@ int main( int argc , char *argv[] )
 				DC4CGetBatchTasksProgramAndParam( penv , i , & program_and_params );
 				DC4CGetBatchTasksTimeout( penv , i , & timeout );
 				DC4CGetBatchTasksElapse( penv , i , & elapse );
-				DC4CGetBatchTasksResponseCode( penv , i , & response_code );
+				DC4CGetBatchTasksError( penv , i , & error );
 				DC4CGetBatchTasksStatus( penv , i , & status );
-				printf( "DC4CGetBatchTasksResponseStatus - [%d] - [%s] [%ld] - [%s] [%s] [%d] [%d] - [%d] [%d]\n" , i , ip , port , tid , program_and_params , timeout , elapse , response_code , WEXITSTATUS(status) );
+				DC4CGetBatchTasksInfo( penv , i , & info );
+				printf( "DC4CGetBatchTasksResponseStatus - [%d] - [%s] [%ld] - [%s] [%s] [%d] [%d] - [%d] [%d] [%s]\n" , i , ip , port , tid , program_and_params , timeout , elapse , error , WEXITSTATUS(status) , info );
 			}
 		}
 		

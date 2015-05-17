@@ -8,14 +8,17 @@
 ###### 源文件配置区
 #@ c_FILE
 c_FILE		=	\
+			dc4c_test_worker_sleep.c \
 			dc4c_test_master.c \
 			dc4c_test_batch_master.c \
-			dc4c_test_worker_sleep.c \
+			dc4c_test_multi_batch_master.c \
 
 ###### 目标文件、安装目录配置区
-BIN		=	dc4c_test_master \
-			dc4c_test_batch_master \
+BIN		=	\
 			dc4c_test_worker_sleep \
+			dc4c_test_master \
+			dc4c_test_batch_master \
+			dc4c_test_multi_batch_master \
 
 BININST		=	$(HOME)/bin
 
@@ -44,12 +47,15 @@ CLEAN_ADDITION	=
 include $(MKTPLDIR)/makeobj_$(MKTPLOS).inc
 
 ###### 目标文件依赖关系
+dc4c_test_worker_sleep	:	dc4c_test_worker_sleep.o
+	$(CC) -o $@ dc4c_test_worker_sleep.o $(LFLAGS)
+
 dc4c_test_master	:	dc4c_test_master.o
 	$(CC) -o $@ dc4c_test_master.o $(LFLAGS)
 
 dc4c_test_batch_master	:	dc4c_test_batch_master.o
 	$(CC) -o $@ dc4c_test_batch_master.o $(LFLAGS)
 
-dc4c_test_worker_sleep	:	dc4c_test_worker_sleep.o
-	$(CC) -o $@ dc4c_test_worker_sleep.o $(LFLAGS)
+dc4c_test_multi_batch_master	:	dc4c_test_multi_batch_master.o
+	$(CC) -o $@ dc4c_test_multi_batch_master.o $(LFLAGS)
 
