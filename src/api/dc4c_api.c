@@ -2,7 +2,6 @@
  * dc4c - Distributed computing framework
  * author	: calvin
  * email	: calvinwilliams@163.com
- * LastVersion	: v1.0.0
  *
  * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
  */
@@ -16,10 +15,10 @@
 #include "dc4c_util.h"
 #include "dc4c_api.h"
 
-char __DC4C_API_VERSION_1_0_1[] = "1.0.1" ;
-char *__DC4C_API_VERSION = __DC4C_API_VERSION_1_0_1 ;
+char __DC4C_API_VERSION_1_0_0[] = "1.0.0" ;
+char *__DC4C_API_VERSION = __DC4C_API_VERSION_1_0_0 ;
 
-#define RSERVER_ARRAYSIZE				2
+#define RSERVER_ARRAYSIZE				8
 
 #define WSERVER_SESSION_PROGRESS_WAITFOR_CONNECTING	0
 #define WSERVER_SESSION_PROGRESS_EXECUTING		1
@@ -187,9 +186,6 @@ int DC4CInitEnv( struct Dc4cApiEnv **ppenv , char *rserver_ip_port )
 	int		c ;
 	
 	int		nret = 0 ;
-	
-	SetLogFile( "%s/log/dc4c_api.log" , getenv("HOME") );
-	SetLogLevel( LOGLEVEL_DEBUG );
 	
 	InfoLog( __FILE__ , __LINE__ , "dc4c_api v%s ( util v%s )" , __DC4C_API_VERSION , __DC4C_UTIL_VERSION );
 	
@@ -495,6 +491,9 @@ int DC4CBeginBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc
 	int				nret = 0 ;
 	
 	InfoLog( __FILE__ , __LINE__ , "workers_count[%d] tasks_count[%d]" , workers_count , tasks_count );
+	
+	if( workers_count < 0 || tasks_count <= 0 )
+		return DC4C_ERROR_PARAMETER;
 	
 	penv->tasks_count = tasks_count ;
 	
@@ -1017,37 +1016,28 @@ int DC4CGetBatchTasksInfo( struct Dc4cApiEnv *penv , int index , char **pp_info 
 void DC4CSetAppLogFile( char *program )
 {
 	char	*WSERVER_INDEX = NULL ;
-	int	wserver_index ;
 	char	*WSERVER_IP_PORT = NULL ;
 	
 	WSERVER_INDEX = getenv("WSERVER_INDEX") ;
-	if( WSERVER_INDEX == NULL )
-		wserver_index = 0 ;
-	else
-		wserver_index = atoi(WSERVER_INDEX) ;
-	
 	WSERVER_IP_PORT = getenv("WSERVER_IP_PORT") ;
-	if( WSERVER_IP_PORT == NULL )
-		WSERVER_IP_PORT = "0.0.0.0:0" ;
 	
-	SetLogFile( "%s/log/dc4c_wserver_%d_%s.%s.log" , getenv("HOME") , wserver_index , WSERVER_IP_PORT , program );
+	if( program[0] == '#' )
+		SetLogFile( "%s" , program );
+	else if( WSERVER_INDEX == NULL || WSERVER_IP_PORT == NULL )
+		SetLogFile( "%s/log/%s.log" , getenv("HOME") , program );
+	else
+		SetLogFile( "%s/log/dc4c_wserver_%d_%s.%s.log" , getenv("HOME") , atoi(WSERVER_INDEX) , WSERVER_IP_PORT , program );
+	
 	InfoLog( __FILE__ , __LINE__ , "%s ( api v%s )" , program , __DC4C_API_VERSION );
 	
 	return;
 }
 
-int DC4CSetReplyInfo( char *format , ... )
+int DC4CFormatReplyInfo( char *format , ... )
 {
-	char				*envptr = NULL ;
-	int				info_pipe ;
 	va_list				valist ;
 	execute_program_response	rsp ;
 	int				size ;
-	
-	envptr = getenv( "WSERVER_INFO_PIPE" ) ;
-	if( envptr == NULL )
-		return DC4C_ERROR_INTERNAL;
-	info_pipe = atoi(envptr) ;
 	
 	va_start( valist , format );
 	memset( & rsp , 0x00 , sizeof(execute_program_response) );
@@ -1056,6 +1046,23 @@ int DC4CSetReplyInfo( char *format , ... )
 	if( size <= 0 )
 		return DC4C_ERROR_PARAMETER;
 	
-	size = (int)write( info_pipe , rsp.info , (size_t)size ) ;
-	return size;
+	return DC4CSetReplyInfoEx( rsp.info , size );
+}
+
+int DC4CSetReplyInfo( char *str )
+{
+	return DC4CSetReplyInfoEx( str , strlen(str) );
+}
+
+int DC4CSetReplyInfoEx( char *buf , int len )
+{
+	char		*envptr = NULL ;
+	int		info_pipe ;
+	
+	envptr = getenv( "WSERVER_INFO_PIPE" ) ;
+	if( envptr == NULL )
+		return DC4C_ERROR_INTERNAL;
+	info_pipe = atoi(envptr) ;
+	
+	return (int)write( info_pipe , buf , (size_t)len );
 }

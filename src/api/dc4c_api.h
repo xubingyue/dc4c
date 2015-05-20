@@ -2,7 +2,6 @@
  * dc4c - Distributed computing framework
  * author	: calvin
  * email	: calvinwilliams@163.com
- * LastVersion	: v1.0.0
  *
  * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
  */
@@ -99,6 +98,9 @@ int DC4CGetBatchTasksStatus( struct Dc4cApiEnv *penv , int index , int *p_status
 int DC4CGetBatchTasksInfo( struct Dc4cApiEnv *penv , int index , char **pp_info );
 
 void DC4CSetAppLogFile( char *program );
-int DC4CSetReplyInfo( char *format , ... );
+
+int DC4CFormatReplyInfo( char *format , ... );
+int DC4CSetReplyInfo( char *str );
+int DC4CSetReplyInfoEx( char *buf , int len );
 
 #endif

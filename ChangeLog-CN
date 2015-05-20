@@ -1,12 +1,19 @@
-ver 1.0.1	2015-05-17	calvin
-		* 计算节点能回复信息给用户节点了
-		  ，计算节点调用函数DC4CSetReplyInfo生成信息
-		  ，用户节点调用函数DC4CGetTaskInfo,DC4CGetBatchTasksInfo获取
-		* 新增函数DC4CPerformMultiBatchTasks用于多批量任务处理
-		  ，同步新增示例代码dc4c_test_multi_batch_master.c
+V1.0.3	2015-05-20	calvin
+	* 新增示例：分布式计算圆周率
 
-ver 1.0.0	2015-05-15	calvin
-		* 发布第一版
+V1.0.2	2015-05-18	calvin
+	* 注册节点最多支持8个，计算节点最多支持10万个
+	* 编写介绍幻灯片doc/DC4C.ppt
 
-ver 0.0.1	2015-04-15	calvin
-		* 创建
+V1.0.1	2015-05-17	calvin
+	* 计算节点能回复信息给用户节点了
+	  ，计算节点调用函数DC4CSetReplyInfo生成信息
+	  ，用户节点调用函数DC4CGetTaskInfo,DC4CGetBatchTasksInfo获取
+	* 新增函数DC4CPerformMultiBatchTasks用于多批量任务处理
+	  ，同步新增示例代码dc4c_test_multi_batch_master.c
+
+V1.0.0	2015-05-15	calvin
+	* 发布第一版
+
+V0.0.1	2015-04-15	calvin
+	* 创建

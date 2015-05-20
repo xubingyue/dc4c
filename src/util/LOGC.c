@@ -105,7 +105,11 @@ static int WriteLogBase( int log_level , char *c_filename , long c_fileline , ch
 	OFFSET_BUFPTR( log_buffer , log_bufptr , len , log_buflen , log_buf_remain_len );
 	
 	/* 输出行日志 */
-	if( g_log_pathfilename[0] )
+	if( STRCMP( g_log_pathfilename , == , "#stdout" ) )
+	{
+		printf( "%.*s" , (int)log_buflen , log_buffer );
+	}
+	else if( g_log_pathfilename[0] )
 	{
 		int		fd ;
 		
@@ -288,11 +292,11 @@ static int WriteHexLogBase( int log_level , char *c_filename , long c_fileline ,
 	}
 	
 	/* 输出十六进制块日志 */
-	if( g_log_pathfilename[0] == '\0' )
+	if( STRCMP( g_log_pathfilename , == , "#stdout" ) )
 	{
-		WRITE( 1 , hexlog_buffer , hexlog_buflen );
+		printf( "%.*s" , (int)hexlog_buflen , hexlog_buffer );
 	}
-	else
+	else if( g_log_pathfilename[0] )
 	{
 		int		fd ;
 		

@@ -2,7 +2,6 @@
  * dc4c - Distributed computing framework
  * author	: calvin
  * email	: calvinwilliams@163.com
- * LastVersion	: v1.0.0
  *
  * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
  */
@@ -30,7 +29,7 @@ extern char *__DC4C_WSERVER_VERSION ;
 #define EPOLL_FD_COUNT			1024
 #define WAIT_EVENTS_COUNT		100
 
-#define RSERVER_ARRAYSIZE		2
+#define RSERVER_ARRAYSIZE		8
 #define MAXCOUNT_WSERVERS		1000
 #define MAXCOUNT_ACCEPTED_SESSION	1000
 

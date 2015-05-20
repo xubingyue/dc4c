@@ -30,7 +30,7 @@ int main( int argc , char *argv[] )
 	
 	int			nret = 0 ;
 	
-	printf( "dc4c_test_multi_batch_master ( api v%s )\n" , __DC4C_API_VERSION );
+	DC4CSetAppLogFile( "dc4c_test_batch_master" );
 	
 	if( argc >= 1 + 3 )
 	{
@@ -140,20 +140,21 @@ int main( int argc , char *argv[] )
 			{
 				printf( "DC4CPerformMultiBatchTasks ok\n" );
 				
-				tasks_count = DC4CGetTasksCount( penv ) ;
-				for( i = 1 ; i <= tasks_count ; i++ )
-				{
-					DC4CGetBatchTasksIp( penv , i , & ip );
-					DC4CGetBatchTasksPort( penv , i , & port );
-					DC4CGetBatchTasksTid( penv , i , & tid );
-					DC4CGetBatchTasksProgramAndParam( penv , i , & program_and_params );
-					DC4CGetBatchTasksTimeout( penv , i , & timeout );
-					DC4CGetBatchTasksElapse( penv , i , & elapse );
-					DC4CGetBatchTasksError( penv , i , & error );
-					DC4CGetBatchTasksStatus( penv , i , & status );
-					DC4CGetBatchTasksInfo( penv , i , & info );
-					printf( "DC4CGetBatchTasksResponseStatus - [%d] - [%s] [%ld] - [%s] [%s] [%d] [%d] - [%d] [%d] [%s]\n" , i , ip , port , tid , program_and_params , timeout , elapse , error , WEXITSTATUS(status) , info );
-				}
+			}
+			
+			tasks_count = DC4CGetTasksCount( penv ) ;
+			for( i = 1 ; i <= tasks_count ; i++ )
+			{
+				DC4CGetBatchTasksIp( penv , i , & ip );
+				DC4CGetBatchTasksPort( penv , i , & port );
+				DC4CGetBatchTasksTid( penv , i , & tid );
+				DC4CGetBatchTasksProgramAndParam( penv , i , & program_and_params );
+				DC4CGetBatchTasksTimeout( penv , i , & timeout );
+				DC4CGetBatchTasksElapse( penv , i , & elapse );
+				DC4CGetBatchTasksError( penv , i , & error );
+				DC4CGetBatchTasksStatus( penv , i , & status );
+				DC4CGetBatchTasksInfo( penv , i , & info );
+				printf( "Task[%d]-[%s][%ld]-[%s][%s][%d][%d]-[%d][%d][%s]\n" , i , ip , port , tid , program_and_params , timeout , elapse , error , WEXITSTATUS(status) , info );
 			}
 		}
 		

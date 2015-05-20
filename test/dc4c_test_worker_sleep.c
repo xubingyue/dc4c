@@ -32,7 +32,7 @@ int main( int argc , char *argv[] )
 	sleep( seconds );
 	InfoLog( __FILE__ , __LINE__ , "END SLEEP [%d]seconds" , seconds );
 	
-	DC4CSetReplyInfo( "Elapse [%d]seconds" , seconds );
+	DC4CFormatReplyInfo( "Elapse [%d]seconds" , seconds );
 	
 	return 0;
 }

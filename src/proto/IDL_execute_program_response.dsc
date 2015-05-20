@@ -4,6 +4,6 @@ STRUCT	execute_program_response
 	INT	4	elapse
 	INT	4	error
 	INT	4	status
-	STRING	256	info
+	STRING	1024	info
 }
 

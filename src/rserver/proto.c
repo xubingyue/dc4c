@@ -2,7 +2,6 @@
  * dc4c - Distributed computing framework
  * author	: calvin
  * email	: calvinwilliams@163.com
- * LastVersion	: v1.0.0
  *
  * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
  */
@@ -75,7 +74,7 @@ int proto_CommandLine( struct ServerEnv *penv , struct SocketSession *psession )
 			DebugLog( __FILE__ , __LINE__ , "app_QueryAllHosts ok" );
 		}
 	}
-	else if( cmd_and_para_count == 1 + 1 && STRNCMP( cmd , == , "list" , strlen(cmd) ) && STRNCMP( param1 , == , "worker" , strlen(param1) ) )
+	else if( cmd_and_para_count == 1 + 1 && STRNCMP( cmd , == , "list" , strlen(cmd) ) && STRNCMP( param1 , == , "workers" , strlen(param1) ) )
 	{
 		nret = app_QueryAllWorkers( penv , psession ) ;
 		if( nret )

@@ -20,7 +20,7 @@ int main( int argc , char *argv[] )
 	
 	int			nret = 0 ;
 	
-	printf( "dc4c_test_master ( api v%s )\n" , __DC4C_API_VERSION );
+	DC4CSetAppLogFile( "dc4c_test_master" );
 	
 	if( argc == 1 + 2 )
 	{
@@ -46,18 +46,18 @@ int main( int argc , char *argv[] )
 		else
 		{
 			printf( "DC4CDoTask ok\n" );
-			
-			DC4CGetTaskIp( penv , & ip );
-			DC4CGetTaskPort( penv , & port );
-			DC4CGetTaskTid( penv , & tid );
-			DC4CGetTaskProgramAndParam( penv , & program_and_params );
-			DC4CGetTaskTimeout( penv , & timeout );
-			DC4CGetTaskElapse( penv , & elapse );
-			DC4CGetTaskError( penv , & error );
-			DC4CGetTaskStatus( penv , & status );
-			DC4CGetTaskInfo( penv , & info );
-			printf( "DC4CGetTaskResponseStatus - [%s] [%ld] - [%s] [%s] [%d] [%d] - [%d] [%d] [%s]\n" , ip , port , tid , program_and_params , timeout , elapse , error , WEXITSTATUS(status) , info );
 		}
+		
+		DC4CGetTaskIp( penv , & ip );
+		DC4CGetTaskPort( penv , & port );
+		DC4CGetTaskTid( penv , & tid );
+		DC4CGetTaskProgramAndParam( penv , & program_and_params );
+		DC4CGetTaskTimeout( penv , & timeout );
+		DC4CGetTaskElapse( penv , & elapse );
+		DC4CGetTaskError( penv , & error );
+		DC4CGetTaskStatus( penv , & status );
+		DC4CGetTaskInfo( penv , & info );
+		printf( "Task-[%s][%ld]-[%s][%s][%d][%d]-[%d][%d][%s]\n" , ip , port , tid , program_and_params , timeout , elapse , error , WEXITSTATUS(status) , info );
 		
 		DC4CCleanEnv( & penv );
 		printf( "DC4CCleanEnv ok\n" );
