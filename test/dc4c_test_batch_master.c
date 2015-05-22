@@ -9,7 +9,7 @@ time ./dc4c_test_batch_master 192.168.6.54:12001,192.168.6.54:12002 -1 -100 "dc4
 int main( int argc , char *argv[] )
 {
 	struct Dc4cApiEnv	*penv = NULL ;
-	struct Dc4cBatchTask	*p_tasks = NULL ;
+	struct Dc4cBatchTask	*tasks_array = NULL ;
 	struct Dc4cBatchTask	*p_task = NULL ;
 	int			tasks_count ;
 	int			workers_count ;
@@ -29,6 +29,7 @@ int main( int argc , char *argv[] )
 	int			nret = 0 ;
 	
 	DC4CSetAppLogFile( "dc4c_test_multi_batch_master" );
+	SetLogLevel( LOGLEVEL_DEBUG );
 	
 	if( argc >= 1 + 3 )
 	{
@@ -63,15 +64,15 @@ int main( int argc , char *argv[] )
 			workers_count = tasks_count ;
 		}
 		
-		p_tasks = (struct Dc4cBatchTask *)malloc( sizeof(struct Dc4cBatchTask) * tasks_count ) ;
-		if( p_tasks == NULL )
+		tasks_array = (struct Dc4cBatchTask *)malloc( sizeof(struct Dc4cBatchTask) * tasks_count ) ;
+		if( tasks_array == NULL )
 		{
 			printf( "alloc failed , errno[%d]\n" , errno );
 			return 1;
 		}
-		memset( p_tasks , 0x00 , sizeof(sizeof(struct Dc4cBatchTask) * tasks_count) );
+		memset( tasks_array , 0x00 , sizeof(struct Dc4cBatchTask) * tasks_count );
 		
-		for( i = 0 , p_task = p_tasks ; i < tasks_count ; i++ , p_task++ )
+		for( i = 0 , p_task = tasks_array ; i < tasks_count ; i++ , p_task++ )
 		{
 			if( repeat_task_flag == 1 )
 				strcpy( p_task->program_and_params , argv[4] );
@@ -80,8 +81,8 @@ int main( int argc , char *argv[] )
 			p_task->timeout = DC4CGetTimeout(penv) ;
 		}
 		
-		nret = DC4CDoBatchTasks( penv , workers_count , p_tasks , tasks_count ) ;
-		free( p_tasks );
+		nret = DC4CDoBatchTasks( penv , workers_count , tasks_array , tasks_count ) ;
+		free( tasks_array );
 		if( nret )
 		{
 			printf( "DC4CDoBatchTasks failed[%d]\n" , nret );

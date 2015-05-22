@@ -60,6 +60,10 @@
 #include "LOGC.h"
 #include "ListX.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern char *__DC4C_UTIL_VERSION ;
 
 #define DC4C_ERROR_TIMETOUT		-14
@@ -164,5 +168,9 @@ void FormatSendHead( struct SocketSession *psession , char *msg_type , int msg_l
 int ConvertToDaemonServer();
 int ns2i( char *str , int len );
 int FileMd5( char *pathfilename , char *program_md5_exp ); /* char program_md5_exp[ MD5_DIGEST_LENGTH * 2 + 1 ] ; */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

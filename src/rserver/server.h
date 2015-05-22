@@ -18,6 +18,10 @@
 #include "dc4c_util.h"
 #include "dc4c_api.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern char *__DC4C_RSERVER_VERSION ;
 
 #define EPOLL_FD_COUNT			1024
@@ -110,5 +114,9 @@ int AddOutputSockToEpoll( int epoll_socks , struct SocketSession *psession );
 int ModifyInputSockFromEpoll( int epoll_socks , struct SocketSession *psession );
 int ModifyOutputSockFromEpoll( int epoll_socks , struct SocketSession *psession );
 int DeleteSockFromEpoll( int epoll_socks , struct SocketSession *psession );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -64,7 +64,7 @@ int app_ExecuteProgramRequest( struct SocketSession *psession , execute_program_
 	if( nret )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "FileMd5 failed[%d]" , nret );
-		return DC4C_ERROR_FILE_NOT_EXIST;
+		return DC4C_ERROR_FILE_NOT_FOUND;
 	}
 	
 	return 0;

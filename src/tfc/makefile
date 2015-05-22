@@ -7,12 +7,7 @@
 
 ###### 子目录配置区
 DIROBJS		= \
-			proto \
-			util \
-			api \
-			rserver \
-			wserver \
-			tfc \
+			dag \
 
 ###### 加载mktpl模板库
 #@ FILESYSTEM

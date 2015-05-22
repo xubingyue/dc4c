@@ -5,7 +5,7 @@
 int pi_master( char *rservers_ip_port , unsigned long max_x , int tasks_count )
 {
 	struct Dc4cApiEnv	*penv = NULL ;
-	struct Dc4cBatchTask	*p_tasks = NULL ;
+	struct Dc4cBatchTask	*tasks_array = NULL ;
 	int			workers_count ;
 	unsigned long		dd_x ;
 	unsigned long		start_x , end_x ;
@@ -29,6 +29,9 @@ int pi_master( char *rservers_ip_port , unsigned long max_x , int tasks_count )
 	
 	int			nret = 0 ;
 	
+	DC4CSetAppLogFile( "pi_master" );
+	SetLogLevel( LOGLEVEL_DEBUG );
+	
 	InfoLog( __FILE__ , __LINE__ , "pi_master" );
 	
 	nret = DC4CInitEnv( & penv , rservers_ip_port ) ;
@@ -44,17 +47,17 @@ int pi_master( char *rservers_ip_port , unsigned long max_x , int tasks_count )
 	
 	DC4CSetTimeout( penv , 600 );
 	
-	p_tasks = (struct Dc4cBatchTask *)malloc( sizeof(struct Dc4cBatchTask) * tasks_count ) ;
-	if( p_tasks == NULL )
+	tasks_array = (struct Dc4cBatchTask *)malloc( sizeof(struct Dc4cBatchTask) * tasks_count ) ;
+	if( tasks_array == NULL )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "alloc failed , errno[%d]" , errno );
 		return -1;
 	}
-	memset( p_tasks , 0x00 , sizeof(sizeof(struct Dc4cBatchTask) * tasks_count) );
+	memset( tasks_array , 0x00 , sizeof(struct Dc4cBatchTask) * tasks_count );
 	
 	dd_x = ( max_x - tasks_count ) / tasks_count ;
 	start_x = 1 ;
-	for( i = 0 , p_task = p_tasks ; i < tasks_count ; i++ , p_task++ )
+	for( i = 0 , p_task = tasks_array ; i < tasks_count ; i++ , p_task++ )
 	{
 		end_x = start_x + dd_x ;
 		snprintf( p_task->program_and_params , sizeof(p_task->program_and_params) , "dc4c_test_worker_pi %lu %lu" , start_x , end_x );
@@ -63,8 +66,8 @@ int pi_master( char *rservers_ip_port , unsigned long max_x , int tasks_count )
 	}
 	
 	workers_count = tasks_count ;
-	nret = DC4CDoBatchTasks( penv , workers_count , p_tasks , tasks_count ) ;
-	free( p_tasks );
+	nret = DC4CDoBatchTasks( penv , workers_count , tasks_array , tasks_count ) ;
+	free( tasks_array );
 	if( nret )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "DC4CDoBatchTasks failed[%d]" , nret );
@@ -117,6 +120,9 @@ int pi_worker( unsigned long start_x , unsigned long end_x )
 	mpf_t		pi ;
 	
 	char		output[ 1024 + 1 ] ;
+	
+	DC4CSetAppLogFile( "pi_worker" );
+	SetLogLevel( LOGLEVEL_DEBUG );
 	
 	InfoLog( __FILE__ , __LINE__ , "pi_worker" );
 	
@@ -182,8 +188,6 @@ int pi_worker( unsigned long start_x , unsigned long end_x )
 
 int main( int argc , char *argv[] )
 {
-	DC4CSetAppLogFile( "dc4c_test_worker_pi" );
-	
 	if( argc == 1 + 3 )
 	{
 		return pi_master( argv[1] , atol(argv[2]) , atoi(argv[3]) );

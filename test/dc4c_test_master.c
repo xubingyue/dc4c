@@ -1,4 +1,4 @@
-#include "dc4c_api.h"	
+#include "dc4c_api.h"
 
 /* for testing
 time ./dc4c_test_master 192.168.6.54:12001,192.168.6.54:12002 "dc4c_test_worker_sleep 3"
@@ -21,6 +21,7 @@ int main( int argc , char *argv[] )
 	int			nret = 0 ;
 	
 	DC4CSetAppLogFile( "dc4c_test_master" );
+	SetLogLevel( LOGLEVEL_DEBUG );
 	
 	if( argc == 1 + 2 )
 	{

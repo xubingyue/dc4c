@@ -1,0 +1,63 @@
+/*
+ * tfc_dag for dc4c - Tasks flow controler for dc4c
+ * author	: calvin
+ * email	: calvinwilliams@163.com
+ *
+ * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
+ */
+
+#ifndef _H_DC4C_TFC_DAG_
+#define _H_DC4C_TFC_DAG_
+
+#include "dc4c_api.h"
+#include "ListX.h"
+#include "LOGC.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct Dc4cDagSchedule ;
+
+/********* ¸ß²ãº¯Êý *********/
+
+int DC4CLoadDagScheduleFromFile( struct Dc4cDagSchedule **pp_sched , char *pathfilename );
+int DC4CLoadDagScheduleFromDatabase( struct Dc4cDagSchedule **pp_sched , char *host , int port , char *dbname , char *user , char *pass );
+int DC4CExecuteDagSchedule( struct Dc4cDagSchedule *p_sched );
+int DC4CUnloadDagSchedule( struct Dc4cDagSchedule **pp_sched );
+
+void DC4CLogDagSchedule( struct Dc4cDagSchedule *p_sched );
+
+#define DC4C_DAGSCHELDULE_PROGRESS_INIT		0
+#define DC4C_DAGSCHELDULE_PROGRESS_EXECUTING	1
+#define DC4C_DAGSCHELDULE_PROGRESS_FINISHED	2
+int DC4CGetDagScheduleProgress( struct Dc4cDagSchedule *p_sched );
+int DC4CGetDagScheduleResult( struct Dc4cDagSchedule *p_sched );
+
+/********* µÍ²ãº¯Êý *********/
+
+int DC4CInitDagSchedule( struct Dc4cDagSchedule *p_sched , char *schedule_name , char *schedule_desc );
+void DC4CCleanDagSchedule( struct Dc4cDagSchedule *p_sched );
+
+struct Dc4cDagBatch *DC4CAllocDagBatch( struct Dc4cDagSchedule *p_sched , char *batch_name , char *batch_desc , int view_pos_x , int view_pos_y );
+BOOL DC4CFreeDagBatch( void *pv );
+
+int DC4CLinkDagBatch( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatch *p_parent_batch , struct Dc4cDagBatch *p_batch );
+
+void DC4CSetBatchTasks( struct Dc4cDagBatch *p_batch , struct Dc4cBatchTask *a_tasks , int tasks_count );
+struct Dc4cApiEnv **DC4CGetApiEnvPPtr( struct Dc4cDagBatch *p_batch );
+
+void DC4CGetBatchBeginDatetime( struct Dc4cDagBatch *p_batch , char begin_datetime[19+1] , long *p_begin_datetime_stamp );
+void DC4CGetBatchEndDatetime( struct Dc4cDagBatch *p_batch , char end_datetime[19+1] , long *p_end_datetime_stamp );
+
+#define DC4C_DAGBATCH_PROGRESS_INIT		0
+#define DC4C_DAGBATCH_PROGRESS_EXECUTING	1
+#define DC4C_DAGBATCH_PROGRESS_FINISHED		2
+int DC4CGetBatchProgress( struct Dc4cDagBatch *p_batch );
+int DC4CGetBatchResult( struct Dc4cDagBatch *p_batch );
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

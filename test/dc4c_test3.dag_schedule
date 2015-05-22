@@ -1,0 +1,55 @@
+/*
+                                            _BEGIN_
+                                 /                              \
+                         BATCH_A1                                      BATCH_B1
+               "dc4c_test_worker_sleep 1"                    "dc4c_test_worker_sleep 3"
+                  /               \                                      |
+            BATCH_A21              BATCH_A22                            BATCH_B2
+  "dc4c_test_worker_sleep 4" "dc4c_test_worker_sleep 5"      "dc4c_test_worker_sleep 6"
+                  \               /                                      |
+                         BATCH_A3                                        /
+                "dc4c_test_worker_sleep 2"                         /
+                                        \                    /
+                                                _END_
+*/
+{
+	"schedule" : {
+		"schedule_name" : "test_schedule_name" ,
+		"schedule_desc" : "test_schedule_desc"
+	} ,
+	"batches" : {
+		"batches_direction" : [
+			{ "from":"", "to":"BATCH_A1" } ,
+			{ "from":"", "to":"BATCH_B1" } ,
+			{ "from":"BATCH_A1", "to":"BATCH_A21" } ,
+			{ "from":"BATCH_A1", "to":"BATCH_A22" } ,
+			{ "from":"BATCH_A21", "to":"BATCH_A3" } ,
+			{ "from":"BATCH_A22", "to":"BATCH_A3" } ,
+			{ "from":"BATCH_B1", "to":"BATCH_B2" } ,
+			{ "from":"BATCH_A3", "to":"" } ,
+			{ "from":"BATCH_B2", "to":"" }
+		] ,
+		"batches_info" : [
+			{ "name":"BATCH_A1", "desc":"", "view_pos_x":0, "view_pos_y":0, "tasks": [
+				{ "program_and_params":"dc4c_test_worker_sleep 1", "timeout":60" }
+			] } ,
+			{ "name":"BATCH_A21", "desc":"", "view_pos_x":0, "view_pos_y":0, "tasks": [
+				{ "program_and_params":"dc4c_test_worker_sleep 4", "timeout":60" }
+			] } ,
+			{ "name":"BATCH_A22", "desc":"", "view_pos_x":0, "view_pos_y":0, "tasks": [
+				{ "program_and_params":"dc4c_test_worker_sleep 5", "timeout":60" }
+			] } ,
+			{ "name":"BATCH_A3", "desc":"", "view_pos_x":0, "view_pos_y":0, "tasks": [
+				{ "program_and_params":"dc4c_test_worker_sleep 2", "timeout":60" } ,
+				{ "program_and_params":"dc4c_test_worker_sleep 1", "timeout":60" }
+			] } ,
+			{ "name":"BATCH_B1", "desc":"", "view_pos_x":0, "view_pos_y":0, "tasks": [
+				{ "program_and_params":"dc4c_test_worker_sleep 3", "timeout":60" }
+			] } ,
+			{ "name":"BATCH_B2", "desc":"", "view_pos_x":0, "view_pos_y":0, "tasks": [
+				{ "program_and_params":"dc4c_test_worker_sleep 6", "timeout":60" }
+			] }
+		]
+	}
+}
+

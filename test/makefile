@@ -11,6 +11,7 @@ c_FILE		=	\
 			dc4c_test_master.c \
 			dc4c_test_batch_master.c \
 			dc4c_test_multi_batch_master.c \
+			dc4c_test_tfc_dag_master.c \
 			dc4c_test_worker_sleep.c \
 			dc4c_test_worker_pi.c \
 
@@ -19,6 +20,7 @@ BIN		=	\
 			dc4c_test_master \
 			dc4c_test_batch_master \
 			dc4c_test_multi_batch_master \
+			dc4c_test_tfc_dag_master \
 			dc4c_test_worker_sleep \
 			dc4c_test_worker_pi \
 
@@ -29,6 +31,7 @@ CFLAGS		=	-I. \
 			-I$(HOME)/include/dc4c_util \
 			-I$(HOME)/include/dc4c_proto \
 			-I$(HOME)/include/dc4c_api \
+			-I$(HOME)/include/dc4c_tfc_dag \
 
 ###### Á´½ÓÑ¡Ïî
 LFLAGS		=	-L. \
@@ -57,6 +60,9 @@ dc4c_test_batch_master	:	dc4c_test_batch_master.o
 
 dc4c_test_multi_batch_master	:	dc4c_test_multi_batch_master.o
 	$(CC) -o $@ dc4c_test_multi_batch_master.o $(LFLAGS)
+
+dc4c_test_tfc_dag_master	:	dc4c_test_tfc_dag_master.o
+	$(CC) -o $@ dc4c_test_tfc_dag_master.o $(LFLAGS) -ldc4c_tfc_dag
 
 dc4c_test_worker_sleep	:	dc4c_test_worker_sleep.o
 	$(CC) -o $@ dc4c_test_worker_sleep.o $(LFLAGS)

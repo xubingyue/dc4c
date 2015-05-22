@@ -18,13 +18,17 @@
 
 #include "LOGC.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern char *__DC4C_API_VERSION ;
 
 #define DC4C_ERROR_INTERNAL			-11
 #define DC4C_ERROR_SOCKET			-12
 #define DC4C_ERROR_CONNECT			-13
 #define DC4C_ERROR_ALLOC			-14
-#define DC4C_ERROR_FILE_NOT_EXIST		-21
+#define DC4C_ERROR_FILE_NOT_FOUND		-21
 #define DC4C_ERROR_PARAMETER			-22
 #define DC4C_ERROR_NO_WORKER			-23
 #define DC4C_INFO_NO_PREPARE			31
@@ -75,10 +79,10 @@ int DC4CDoBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cB
 int DC4CPerformMultiBatchTasks( struct Dc4cApiEnv **ppenvs , int envs_count , struct Dc4cApiEnv **ppenv , int *p_remain_envs_count );
 
 int DC4CBeginBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cBatchTask *p_tasks , int tasks_count );
+int DC4CQueryWorkers( struct Dc4cApiEnv *penv );
 int DC4CSetBatchTasksFds( struct Dc4cApiEnv *penv , fd_set *read_fds , int *p_max_fd );
 int DC4CSelectBatchTasksFds( fd_set *p_read_fds , int *p_max_fd , int select_timeout );
 int DC4CProcessBatchTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , int *p_max_fd );
-int DC4CQueryWorkers( struct Dc4cApiEnv *penv );
 
 int DC4CGetTasksCount( struct Dc4cApiEnv *penv );
 int DC4CGetWorkersCount( struct Dc4cApiEnv *penv );
@@ -102,5 +106,11 @@ void DC4CSetAppLogFile( char *program );
 int DC4CFormatReplyInfo( char *format , ... );
 int DC4CSetReplyInfo( char *str );
 int DC4CSetReplyInfoEx( char *buf , int len );
+
+int DC4CGetUnusedWorkersCount( struct Dc4cApiEnv *penv );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

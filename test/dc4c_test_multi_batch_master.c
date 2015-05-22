@@ -11,7 +11,7 @@ int main( int argc , char *argv[] )
 	struct Dc4cApiEnv	*penv = NULL ;
 	int			remain_envs_count ;
 	struct Dc4cBatchTask	task ;
-	struct Dc4cBatchTask	*p_tasks = NULL ;
+	struct Dc4cBatchTask	*tasks_array = NULL ;
 	struct Dc4cBatchTask	*p_task = NULL ;
 	int			tasks_count ;
 	int			workers_count ;
@@ -31,6 +31,7 @@ int main( int argc , char *argv[] )
 	int			nret = 0 ;
 	
 	DC4CSetAppLogFile( "dc4c_test_batch_master" );
+	SetLogLevel( LOGLEVEL_DEBUG );
 	
 	if( argc >= 1 + 3 )
 	{
@@ -97,15 +98,15 @@ int main( int argc , char *argv[] )
 			return 1;
 		}
 		
-		p_tasks = (struct Dc4cBatchTask *)malloc( sizeof(struct Dc4cBatchTask) * tasks_count ) ;
-		if( p_tasks == NULL )
+		tasks_array = (struct Dc4cBatchTask *)malloc( sizeof(struct Dc4cBatchTask) * tasks_count ) ;
+		if( tasks_array == NULL )
 		{
 			printf( "alloc failed , errno[%d]\n" , errno );
 			return 1;
 		}
-		memset( p_tasks , 0x00 , sizeof(sizeof(struct Dc4cBatchTask) * tasks_count) );
+		memset( tasks_array , 0x00 , sizeof(struct Dc4cBatchTask) * tasks_count );
 		
-		for( i = 0 , p_task = p_tasks ; i < tasks_count ; i++ , p_task++ )
+		for( i = 0 , p_task = tasks_array ; i < tasks_count ; i++ , p_task++ )
 		{
 			if( repeat_task_flag == 1 )
 				strcpy( p_task->program_and_params , argv[4] );
@@ -114,7 +115,7 @@ int main( int argc , char *argv[] )
 			p_task->timeout = DC4CGetTimeout(ppenvs[1]) ;
 		}
 		
-		nret = DC4CBeginBatchTasks( ppenvs[1] , workers_count , p_tasks , tasks_count ) ;
+		nret = DC4CBeginBatchTasks( ppenvs[1] , workers_count , tasks_array , tasks_count ) ;
 		if( nret )
 		{
 			printf( "DC4CBeginBatchTasks failed[%d] , errno[%d]\n" , nret , errno );
@@ -127,13 +128,13 @@ int main( int argc , char *argv[] )
 			if( nret == DC4C_INFO_NO_UNFINISHED_ENVS )
 			{
 				printf( "DC4CPerformMultiBatchTasks ok , all is done\n" );
-				free( p_tasks );
+				free( tasks_array );
 				break;
 			}
 			else if( nret )
 			{
 				printf( "DC4CPerformMultiBatchTasks failed[%d]\n" , nret );
-				free( p_tasks );
+				free( tasks_array );
 				return 1;
 			}
 			else

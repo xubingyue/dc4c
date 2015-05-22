@@ -1,0 +1,26 @@
+/*
+                         _BEGIN_
+                            |
+                         BATCH_A1
+               "dc4c_test_worker_sleep 3"
+                            |
+                          _END_
+*/
+{
+	"schedule" : {
+		"schedule_name" : "test_schedule_name" ,
+		"schedule_desc" : "test_schedule_desc"
+	} ,
+	"batches" : {
+		"batches_direction" : [
+			{ "from":"", "to":"BATCH_A1" } ,
+			{ "from":"BATCH_A1", "to":"" }
+		] ,
+		"batches_info" : [
+			{ "name":"BATCH_A1", "desc":"", "view_pos_x":0, "view_pos_y":0, "tasks": [
+				{ "program_and_params":"dc4c_test_worker_sleep 1", "timeout":60" }
+			] }
+		]
+	}
+}
+

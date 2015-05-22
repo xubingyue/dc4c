@@ -183,7 +183,6 @@ int DC4CInitEnv( struct Dc4cApiEnv **ppenv , char *rserver_ip_port )
 {
 	char		buf[ 1024 + 1 ] ;
 	char		*p = NULL ;
-	int		c ;
 	
 	int		nret = 0 ;
 	
@@ -216,6 +215,7 @@ int DC4CInitEnv( struct Dc4cApiEnv **ppenv , char *rserver_ip_port )
 		return DC4C_ERROR_ALLOC;
 	}
 	
+	/*
 	for( c = 0 ; c < (*ppenv)->rserver_count ; c++ )
 	{
 		nret = SyncConnectSocket( (*ppenv)->rserver_ip[(*ppenv)->rserver_index] , (*ppenv)->rserver_port[(*ppenv)->rserver_index] , & ((*ppenv)->rserver_session) ) ;
@@ -236,6 +236,7 @@ int DC4CInitEnv( struct Dc4cApiEnv **ppenv , char *rserver_ip_port )
 		DC4CCleanEnv( ppenv );
 		return DC4C_ERROR_CONNECT;
 	}
+	*/
 	
 	return 0;
 }
@@ -344,7 +345,9 @@ int DC4CDoBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cB
 	
 	while(1)
 	{
-		if( DC4CGetRunningTasksCount(penv) < DC4CGetWorkersCount(penv) && DC4CGetPrepareTasksCount(penv) > 0 )
+		if(	DC4CGetRunningTasksCount(penv) < DC4CGetWorkersCount(penv)
+			&& DC4CGetPrepareTasksCount(penv) > 0
+			&& penv->qwp._nodes_count - penv->query_count_used == 0 )
 		{
 			nret = DC4CQueryWorkers( penv ) ;
 			if( nret )
@@ -356,30 +359,36 @@ int DC4CDoBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cB
 		nret = DC4CSetBatchTasksFds( penv , & read_fds , & max_fd ) ;
 		if( nret == DC4C_INFO_NO_RUNNING )
 		{
-			sleep(1);
-			continue;
+			;
 		}
 		else if( nret )
 		{
 			return nret;
 		}
-		
-		select_return_count = DC4CSelectBatchTasksFds( & read_fds , & max_fd , 1 ) ;
-		if( select_return_count < 0 )
+		else
 		{
-			return select_return_count;
+			select_return_count = DC4CSelectBatchTasksFds( & read_fds , & max_fd , 1 ) ;
+			if( select_return_count < 0 )
+			{
+				return select_return_count;
+			}
+			else if( select_return_count > 0 )
+			{
+				nret = DC4CProcessBatchTasks( penv , & read_fds , & max_fd ) ;
+				if( nret == DC4C_INFO_NO_PREPARE_AND_RUNNING )
+				{
+					return 0;
+				}
+				else if( nret )
+				{
+					return nret;
+				}
+			}
 		}
-		else if( select_return_count > 0 )
+		
+		if( penv->qwp._nodes_count == 0 )
 		{
-			nret = DC4CProcessBatchTasks( penv , & read_fds , & max_fd ) ;
-			if( nret == DC4C_INFO_NO_PREPARE_AND_RUNNING )
-			{
-				return 0;
-			}
-			else if( nret )
-			{
-				return nret;
-			}
+			sleep(1);
 		}
 	}
 }
@@ -419,7 +428,9 @@ int DC4CPerformMultiBatchTasks( struct Dc4cApiEnv **ppenvs , int envs_count , st
 			if( DC4CGetPrepareTasksCount(penv) == 0 && DC4CGetRunningTasksCount(penv) == 0 )
 				continue;
 			
-			if( DC4CGetRunningTasksCount(penv) < DC4CGetWorkersCount(penv) && DC4CGetPrepareTasksCount(penv) > 0 )
+			if(	DC4CGetRunningTasksCount(penv) < DC4CGetWorkersCount(penv)
+				&& DC4CGetPrepareTasksCount(penv) > 0
+				&& penv->qwp._nodes_count - penv->query_count_used == 0 )
 			{
 				nret = DC4CQueryWorkers( penv ) ;
 				if( nret )
@@ -445,39 +456,41 @@ int DC4CPerformMultiBatchTasks( struct Dc4cApiEnv **ppenvs , int envs_count , st
 				return nret;
 			}
 		}
-		if( max_fd == -1 )
+		if( max_fd != -1 )
 		{
-			sleep(1);
-			continue;
-		}
-		
-		select_return_count = DC4CSelectBatchTasksFds( & read_fds , & max_fd , 1 ) ;
-		if( select_return_count < 0 )
-		{
-			return select_return_count;
-		}
-		else if( select_return_count > 0 )
-		{
-			for( envs_index = 0 ; envs_index < envs_count ; envs_index++ )
+			select_return_count = DC4CSelectBatchTasksFds( & read_fds , & max_fd , 1 ) ;
+			if( select_return_count < 0 )
 			{
-				penv = ppenvs[envs_index] ;
-				if( DC4CGetPrepareTasksCount(penv) == 0 && DC4CGetRunningTasksCount(penv) == 0 )
-					continue;
-				
-				nret = DC4CProcessBatchTasks( penv , & read_fds , & max_fd ) ;
-				if( nret == DC4C_INFO_NO_PREPARE_AND_RUNNING )
+				return select_return_count;
+			}
+			else if( select_return_count > 0 )
+			{
+				for( envs_index = 0 ; envs_index < envs_count ; envs_index++ )
 				{
-					if( p_penv )
-						(*p_penv) = penv ;
-					if( p_remain_envs_count )
-						(*p_remain_envs_count) = remain_envs_count - 1 ;
-					return 0;
-				}
-				else if( nret )
-				{
-					return nret;
+					penv = ppenvs[envs_index] ;
+					if( DC4CGetPrepareTasksCount(penv) == 0 && DC4CGetRunningTasksCount(penv) == 0 )
+						continue;
+					
+					nret = DC4CProcessBatchTasks( penv , & read_fds , & max_fd ) ;
+					if( nret == DC4C_INFO_NO_PREPARE_AND_RUNNING )
+					{
+						if( p_penv )
+							(*p_penv) = penv ;
+						if( p_remain_envs_count )
+							(*p_remain_envs_count) = remain_envs_count - 1 ;
+						return 0;
+					}
+					else if( nret )
+					{
+						return nret;
+					}
 				}
 			}
+		}
+		
+		if( penv->qwp._nodes_count == 0 )
+		{
+			sleep(1);
 		}
 	}
 }
@@ -1066,3 +1079,9 @@ int DC4CSetReplyInfoEx( char *buf , int len )
 	
 	return (int)write( info_pipe , buf , (size_t)len );
 }
+
+int DC4CGetUnusedWorkersCount( struct Dc4cApiEnv *penv )
+{
+	return penv->qwp._nodes_count - penv->query_count_used ;
+}
+

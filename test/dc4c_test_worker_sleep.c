@@ -12,6 +12,7 @@ int main( int argc , char *argv[] )
 	int			seconds ;
 	
 	DC4CSetAppLogFile( "dc4c_test_worker_sleep" );
+	SetLogLevel( LOGLEVEL_DEBUG );
 	
 	gettimeofday( & tv , NULL );
 	srand( (unsigned int)(tv.tv_sec*tv.tv_usec) );

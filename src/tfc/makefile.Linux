@@ -9,12 +9,7 @@ MAKEFILE_POSTFIX=.Linux
 
 ###### 子目录配置区
 DIROBJS		= \
-			proto \
-			util \
-			api \
-			rserver \
-			wserver \
-			tfc \
+			dag \
 
 ###### 加载mktpl模板库
 # 文件系统宏
@@ -63,7 +58,6 @@ clean	:
 # install规则
 .PHONY:install
 install	:
-	echo $(MAKE)
 	@for i in $(DIROBJS) ; do \
 		if [ -d "$$i" ] ; then \
 			if [ -f "$$i/makefile$(MAKEFILE_POSTFIX)" ] ; then \
