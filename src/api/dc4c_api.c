@@ -168,7 +168,7 @@ int DC4CCleanEnv( struct Dc4cApiEnv **ppenv )
 	{
 		for( i = 0 ; i < (*ppenv)->task_array_size ; i++ )
 		{
-			if( IsSocketEstablished( & ((*ppenv)->task_session_array[i]) )
+			if( IsSocketEstablished( & ((*ppenv)->task_session_array[i]) ) )
 			{
 				CloseSocket( & ((*ppenv)->task_session_array[i]) );
 			}
