@@ -14,9 +14,9 @@ int main( int argc , char *argv[] )
 	DC4CSetAppLogFile( "dc4c_test_tfc_dag_master" );
 	SetLogLevel( LOGLEVEL_DEBUG );
 	
-	if( argc == 1 + 1 )
+	if( argc == 1 + 2 )
 	{
-		nret = DC4CLoadDagScheduleFromFile( & p_sched , argv[1] ) ;
+		nret = DC4CLoadDagScheduleFromFile( & p_sched , argv[2] ) ;
 		if( nret )
 		{
 			printf( "DC4CLoadDagScheduleFromFile failed[%d]\n" , nret );
@@ -27,7 +27,9 @@ int main( int argc , char *argv[] )
 			printf( "DC4CLoadDagScheduleFromFile ok\n" );
 		}
 		
-		nret = DC4CExecuteDagSchedule( p_sched ) ;
+		DC4CLogDagSchedule( p_sched );
+		
+		nret = DC4CExecuteDagSchedule( p_sched , argv[1] ) ;
 		if( nret )
 		{
 			printf( "DC4CExecuteDagSchedule failed[%d]\n" , nret );
@@ -38,14 +40,12 @@ int main( int argc , char *argv[] )
 			printf( "DC4CExecuteDagSchedule ok\n" );
 		}
 		
-		DC4CLogDagSchedule( p_sched );
-		
 		DC4CUnloadDagSchedule( & p_sched );
 		printf( "DC4CCleanEnv ok\n" );
 	}
 	else
 	{
-		printf( "USAGE : dc4c_test_tfc_dag_master *.schedule\n" );
+		printf( "USAGE : dc4c_test_tfc_dag_master rservers_ip_port .dag_schedule\n" );
 		exit(7);
 	}
 	

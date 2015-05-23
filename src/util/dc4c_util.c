@@ -105,7 +105,7 @@ int InitSocketSession( struct SocketSession *psession )
 		CleanSocketSession( psession );
 		return -1;
 	}
-	CleanSendBuffer( psession );
+	CleanRecvBuffer( psession );
 	
 	psession->send_buffer_size = 1024+1 ;
 	psession->send_buffer = (char*) malloc( psession->send_buffer_size ) ;
@@ -114,7 +114,7 @@ int InitSocketSession( struct SocketSession *psession )
 		CleanSocketSession( psession );
 		return -1;
 	}
-	CleanRecvBuffer( psession );
+	CleanSendBuffer( psession );
 	
 	return 0;
 }

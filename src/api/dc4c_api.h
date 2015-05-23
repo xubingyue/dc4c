@@ -50,7 +50,7 @@ extern char *__DC4C_API_VERSION ;
 
 struct Dc4cApiEnv ;
 
-int DC4CInitEnv( struct Dc4cApiEnv **ppenv , char *rserver_ip_port );
+int DC4CInitEnv( struct Dc4cApiEnv **ppenv , char *rservers_ip_port );
 int DC4CCleanEnv( struct Dc4cApiEnv **ppenv );
 
 void DC4CSetTimeout( struct Dc4cApiEnv *penv , int timeout );

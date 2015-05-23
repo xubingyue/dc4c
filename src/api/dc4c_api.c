@@ -59,7 +59,7 @@ struct Dc4cApiEnv
 	int				query_count_used ;
 } ;
 
-static int PerformTasksArray( struct Dc4cApiEnv *penv , int tasks_count )
+static int ReformingTasksArray( struct Dc4cApiEnv *penv , int tasks_count )
 {
 	int			i ;
 	
@@ -168,7 +168,11 @@ int DC4CCleanEnv( struct Dc4cApiEnv **ppenv )
 	{
 		for( i = 0 ; i < (*ppenv)->task_array_size ; i++ )
 		{
-			CloseSocket( & ((*ppenv)->task_session_array[i]) );
+			if( IsSocketEstablished( & ((*ppenv)->task_session_array[i]) )
+			{
+				CloseSocket( & ((*ppenv)->task_session_array[i]) );
+			}
+			CleanSocketSession( & ((*ppenv)->task_session_array[i]) );
 		}
 		
 		free( (*ppenv)->task_session_array );
@@ -179,7 +183,7 @@ int DC4CCleanEnv( struct Dc4cApiEnv **ppenv )
 	return 0;
 }
 
-int DC4CInitEnv( struct Dc4cApiEnv **ppenv , char *rserver_ip_port )
+int DC4CInitEnv( struct Dc4cApiEnv **ppenv , char *rservers_ip_port )
 {
 	char		buf[ 1024 + 1 ] ;
 	char		*p = NULL ;
@@ -196,7 +200,7 @@ int DC4CInitEnv( struct Dc4cApiEnv **ppenv , char *rserver_ip_port )
 	}
 	memset( (*ppenv) , 0x00 , sizeof(struct Dc4cApiEnv) );
 	
-	strcpy( buf , rserver_ip_port );
+	strcpy( buf , rservers_ip_port );
 	p = strtok( buf , "," ) ;
 	if( p == NULL )
 		p = buf ;
@@ -338,6 +342,9 @@ int DC4CDoBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cB
 	int		select_return_count ;
 	
 	int		nret = 0 ;
+	
+	if( tasks_count == 0 )
+		return 0;
 	
 	nret = DC4CBeginBatchTasks( penv , workers_count , p_tasks , tasks_count ) ;
 	if( nret )
@@ -505,20 +512,22 @@ int DC4CBeginBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc
 	
 	InfoLog( __FILE__ , __LINE__ , "workers_count[%d] tasks_count[%d]" , workers_count , tasks_count );
 	
-	if( workers_count < 0 || tasks_count <= 0 )
+	if( tasks_count == 0 )
+		return 0;
+	else if( workers_count < 0 || tasks_count < 0 )
 		return DC4C_ERROR_PARAMETER;
 	
 	penv->tasks_count = tasks_count ;
 	
-	nret = PerformTasksArray( penv , penv->tasks_count ) ;
+	nret = ReformingTasksArray( penv , penv->tasks_count ) ;
 	if( nret )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "PerformTasksArray failed[%d] , errno[%d]" , nret , errno );
+		ErrorLog( __FILE__ , __LINE__ , "ReformingTasksArray failed[%d] , errno[%d]" , nret , errno );
 		return nret;
 	}
 	else
 	{
-		DebugLog( __FILE__ , __LINE__ , "PerformTasksArray ok" );
+		DebugLog( __FILE__ , __LINE__ , "ReformingTasksArray ok" );
 	}
 	
 	for( i = 0 , p_task = p_tasks ; i < penv->tasks_count ; i++ , p_task++ )

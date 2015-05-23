@@ -1,3 +1,8 @@
+V1.1.0	2015-05-23	calvin
+	* Fixed a problom about momery leak in 'util'
+	* Add tasks-flow-controler with directed acyclic graph in `src/tfc/dag'
+	* Add demo for tasks-flow-controler with directed acyclic graph in `test/dc4c_test_tfc_dag_master'
+
 V1.0.3	2015-05-20	calvin
 	* Add demo : Distributed computing PI
 

@@ -219,8 +219,6 @@ SListNode *InsertListNodeAfter( SList **list , SListNode **nodeList , void *memb
 	nodeNew->prev = (*nodeList) ;
 	(*nodeList)->next = nodeNew ;
 
-	(*nodeList) = nodeNew ;
-
 	return nodeNew;
 }
 

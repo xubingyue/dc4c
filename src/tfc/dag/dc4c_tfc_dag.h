@@ -23,10 +23,9 @@ struct Dc4cDagSchedule ;
 
 int DC4CLoadDagScheduleFromFile( struct Dc4cDagSchedule **pp_sched , char *pathfilename );
 int DC4CLoadDagScheduleFromDatabase( struct Dc4cDagSchedule **pp_sched , char *host , int port , char *dbname , char *user , char *pass );
-int DC4CExecuteDagSchedule( struct Dc4cDagSchedule *p_sched );
-int DC4CUnloadDagSchedule( struct Dc4cDagSchedule **pp_sched );
-
 void DC4CLogDagSchedule( struct Dc4cDagSchedule *p_sched );
+int DC4CExecuteDagSchedule( struct Dc4cDagSchedule *p_sched , char *rservers_ip_port );
+int DC4CUnloadDagSchedule( struct Dc4cDagSchedule **pp_sched );
 
 #define DC4C_DAGSCHELDULE_PROGRESS_INIT		0
 #define DC4C_DAGSCHELDULE_PROGRESS_EXECUTING	1

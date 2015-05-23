@@ -1,3 +1,8 @@
+V1.1.0	2015-05-23	calvin
+	* 解决了util中的内存泄露问题
+	* 新增有向无环图任务流控制器src/tfc/dag
+	* 新增有向无环图任务流控制器示例test/dc4c_test_tfc_dag_master
+	
 V1.0.3	2015-05-20	calvin
 	* 新增示例：分布式计算圆周率
 

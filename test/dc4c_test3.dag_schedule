@@ -9,8 +9,9 @@
                   \               /                                      |
                          BATCH_A3                                        /
                 "dc4c_test_worker_sleep 2"                         /
-                                        \                    /
-                                                _END_
+                "dc4c_test_worker_sleep 1"                    /
+                                        \                /
+                                              _END_
 */
 {
 	"schedule" : {

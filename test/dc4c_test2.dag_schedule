@@ -23,7 +23,7 @@
 				{ "program_and_params":"dc4c_test_worker_sleep 1", "timeout":60" }
 			] } ,
 			{ "name":"BATCH_B1", "desc":"", "view_pos_x":0, "view_pos_y":0, "tasks": [
-				{ "program_and_params":"dc4c_test_worker_sleep 3", "timeout":60" }
+				{ "program_and_params":"dc4c_test_worker_sleep 5", "timeout":60" }
 			] }
 		]
 	}
