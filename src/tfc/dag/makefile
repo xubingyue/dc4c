@@ -9,13 +9,20 @@
 #@ c_FILE
 c_FILE		=	\
 			dc4c_tfc_dag.c \
-			IDL_dag_schedule_config.dsc.c \
+			IDL_dag_schedule_configfile.dsc.c \
 
+ec_FILE		=	\
+			dc4c_tfc_dag_pgsql.ec \
+			IDL_dag_schedule.dsc.ESQL.ec \
+			IDL_dag_batches_direction.dsc.ESQL.ec \
+			IDL_dag_batches_info.dsc.ESQL.ec \
+			IDL_dag_batches_tasks.dsc.ESQL.ec \
+			
 ###### 目标文件、安装目录配置区
-LIB		=	libdc4c_tfc_dag.so
+LIB		=	libdc4c_tfc_dag.so libdc4c_tfc_dag_pgsql.so
 LIBINST		=	$(HOME)/lib
 HDER		=	\
-			dc4c_tfc_dag.h
+			dc4c_tfc_dag.h IDL_dag_schedule_configfile.dsc.h IDL_dag_schedule.dsc.ESQL.eh IDL_dag_schedule.dsc.h
 HDERINST	=	$(HOME)/include/dc4c_tfc_dag
 NOINST_OBJ	=	sizeof
 
@@ -24,6 +31,7 @@ CFLAGS		=	-I. \
 			-I$(HOME)/include/fasterjson \
 			-I$(HOME)/include/dc4c_util \
 			-I$(HOME)/include/dc4c_api \
+			-I/root/local/postgresql/include \
 
 ###### 链接选项
 LFLAGS		=	-L. \
@@ -48,6 +56,9 @@ include $(MKTPLDIR)/makeobj_$(MKTPLOS).inc
 ###### 目标文件依赖关系
 libdc4c_tfc_dag.so		:	$(c_FILE_o)
 	$(CC) -o $@ $(c_FILE_o) $(SOFLAGS) $(LFLAGS)
+
+libdc4c_tfc_dag_pgsql.so	:	$(c_FILE_o) $(ec_FILE_o)
+	$(CC) -o $@ $(c_FILE_o) $(ec_FILE_o) $(SOFLAGS) $(LFLAGS) -L/root/local/postgresql/lib -lecpg
 
 sizeof		:	sizeof.o
 	$(CC) -o $@ sizeof.o

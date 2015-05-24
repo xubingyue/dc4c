@@ -15,6 +15,9 @@ c_FILE		=	\
 			dc4c_test_worker_sleep.c \
 			dc4c_test_worker_pi.c \
 
+ec_FILE		=	\
+			dc4c_test_tfc_dag_master_pgsql.ec \
+			
 ###### 目标文件、安装目录配置区
 BIN		=	\
 			dc4c_test_master \
@@ -23,19 +26,23 @@ BIN		=	\
 			dc4c_test_tfc_dag_master \
 			dc4c_test_worker_sleep \
 			dc4c_test_worker_pi \
+			dc4c_test_tfc_dag_master_pgsql \
 
 BININST		=	$(HOME)/bin
 
 ###### 编译选项
 CFLAGS		=	-I. \
+			-I$(HOME)/include/fasterjson \
 			-I$(HOME)/include/dc4c_util \
 			-I$(HOME)/include/dc4c_proto \
 			-I$(HOME)/include/dc4c_api \
 			-I$(HOME)/include/dc4c_tfc_dag \
+			-I/root/local/postgresql/include \
 
 ###### 链接选项
 LFLAGS		=	-L. \
 			-L$(HOME)/lib \
+			-lfasterjson \
 			-ldc4c_util \
 			-ldc4c_proto \
 			-ldc4c_api \
@@ -63,6 +70,9 @@ dc4c_test_multi_batch_master	:	dc4c_test_multi_batch_master.o
 
 dc4c_test_tfc_dag_master	:	dc4c_test_tfc_dag_master.o
 	$(CC) -o $@ dc4c_test_tfc_dag_master.o $(LFLAGS) -ldc4c_tfc_dag
+
+dc4c_test_tfc_dag_master_pgsql	:	dc4c_test_tfc_dag_master_pgsql.o
+	$(CC) -o $@ dc4c_test_tfc_dag_master_pgsql.o $(LFLAGS) -ldc4c_tfc_dag_pgsql -L/root/local/postgresql/lib -lecpg
 
 dc4c_test_worker_sleep	:	dc4c_test_worker_sleep.o
 	$(CC) -o $@ dc4c_test_worker_sleep.o $(LFLAGS)

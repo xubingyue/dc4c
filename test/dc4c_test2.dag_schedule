@@ -1,10 +1,13 @@
 /*
-                                            _BEGIN_
-                                 /                              \
-                         BATCH_A1                                      BATCH_B1
-               "dc4c_test_worker_sleep 1"                    "dc4c_test_worker_sleep 3"
-                                        \                    /
-                                                _END_
+                         _BEGIN_
+                            |
+                         BATCH_A1
+               "dc4c_test_worker_sleep 3"
+                            |
+                         BATCH_A2
+               "dc4c_test_worker_sleep 5"
+                            |
+                          _END_
 */
 {
 	"schedule" : {
@@ -12,19 +15,18 @@
 		"schedule_desc" : "test_schedule_desc"
 	} ,
 	"batches" : {
-		"batches_direction" : [
-			{ "from":"", "to":"BATCH_A1" } ,
-			{ "from":"", "to":"BATCH_B1" } ,
-			{ "from":"BATCH_A1", "to":"" } ,
-			{ "from":"BATCH_B1", "to":"" }
-		] ,
 		"batches_info" : [
-			{ "name":"BATCH_A1", "desc":"", "view_pos_x":0, "view_pos_y":0, "tasks": [
-				{ "program_and_params":"dc4c_test_worker_sleep 1", "timeout":60" }
+			{ "batch_name":"BATCH_A1", "batch_desc":"", "view_pos_x":0, "view_pos_y":0, "tasks": [
+				{ "program_and_params":"dc4c_test_worker_sleep 3", "timeout":60" }
 			] } ,
-			{ "name":"BATCH_B1", "desc":"", "view_pos_x":0, "view_pos_y":0, "tasks": [
+			{ "batch_name":"BATCH_A2", "batch_desc":"", "view_pos_x":0, "view_pos_y":0, "tasks": [
 				{ "program_and_params":"dc4c_test_worker_sleep 5", "timeout":60" }
 			] }
+		] ,
+		"batches_direction" : [
+			{ "from_batch":"", "to_batch":"BATCH_A1" } ,
+			{ "from_batch":"BATCH_A1", "to_batch":"BATCH_A2" } ,
+			{ "from_batch":"BATCH_A2", "to_batch":"" }
 		]
 	}
 }

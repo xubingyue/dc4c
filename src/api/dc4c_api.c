@@ -700,6 +700,15 @@ int DC4CSetBatchTasksFds( struct Dc4cApiEnv *penv , fd_set *p_read_fds , int *p_
 	{
 		if( task_session_ptr->progress == WSERVER_SESSION_PROGRESS_WAITFOR_CONNECTING )
 		{
+			if( STRCMP( task_request_ptr->program_and_params , == , "" ) )
+			{
+				PREPARE_COUNT_DECREASE
+				FINISHED_COUNT_INCREASE
+				task_session_ptr->progress = WSERVER_SESSION_PROGRESS_FINISHED ;
+				task_response_ptr->error = DC4C_ERROR_PARAMETER ;
+				continue;
+			}
+			
 _GOTO_CONNECT :
 			nret = SyncConnectSocket( penv->qwp.nodes[penv->query_count_used].node.ip , penv->qwp.nodes[penv->query_count_used].node.port , task_session_ptr ) ;
 			if( nret )
