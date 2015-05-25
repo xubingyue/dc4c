@@ -28,7 +28,7 @@ int main( int argc , char *argv[] )
 	
 	int			nret = 0 ;
 	
-	DC4CSetAppLogFile( "dc4c_test_multi_batch_master" );
+	DC4CSetAppLogFile( "dc4c_test_batch_master" );
 	SetLogLevel( LOGLEVEL_DEBUG );
 	
 	if( argc >= 1 + 3 )
@@ -45,6 +45,7 @@ int main( int argc , char *argv[] )
 		}
 		
 		DC4CSetTimeout( penv , 60 );
+		DC4CSetOptions( penv , DC4C_OPTIONS_INTERRUPT_BY_APP );
 		
 		workers_count = atoi(argv[2]) ;
 		tasks_count = atoi(argv[3]) ;
@@ -86,15 +87,16 @@ int main( int argc , char *argv[] )
 		if( nret )
 		{
 			printf( "DC4CDoBatchTasks failed[%d]\n" , nret );
-			return 1;
 		}
 		else
 		{
 			printf( "DC4CDoBatchTasks ok\n" );
 		}
 		
+		printf( "tasks_count[%d] worker_count[%d] - prepare_count[%d] running_count[%d] finished_count[%d]\n" , DC4CGetTasksCount(penv) , DC4CGetWorkersCount(penv) , DC4CGetPrepareTasksCount(penv) , DC4CGetRunningTasksCount(penv) , DC4CGetFinishedTasksCount(penv) );
+		
 		tasks_count = DC4CGetTasksCount( penv ) ;
-		for( i = 1 ; i <= tasks_count ; i++ )
+		for( i = 0 ; i < tasks_count ; i++ )
 		{
 			DC4CGetBatchTasksIp( penv , i , & ip );
 			DC4CGetBatchTasksPort( penv , i , & port );

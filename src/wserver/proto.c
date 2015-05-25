@@ -124,7 +124,7 @@ int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession 
 	DSCINIT_execute_program_response( & rsp );
 	if( error == 0 )
 	{
-		strcpy( rsp.tid , penv->epq.tid );
+		strcpy( rsp.tid , penv->epq_array[psession-penv->accepted_session_array].tid );
 	}
 	time( & end_timestamp );
 	rsp.elapse = end_timestamp - penv->begin_timestamp ;
@@ -132,7 +132,7 @@ int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession 
 	rsp.status = status ;
 	if( error == 0 )
 	{
-		strcpy( rsp.info , penv->epp.info );
+		strcpy( rsp.info , penv->epp_array[psession-penv->accepted_session_array].info );
 	}
 	
 	DSCLOG_execute_program_response( & rsp );

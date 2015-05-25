@@ -15,6 +15,7 @@
 struct Dc4cDagSchedule
 {
 	dag_schedule_configfile	schedule_config ;
+	int			options ;
 	
 	char			schedule_name[ 64 + 1 ] ;
 	char			schedule_desc[ 256 + 1 ] ;
@@ -152,7 +153,7 @@ int _LoadDagScheduleFromStruct( struct Dc4cDagSchedule *p_sched , struct Dc4cDag
 	return 0;
 }
 
-int DC4CLoadDagScheduleFromStruct( struct Dc4cDagSchedule **pp_sched , dag_schedule_configfile *p_config )
+int DC4CLoadDagScheduleFromStruct( struct Dc4cDagSchedule **pp_sched , dag_schedule_configfile *p_config , int options )
 {
 	struct Dc4cDagBatch	*p_begin_batch = NULL ;
 	struct Dc4cDagBatch	*p_end_batch = NULL ;
@@ -167,6 +168,7 @@ int DC4CLoadDagScheduleFromStruct( struct Dc4cDagSchedule **pp_sched , dag_sched
 		return DC4C_ERROR_ALLOC;
 	}
 	memset( (*pp_sched) , 0x00 , sizeof(struct Dc4cDagSchedule) );
+	(*pp_sched)->options = options ;
 	
 	DSCLOG_dag_schedule_configfile( p_config );
 	
@@ -210,7 +212,7 @@ int DC4CLoadDagScheduleFromStruct( struct Dc4cDagSchedule **pp_sched , dag_sched
 	return 0;
 }
 
-int DC4CLoadDagScheduleFromFile( struct Dc4cDagSchedule **pp_sched , char *pathfilename )
+int DC4CLoadDagScheduleFromFile( struct Dc4cDagSchedule **pp_sched , char *pathfilename , int options )
 {
 	dag_schedule_configfile *p_config = NULL ;
 	
@@ -280,7 +282,7 @@ int DC4CLoadDagScheduleFromFile( struct Dc4cDagSchedule **pp_sched , char *pathf
 		DebugLog( __FILE__ , __LINE__ , "DSCDESERIALIZE_JSON_dag_schedule_configfile ok" );
 	}
 	
-	nret = DC4CLoadDagScheduleFromStruct( pp_sched , p_config ) ;
+	nret = DC4CLoadDagScheduleFromStruct( pp_sched , p_config , options ) ;
 	free( p_config );
 	if( nret )
 	{
@@ -400,6 +402,8 @@ int DC4CExecuteDagSchedule( struct Dc4cDagSchedule *p_sched , char *rservers_ip_
 			return nret;
 		}
 		
+		DC4CSetOptions( p_branch_batch->penv , p_sched->options );
+		
 		nret = DC4CBeginBatchTasks( p_branch_batch->penv , p_branch_batch->tasks_count , p_branch_batch->tasks_array , p_branch_batch->tasks_count ) ;
 		if( nret )
 		{
@@ -512,6 +516,8 @@ int DC4CExecuteDagSchedule( struct Dc4cDagSchedule *p_sched , char *rservers_ip_
 				{
 					DebugLog( __FILE__ , __LINE__ , "DC4CInitEnv ok" );
 				}
+				
+				DC4CSetOptions( p_postdepend_branch_batch->penv , p_sched->options );
 				
 				nret = DC4CBeginBatchTasks( p_postdepend_branch_batch->penv , p_postdepend_branch_batch->tasks_count , p_postdepend_branch_batch->tasks_array , p_postdepend_branch_batch->tasks_count ) ;
 				if( nret )

@@ -1,3 +1,6 @@
+V1.1.2	2015-05-25	calvin
+	* Add function DC4CSetOptions and option DC4C_OPTIONS_INTERRUPT_BY_APP for interrupting on task error
+
 V1.1.1	2015-05-24	calvin
 	* Add tasks-flow-controler with directed acyclic graph in `src/tfc/dag' for PostgreSQL , load schedule config from database
 	* Add demo for tasks-flow-controler with directed acyclic graph in `test/dc4c_test_tfc_dag_master_pgsql'

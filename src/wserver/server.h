@@ -35,7 +35,7 @@ extern char *__DC4C_WSERVER_VERSION ;
 
 #define RSERVER_ARRAYSIZE		8
 #define MAXCOUNT_WSERVERS		1000
-#define MAXCOUNT_ACCEPTED_SESSION	1000
+#define MAXCOUNT_ACCEPTED_SESSION	100
 
 #define SEND_HEARTBEAT_INTERVAL		60
 #define MAXCNT_HEARTBEAT_LOST		3
@@ -58,22 +58,22 @@ struct CommandParameter
 struct ServerEnv
 {
 	struct CommandParameter		param ;
+	int				rserver_count ;
+	
+	int				wserver_index ;
 	
 	int				epoll_socks ;
 	struct SocketSession		listen_session ;
 	struct SocketSession		*accepted_session_array ; /* sizeof(struct SocketSession) * MAXCOUNT_ACCEPTED_SESSION */
 	struct SocketSession		*p_slibing_accepted_session ;
 	struct SocketSession		connect_session[ RSERVER_ARRAYSIZE ] ;
-	int				info_pipe[ 2 ] ;
-	struct SocketSession		info_session ;
 	
-	int				rserver_count ;
-	
-	int				wserver_index ;
+	execute_program_request		*epq_array ;
+	execute_program_response	*epp_array ;
 	
 	int				is_working ;
-	execute_program_request		epq ;
-	execute_program_response	epp ;
+	int				info_pipe[ 2 ] ;
+	struct SocketSession		info_session ;
 	pid_t				pid ;
 	time_t				begin_timestamp ;
 } ;

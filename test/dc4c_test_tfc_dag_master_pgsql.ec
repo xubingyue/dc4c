@@ -28,7 +28,7 @@ int main( int argc , char *argv[] )
 	
 	if( argc == 1 + 2 )
 	{
-		nret = DC4CLoadDagScheduleFromDatabase( & p_sched , argv[2] ) ;
+		nret = DC4CLoadDagScheduleFromDatabase( & p_sched , argv[2] , DC4C_OPTIONS_INTERRUPT_BY_APP ) ;
 		if( nret )
 		{
 			printf( "DC4CLoadDagScheduleFromDatabase failed[%d]\n" , nret );

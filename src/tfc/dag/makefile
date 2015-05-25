@@ -19,7 +19,7 @@ ec_FILE		=	\
 			IDL_dag_batches_tasks.dsc.ESQL.ec \
 			
 ###### 目标文件、安装目录配置区
-LIB		=	libdc4c_tfc_dag.so libdc4c_tfc_dag_pgsql.so
+LIB		=	libdc4c_tfc_dag.so # libdc4c_tfc_dag_pgsql.so
 LIBINST		=	$(HOME)/lib
 HDER		=	\
 			dc4c_tfc_dag.h IDL_dag_schedule_configfile.dsc.h IDL_dag_schedule.dsc.ESQL.eh IDL_dag_schedule.dsc.h
@@ -31,7 +31,8 @@ CFLAGS		=	-I. \
 			-I$(HOME)/include/fasterjson \
 			-I$(HOME)/include/dc4c_util \
 			-I$(HOME)/include/dc4c_api \
-			-I/root/local/postgresql/include \
+
+#			-I/root/local/postgresql/include \
 
 ###### 链接选项
 LFLAGS		=	-L. \
@@ -39,6 +40,7 @@ LFLAGS		=	-L. \
 			-lfasterjson \
 			-ldc4c_util \
 			-ldc4c_api \
+			-L/root/local/postgresql/lib \
 
 ###### 额外宏定义区
 CLEAN_ADDITION	=	sizeof.o
@@ -58,7 +60,7 @@ libdc4c_tfc_dag.so		:	$(c_FILE_o)
 	$(CC) -o $@ $(c_FILE_o) $(SOFLAGS) $(LFLAGS)
 
 libdc4c_tfc_dag_pgsql.so	:	$(c_FILE_o) $(ec_FILE_o)
-	$(CC) -o $@ $(c_FILE_o) $(ec_FILE_o) $(SOFLAGS) $(LFLAGS) -L/root/local/postgresql/lib -lecpg
+	$(CC) -o $@ $(c_FILE_o) $(ec_FILE_o) $(SOFLAGS) $(LFLAGS) -lecpg
 
 sizeof		:	sizeof.o
 	$(CC) -o $@ sizeof.o

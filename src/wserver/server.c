@@ -85,6 +85,22 @@ int server( struct ServerEnv *penv )
 		}
 	}
 	
+	penv->epq_array = (execute_program_request *)malloc( sizeof(execute_program_request) * MAXCOUNT_ACCEPTED_SESSION ) ;
+	if( penv->epq_array == NULL )
+	{
+		FatalLog( __FILE__ , __LINE__ , "malloc failed[%d]errno[%d]" , nret , errno );
+		return -1;
+	}
+	memset( penv->epq_array , 0x00 , sizeof(execute_program_request) * MAXCOUNT_ACCEPTED_SESSION );
+	
+	penv->epp_array = (execute_program_response *)malloc( sizeof(execute_program_response) * MAXCOUNT_ACCEPTED_SESSION ) ;
+	if( penv->epp_array == NULL )
+	{
+		FatalLog( __FILE__ , __LINE__ , "malloc failed[%d]errno[%d]" , nret , errno );
+		return -1;
+	}
+	memset( penv->epp_array , 0x00 , sizeof(execute_program_response) * MAXCOUNT_ACCEPTED_SESSION );
+	
 	for( rserver_index = 0 ; rserver_index < penv->rserver_count ; rserver_index++ )
 	{
 		nret = InitSocketSession( & (penv->connect_session[rserver_index]) ) ;

@@ -230,7 +230,10 @@ int comm_OnInfoPipeInput( struct ServerEnv *penv , struct SocketSession *psessio
 		return 0;
 	}
 	
-	strncat( penv->epp.info , rsp.info , sizeof(penv->epp.info)-1 - strlen(penv->epp.info) );
+	strncat(penv->epp_array[(struct SocketSession*)(psession->p1)-penv->accepted_session_array].info
+		, rsp.info
+		, sizeof(penv->epp_array[(struct SocketSession*)(psession->p1)-penv->accepted_session_array].info)-1
+			- strlen(penv->epp_array[(struct SocketSession*)(psession->p1)-penv->accepted_session_array].info) );
 	
 	return 0;
 }
@@ -252,6 +255,8 @@ int comm_OnListenSocketInput( struct ServerEnv *penv , struct SocketSession *pse
 	if( p_new_session == NULL )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "GetUnusedSocketSession failed , too many sessions" );
+		DiscardAcceptSocket( psession->sock );
+		return 0;
 	}
 	
 	nret = AcceptSocket( psession->sock , p_new_session ) ;

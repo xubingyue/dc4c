@@ -23,8 +23,8 @@ struct Dc4cDagSchedule ;
 
 /********* ¸ß²ãº¯Êý *********/
 
-int DC4CLoadDagScheduleFromFile( struct Dc4cDagSchedule **pp_sched , char *pathfilename );
-int DC4CLoadDagScheduleFromDatabase( struct Dc4cDagSchedule **pp_sched , char *schedule_name );
+int DC4CLoadDagScheduleFromFile( struct Dc4cDagSchedule **pp_sched , char *pathfilename , int options );
+int DC4CLoadDagScheduleFromDatabase( struct Dc4cDagSchedule **pp_sched , char *schedule_name , int options );
 void DC4CLogDagSchedule( struct Dc4cDagSchedule *p_sched );
 int DC4CExecuteDagSchedule( struct Dc4cDagSchedule *p_sched , char *rservers_ip_port );
 int DC4CUnloadDagSchedule( struct Dc4cDagSchedule **pp_sched );
@@ -37,7 +37,7 @@ int DC4CGetDagScheduleResult( struct Dc4cDagSchedule *p_sched );
 
 /********* µÍ²ãº¯Êý *********/
 
-int DC4CLoadDagScheduleFromStruct( struct Dc4cDagSchedule **pp_sched , dag_schedule_configfile *p_config );
+int DC4CLoadDagScheduleFromStruct( struct Dc4cDagSchedule **pp_sched , dag_schedule_configfile *p_config , int options );
 
 int DC4CInitDagSchedule( struct Dc4cDagSchedule *p_sched , char *schedule_name , char *schedule_desc );
 void DC4CCleanDagSchedule( struct Dc4cDagSchedule *p_sched );

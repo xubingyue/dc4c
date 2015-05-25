@@ -1,3 +1,6 @@
+V1.1.2	2015-05-25	calvin
+	* 新增函数DC4CSetOptions给予选项DC4C_OPTIONS_INTERRUPT_BY_APP允许批量任务处理中报错时立即返回
+
 V1.1.1	2015-05-24	calvin
 	* 新增有向无环图任务流控制器src/tfc/dag for PostgreSQL版本，支持从数据库载入schedule配置
 	* 新增有向无环图任务流控制器示例test/dc4c_test_tfc_dag_master_pgsql

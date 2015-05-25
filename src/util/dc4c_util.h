@@ -66,9 +66,6 @@ extern "C" {
 
 extern char *__DC4C_UTIL_VERSION ;
 
-#define DC4C_ERROR_TIMETOUT		-14
-#define DC4C_ERROR_SOCKET_EXPECTION	-15
-
 #define MAXCNT_LISTEN_BAKLOG		10000
 
 #define LEN_COMMHEAD			8
@@ -156,6 +153,7 @@ int AfterDoCommandProtocol( struct SocketSession *psession );
 #define RETURN_SENDING_IN_PROGRESS		1
 int AsyncSendSocketData( struct SocketSession *psession );
 int SyncConnectSocket( char *ip , long port , struct SocketSession *psession );
+#define RETURN_TIMEOUT				1
 int SyncReceiveSocketData( struct SocketSession *psession , int *p_timeout );
 int SyncSendSocketData( struct SocketSession *psession , int *p_timeout );
 
@@ -168,6 +166,11 @@ void FormatSendHead( struct SocketSession *psession , char *msg_type , int msg_l
 int ConvertToDaemonServer();
 int ns2i( char *str , int len );
 int FileMd5( char *pathfilename , char *program_md5_exp ); /* char program_md5_exp[ MD5_DIGEST_LENGTH * 2 + 1 ] ; */
+
+#define SetAttribute(_param_,_attribute_)	(_param_)=(_attribute_);
+#define AddAttribute(_param_,_attribute_)	(_param_)|=(_attribute_);
+#define RemoveAttribute(_param_,_attribute_)	(_param_)&=(_attribute_);
+#define TestAttribute(_param_,_attribute_)	( ((_param_)&(_attribute_)) == (_attribute_) ? TRUE : FALSE )
 
 #ifdef __cplusplus
 }

@@ -100,17 +100,17 @@ typedef struct
 			{
 				char	program_and_params[ 256 + 1 ] ;
 				int	timeout ;
-			} tasks [ 100 ] ;
+			} tasks [ 200 ] ;
 			int	_tasks_count ;
 			int	_tasks_size ;
-		} batches_info [ 1000 ] ;
+		} batches_info [ 200 ] ;
 		int	_batches_info_count ;
 		int	_batches_info_size ;
 		struct
 		{
 			char	from_batch[ 64 + 1 ] ;
 			char	to_batch[ 64 + 1 ] ;
-		} batches_direction [ 1000 ] ;
+		} batches_direction [ 200 ] ;
 		int	_batches_direction_count ;
 		int	_batches_direction_size ;
 	} batches ;

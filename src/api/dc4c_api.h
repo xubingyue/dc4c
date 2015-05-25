@@ -42,12 +42,16 @@ extern char *__DC4C_API_VERSION ;
 #define DC4C_ERROR_CREATEPIPE			-72
 #define DC4C_ERROR_FORK				-73
 #define DC4C_ERROR_TIMEOUT			-74
+#define DC4C_ERROR_MD5_NOT_MATCHED_TOO		-75
 #define DC4C_ERROR_TERMSIG			-81
 #define DC4C_ERROR_SIGNALED			-82
 #define DC4C_ERROR_STOPPED			-83
-#define DC4C_ERROR_UNKNOW_QUIT			-84
+#define DC4C_ERROR_APP				-84
+#define DC4C_ERROR_UNKNOW_QUIT			-89
 
 #define DC4C_WORKER_COUNT_UNLIMITED		0
+
+#define DC4C_OPTIONS_INTERRUPT_BY_APP		1
 
 struct Dc4cApiEnv ;
 
@@ -56,6 +60,9 @@ int DC4CCleanEnv( struct Dc4cApiEnv **ppenv );
 
 void DC4CSetTimeout( struct Dc4cApiEnv *penv , int timeout );
 int DC4CGetTimeout( struct Dc4cApiEnv *penv );
+
+void DC4CSetOptions( struct Dc4cApiEnv *penv , unsigned long options );
+unsigned long DC4CGetOptions( struct Dc4cApiEnv *penv );
 
 int DC4CDoTask( struct Dc4cApiEnv *penv , char *program_and_params , int timeout );
 

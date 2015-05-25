@@ -13,7 +13,7 @@
 #include "IDL_dag_batches_tasks.dsc.ESQL.eh"
 #include "IDL_dag_batches_direction.dsc.ESQL.eh"
 
-int DC4CLoadDagScheduleFromDatabase( struct Dc4cDagSchedule **pp_sched , char *schedule_name )
+int DC4CLoadDagScheduleFromDatabase( struct Dc4cDagSchedule **pp_sched , char *schedule_name , int options )
 {
 	dag_schedule_configfile *p_config = NULL ;
 	
@@ -176,7 +176,7 @@ int DC4CLoadDagScheduleFromDatabase( struct Dc4cDagSchedule **pp_sched , char *s
 	DSCSQLACTION_CLOSE_CURSOR_dag_batches_direction_cursor1();
 	DebugLog( __FILE__ , __LINE__ , "DSCSQLACTION_CLOSE_CURSOR_dag_batches_direction_cursor1 ok" );
 	
-	nret = DC4CLoadDagScheduleFromStruct( pp_sched , p_config ) ;
+	nret = DC4CLoadDagScheduleFromStruct( pp_sched , p_config , options ) ;
 	free( p_config );
 	if( nret )
 	{

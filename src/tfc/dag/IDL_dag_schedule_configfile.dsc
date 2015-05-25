@@ -7,19 +7,19 @@ STRUCT	dag_schedule_configfile
 	}
 	STRUCT	batches
 	{
-		STRUCT	batches_info	ARRAY	1000
+		STRUCT	batches_info	ARRAY	200
 		{
 			STRING	64	batch_name
 			STRING	256	batch_desc
 			INT	4	view_pos_x
 			INT	4	view_pos_y
-			STRUCT	tasks	ARRAY	100
+			STRUCT	tasks	ARRAY	200
 			{
 				STRING	256	program_and_params
 				INT	4	timeout
 			}
 		}
-		STRUCT	batches_direction	ARRAY	1000
+		STRUCT	batches_direction	ARRAY	200
 		{
 			STRING	64	from_batch
 			STRING	64	to_batch

@@ -27,6 +27,8 @@ int comm_OnListenSocketInput( struct ServerEnv *penv , struct SocketSession *pse
 	if( p_new_session == NULL )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "GetUnusedSocketSession failed , too many sessions" );
+		DiscardAcceptSocket( psession->sock );
+		return 0;
 	}
 	
 	nret = AcceptSocket( psession->sock , p_new_session ) ;

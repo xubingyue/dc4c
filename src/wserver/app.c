@@ -116,6 +116,8 @@ static int ExecuteProgram( struct ServerEnv *penv , struct SocketSession *psessi
 	}
 	else
 	{
+		penv->is_working = 1 ;
+		
 		close( penv->info_pipe[1] );
 		SetNonBlocking( penv->info_pipe[0] );
 		
@@ -128,9 +130,8 @@ static int ExecuteProgram( struct ServerEnv *penv , struct SocketSession *psessi
 		
 		InfoLog( __FILE__ , __LINE__ , "[%d]fork[%d] ok" , (int)getpid() , (int)pid );
 		
-		memcpy( & (penv->epq) , p_req , sizeof(execute_program_request) );
-		memset( & (penv->epp) , 0x00 , sizeof(execute_program_response) );
 		penv->pid = pid ;
+		
 		time( & (penv->begin_timestamp) );
 	}
 	
@@ -139,7 +140,7 @@ static int ExecuteProgram( struct ServerEnv *penv , struct SocketSession *psessi
 	return 0;
 }
 
-int app_WaitProgramExiting( struct ServerEnv *penv , struct SocketSession *p_alive_session )
+int app_WaitProgramExiting( struct ServerEnv *penv , struct SocketSession *p_execute_session )
 {
 	pid_t			pid ;
 	int			error ;
@@ -182,7 +183,9 @@ int app_WaitProgramExiting( struct ServerEnv *penv , struct SocketSession *p_ali
 		error = DC4C_ERROR_UNKNOW_QUIT ;
 	}
 	
-	p_accepted_session = p_alive_session->p1 ;
+	penv->is_working = 0 ;
+	
+	p_accepted_session = p_execute_session->p1 ;
 	if( p_accepted_session && IsSocketEstablished( p_accepted_session ) )
 	{
 		nret = proto_ExecuteProgramResponse( penv , p_accepted_session , error , status ) ;
@@ -198,7 +201,7 @@ int app_WaitProgramExiting( struct ServerEnv *penv , struct SocketSession *p_ali
 		
 		ModifyOutputSockFromEpoll( penv->epoll_socks , p_accepted_session );
 		
-		p_alive_session->p1 = NULL ;
+		p_execute_session->p1 = NULL ;
 		p_accepted_session->p1 = NULL ;
 	}
 	else
@@ -206,8 +209,8 @@ int app_WaitProgramExiting( struct ServerEnv *penv , struct SocketSession *p_ali
 		DebugLog( __FILE__ , __LINE__ , "accepted sock not existed" );
 	}
 	
-	DeleteSockFromEpoll( penv->epoll_socks , p_alive_session );
-	CloseSocket( p_alive_session );
+	DeleteSockFromEpoll( penv->epoll_socks , p_execute_session );
+	CloseSocket( p_execute_session );
 	
 	SendWorkerNotice( penv );
 	
@@ -224,24 +227,16 @@ int app_ExecuteProgramRequest( struct ServerEnv *penv , struct SocketSession *ps
 	
 	int		nret = 0 ;
 	
-	if( IsSocketEstablished( & (penv->info_session) ) )
+	if( penv->is_working == 1 )
 	{
-		nret = proto_ExecuteProgramResponse( penv , psession , DC4C_INFO_ALREADY_EXECUTING , 0 ) ;
-		if( nret )
-		{
-			ErrorLog( __FILE__ , __LINE__ , "proto_ExecuteProgramResponse failed[%d]" , nret );
-			return -1;
-		}
-		else
-		{
-			DebugLog( __FILE__ , __LINE__ , "proto_ExecuteProgramResponse ok" );
-		}
+		proto_ExecuteProgramResponse( penv , psession , DC4C_INFO_ALREADY_EXECUTING , 0 );
 		return 0;
 	}
 	
 	lock_file( & lock_fd );
 	
-	memcpy( & (penv->epq) , p_req , sizeof(execute_program_request) );
+	memcpy( & (penv->epq_array[psession-penv->accepted_session_array]) , p_req , sizeof(execute_program_request) );
+	memset( & (penv->epp_array[psession-penv->accepted_session_array]) , 0x00 , sizeof(execute_program_response) );
 	
 	memset( program , 0x00 , sizeof(program) );
 	sscanf( p_req->program_and_params , "%s" , program );
@@ -274,11 +269,14 @@ int app_DeployProgramResponse( struct ServerEnv *penv , struct SocketSession *ps
 	char		pathfilename[ MAXLEN_FILENAME + 1 ] ;
 	FILE		*fp = NULL ;
 	int		len ;
+	char		program_md5_exp[ sizeof(((execute_program_request*)NULL)->program_md5_exp) ] ;
+	
+	int		nret = 0 ;
 	
 	lock_file( & lock_fd );
 	
 	memset( program , 0x00 , sizeof(program) );
-	sscanf( penv->epq.program_and_params , "%s" , program );
+	sscanf( penv->epq_array[psession-penv->accepted_session_array].program_and_params , "%s" , program );
 	memset( pathfilename , 0x00 , sizeof(pathfilename) );
 	SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/bin/%s" , getenv("HOME") , program );
 	unlink( pathfilename );
@@ -306,7 +304,15 @@ int app_DeployProgramResponse( struct ServerEnv *penv , struct SocketSession *ps
 	
 	unlock_file( & lock_fd );
 	
-	return ExecuteProgram( penv , psession , & (penv->epq) );
+	nret = FileMd5( pathfilename , program_md5_exp ) ;
+	if( nret || STRCMP( program_md5_exp , != , penv->epq_array[psession-penv->accepted_session_array].program_md5_exp ) )
+	{
+		InfoLog( __FILE__ , __LINE__ , "FileMd5[%s][%d] or MD5[%s] and req[%s] not matched too" , pathfilename , nret , program_md5_exp , penv->epq_array[psession-penv->accepted_session_array].program_md5_exp );
+		proto_ExecuteProgramResponse( penv , psession , DC4C_ERROR_MD5_NOT_MATCHED_TOO , 0 );
+		return 0;
+	}
+	
+	return ExecuteProgram( penv , psession , & (penv->epq_array[psession-penv->accepted_session_array]) );
 }
 
 int app_HeartBeatRequest( struct ServerEnv *penv , long *p_now , long *p_epoll_timeout )

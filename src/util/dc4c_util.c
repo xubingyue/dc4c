@@ -476,21 +476,21 @@ void CloseSocket( struct SocketSession *psession )
 		close( psession->sock );
 		memset( & (psession->addr) , 0x00 , sizeof(psession->addr) );
 		SetSocketClosed( psession );
-		
-		psession->type = 0 ;
-		psession->comm_protocol_mode = 0 ;
-		psession->progress = 0 ;
-		
-		psession->alive_timestamp = 0 ;
-		psession->active_timestamp = 0 ;
-		psession->alive_timeout = 0 ;
-		psession->heartbeat_lost_count = 0 ;
-		
-		psession->ch = '\0' ;
-		psession->p1 = NULL ;
-		psession->p2 = NULL ;
-		psession->p3 = NULL ;
 	}
+	
+	psession->type = 0 ;
+	psession->comm_protocol_mode = 0 ;
+	psession->progress = 0 ;
+	
+	psession->alive_timestamp = 0 ;
+	psession->active_timestamp = 0 ;
+	psession->alive_timeout = 0 ;
+	psession->heartbeat_lost_count = 0 ;
+	
+	psession->ch = '\0' ;
+	psession->p1 = NULL ;
+	psession->p2 = NULL ;
+	psession->p3 = NULL ;
 	
 	return;
 }
@@ -832,13 +832,13 @@ int SyncReceiveSocketData( struct SocketSession *psession , int *p_timeout )
 		if( nret == 0 )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "send timeout when selecting" );
-			return DC4C_ERROR_TIMETOUT;
+			return RETURN_TIMEOUT;
 		}
 		
 		if( FD_ISSET( psession->sock , & expt_fds ) )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "expection when selecting" );
-			return DC4C_ERROR_SOCKET_EXPECTION;
+			return -2;
 		}
 		
 		time( & tt2 );
@@ -846,7 +846,7 @@ int SyncReceiveSocketData( struct SocketSession *psession , int *p_timeout )
 		if( (*p_timeout) <= 0 )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "send timeout after select" );
-			return DC4C_ERROR_TIMETOUT;
+			return RETURN_TIMEOUT;
 		}
 		
 		len = (int)recv( psession->sock , psession->recv_buffer + psession->total_recv_len , 8 - psession->total_recv_len , 0 ) ;
@@ -861,7 +861,7 @@ int SyncReceiveSocketData( struct SocketSession *psession , int *p_timeout )
 			if( psession->total_recv_len == 0 )
 			{
 				InfoLog( __FILE__ , __LINE__ , "detected sock[%d] close on waiting for first byte" , psession->sock );
-				return RETURN_PEER_CLOSED;
+				return -4;
 			}
 			else
 			{
@@ -898,13 +898,13 @@ int SyncReceiveSocketData( struct SocketSession *psession , int *p_timeout )
 		if( nret == 0 )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "send timeout when selecting" );
-			return DC4C_ERROR_TIMETOUT;
+			return RETURN_TIMEOUT;
 		}
 		
 		if( FD_ISSET( psession->sock , & expt_fds ) )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "expection when selecting" );
-			return DC4C_ERROR_SOCKET_EXPECTION;
+			return -6;
 		}
 		
 		time( & tt2 );
@@ -912,7 +912,7 @@ int SyncReceiveSocketData( struct SocketSession *psession , int *p_timeout )
 		if( (*p_timeout) <= 0 )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "send timeout after select" );
-			return DC4C_ERROR_TIMETOUT;
+			return RETURN_TIMEOUT;
 		}
 		
 		len = (int)recv( psession->sock , psession->recv_buffer + psession->total_recv_len , 8 + psession->recv_body_len - psession->total_recv_len , 0 ) ;
@@ -920,12 +920,12 @@ int SyncReceiveSocketData( struct SocketSession *psession , int *p_timeout )
 		if( len < 0 )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "detected sock[%d] error on receiving data" , psession->sock );
-			return -1;
+			return -8;
 		}
 		else if( len == 0 )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "detected sock[%d] close on receiving data" , psession->sock );
-			return -1;
+			return -9;
 		}
 		else
 		{
@@ -945,7 +945,7 @@ int SyncReceiveSocketData( struct SocketSession *psession , int *p_timeout )
 
 int SyncSendSocketData( struct SocketSession *psession , int *p_timeout )
 {
-	fd_set			read_fds , expt_fds ;
+	fd_set			write_fds , expt_fds ;
 	struct timeval		tv ;
 	time_t			tt1 , tt2 ;
 	int			len ;
@@ -956,23 +956,23 @@ int SyncSendSocketData( struct SocketSession *psession , int *p_timeout )
 	{
 		time( & tt1 );
 		
-		FD_ZERO( & read_fds );
+		FD_ZERO( & write_fds );
 		FD_ZERO( & expt_fds );
-		FD_SET( psession->sock , & read_fds );
+		FD_SET( psession->sock , & write_fds );
 		FD_SET( psession->sock , & expt_fds );
 		tv.tv_sec = (*p_timeout) ;
 		tv.tv_usec = 0 ;
-		nret = select( psession->sock+1 , NULL , & read_fds , & expt_fds , & tv ) ;
+		nret = select( psession->sock+1 , NULL , & write_fds , & expt_fds , & tv ) ;
 		if( nret == 0 )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "send timeout when selecting" );
-			return DC4C_ERROR_TIMETOUT;
+			return RETURN_TIMEOUT;
 		}
 		
 		if( FD_ISSET( psession->sock , & expt_fds ) )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "expection when selecting" );
-			return DC4C_ERROR_SOCKET_EXPECTION;
+			return -2;
 		}
 		
 		time( & tt2 );
@@ -980,7 +980,7 @@ int SyncSendSocketData( struct SocketSession *psession , int *p_timeout )
 		if( (*p_timeout) <= 0 )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "send timeout after select" );
-			return DC4C_ERROR_TIMETOUT;
+			return RETURN_TIMEOUT;
 		}
 		
 		len = (int)send( psession->sock , psession->send_buffer + psession->send_len , psession->total_send_len - psession->send_len , 0 ) ;
@@ -991,7 +991,7 @@ int SyncSendSocketData( struct SocketSession *psession , int *p_timeout )
 				return RETURN_SENDING_IN_PROGRESS;
 			
 			ErrorLog( __FILE__ , __LINE__ , "detected sock[%d] error on sending data" , psession->sock );
-			return -1;
+			return -4;
 		}
 		else
 		{
