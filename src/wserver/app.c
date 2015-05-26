@@ -302,15 +302,16 @@ int app_DeployProgramResponse( struct ServerEnv *penv , struct SocketSession *ps
 		return 0;
 	}
 	
-	unlock_file( & lock_fd );
-	
 	nret = FileMd5( pathfilename , program_md5_exp ) ;
 	if( nret || STRCMP( program_md5_exp , != , penv->epq_array[psession-penv->accepted_session_array].program_md5_exp ) )
 	{
 		InfoLog( __FILE__ , __LINE__ , "FileMd5[%s][%d] or MD5[%s] and req[%s] not matched too" , pathfilename , nret , program_md5_exp , penv->epq_array[psession-penv->accepted_session_array].program_md5_exp );
 		proto_ExecuteProgramResponse( penv , psession , DC4C_ERROR_MD5_NOT_MATCHED_TOO , 0 );
+		unlock_file( & lock_fd );
 		return 0;
 	}
+	
+	unlock_file( & lock_fd );
 	
 	return ExecuteProgram( penv , psession , & (penv->epq_array[psession-penv->accepted_session_array]) );
 }

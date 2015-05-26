@@ -269,6 +269,7 @@ int DC4CLoadDagScheduleFromFile( struct Dc4cDagSchedule **pp_sched , char *pathf
 	g_fasterjson_encoding = FASTERJSON_ENCODING_GB18030 ;
 	
 	DSCINIT_dag_schedule_configfile( p_config );
+	
 	nret = DSCDESERIALIZE_JSON_dag_schedule_configfile( NULL , filebuffer , & readsize , p_config ) ;
 	free( filebuffer );
 	if( nret )
@@ -421,7 +422,7 @@ int DC4CExecuteDagSchedule( struct Dc4cDagSchedule *p_sched , char *rservers_ip_
 		}
 		else
 		{
-			InfoLog( __FILE__ , __LINE__ , "EXEC ACT batch - p_batch[%p] batch_name[%s] tasks_count[%d]" , p_branch_batch , p_branch_batch->batch_name , p_branch_batch->tasks_count );
+			InfoLog( __FILE__ , __LINE__ , "EXEC ACT batch - batch_name[%s] tasks_count[%d]" , p_branch_batch->batch_name , p_branch_batch->tasks_count );
 		}
 	}
 	

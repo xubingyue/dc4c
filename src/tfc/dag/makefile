@@ -62,6 +62,6 @@ libdc4c_tfc_dag.so		:	$(c_FILE_o)
 libdc4c_tfc_dag_pgsql.so	:	$(c_FILE_o) $(ec_FILE_o)
 	$(CC) -o $@ $(c_FILE_o) $(ec_FILE_o) $(SOFLAGS) $(LFLAGS) -lecpg
 
-sizeof		:	sizeof.o
-	$(CC) -o $@ sizeof.o
+sizeof		:	sizeof.o libdc4c_tfc_dag.so
+	$(CC) -o $@ sizeof.o libdc4c_tfc_dag.so
 

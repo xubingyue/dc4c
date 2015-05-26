@@ -161,7 +161,9 @@ int main( int argc , char *argv[] )
 				printf( "Task[%d]-[%s][%ld]-[%s][%s][%d][%d]-[%d][%d][%s]\n" , i , ip , port , tid , program_and_params , timeout , elapse , error , WEXITSTATUS(status) , info );
 			}
 			
-			if( nret )
+			if( nret == DC4C_ERROR_APP )
+				DC4CResetFinishedTasksWithError( penv );
+			else if( nret )
 				break;
 		}
 		

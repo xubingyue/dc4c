@@ -98,7 +98,7 @@ int DC4CGetPrepareTasksCount( struct Dc4cApiEnv *penv );
 int DC4CGetRunningTasksCount( struct Dc4cApiEnv *penv );
 int DC4CGetFinishedTasksCount( struct Dc4cApiEnv *penv );
 
-/* index based 1 */
+/* index based 0 */
 int DC4CGetBatchTasksIp( struct Dc4cApiEnv *penv , int index , char **pp_ip );
 int DC4CGetBatchTasksPort( struct Dc4cApiEnv *penv , int index , long *p_port );
 int DC4CGetBatchTasksTid( struct Dc4cApiEnv *penv , int index , char **pp_tid );
@@ -108,6 +108,8 @@ int DC4CGetBatchTasksElapse( struct Dc4cApiEnv *penv , int index , int *p_elapse
 int DC4CGetBatchTasksError( struct Dc4cApiEnv *penv , int index , int *p_error );
 int DC4CGetBatchTasksStatus( struct Dc4cApiEnv *penv , int index , int *p_status );
 int DC4CGetBatchTasksInfo( struct Dc4cApiEnv *penv , int index , char **pp_info );
+
+void DC4CResetFinishedTasksWithError( struct Dc4cApiEnv *penv );
 
 void DC4CSetAppLogFile( char *program );
 
