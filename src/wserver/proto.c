@@ -262,12 +262,12 @@ int proto( void *_penv , struct SocketSession *psession )
 		nret = app_ExecuteProgramRequest( penv , psession , & req ) ;
 		if( nret )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "app_WorkerRegisterRequest failed[%d]" , nret );
+			ErrorLog( __FILE__ , __LINE__ , "app_ExecuteProgramRequest failed[%d]" , nret );
 			return -1;
 		}
 		else
 		{
-			DebugLog( __FILE__ , __LINE__ , "app_WorkerRegisterRequest ok" );
+			DebugLog( __FILE__ , __LINE__ , "app_ExecuteProgramRequest ok" );
 		}
 	}
 	else if( STRNCMP( psession->recv_buffer + LEN_COMMHEAD , == , "DPP" , LEN_MSGHEAD_MSGTYPE ) )

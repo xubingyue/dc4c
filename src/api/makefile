@@ -9,8 +9,6 @@
 #@ c_FILE
 c_FILE		=	\
 			dc4c_api.c \
-			proto.c \
-			app.c \
 
 ###### 目标文件、安装目录配置区
 LIB		=	libdc4c_api.so
@@ -22,6 +20,7 @@ HDERINST	=	$(HOME)/include/dc4c_api
 CFLAGS		=	-I. \
 			-I$(HOME)/include/dc4c_util \
 			-I$(HOME)/include/dc4c_proto \
+			-I$(HOME)/include/dc4c_api \
 			-I$(HOME)/include/fasterjson \
 
 ###### 链接选项

@@ -15,20 +15,24 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <sys/socket.h>
-#include <sys/epoll.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/time.h>
 #include <time.h>
 #include <stdarg.h>
 #include <limits.h>
-#include <sys/epoll.h>
 #include <signal.h>
+#include <sys/socket.h>
+#include <sys/epoll.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/wait.h>
+#include <sys/sysinfo.h>
+#include <sys/utsname.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#define __USE_GNU
+#include <sched.h>
 #define _VSNPRINTF		vsnprintf
 #define _SNPRINTF		snprintf
 #define _CLOSESOCKET		close
@@ -63,8 +67,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-extern char *__DC4C_UTIL_VERSION ;
 
 #define MAXCNT_LISTEN_BAKLOG		10000
 
@@ -166,6 +168,9 @@ void FormatSendHead( struct SocketSession *psession , char *msg_type , int msg_l
 int ConvertToDaemonServer();
 int ns2i( char *str , int len );
 int FileMd5( char *pathfilename , char *program_md5_exp ); /* char program_md5_exp[ MD5_DIGEST_LENGTH * 2 + 1 ] ; */
+
+int BindCpuProcessor( int processor_no );
+int UnbindCpuProcessor();
 
 #define SetAttribute(_param_,_attribute_)	(_param_)=(_attribute_);
 #define AddAttribute(_param_,_attribute_)	(_param_)|=(_attribute_);

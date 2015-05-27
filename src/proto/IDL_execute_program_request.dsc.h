@@ -89,6 +89,7 @@ typedef struct
 	char	program_and_params[ 256 + 1 ] ;
 	char	program_md5_exp[ 32 + 1 ] ;
 	int	timeout ;
+	char	bind_cpu_flag ;
 } execute_program_request ;
 
 _WINDLL_FUNC int DSCINIT_execute_program_request( execute_program_request *pst );

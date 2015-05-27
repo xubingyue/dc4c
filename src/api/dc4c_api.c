@@ -15,8 +15,8 @@
 #include "dc4c_util.h"
 #include "dc4c_api.h"
 
-char __DC4C_API_VERSION_1_0_0[] = "1.0.0" ;
-char *__DC4C_API_VERSION = __DC4C_API_VERSION_1_0_0 ;
+char __DC4C_VERSION_1_1_4[] = "1.1.4" ;
+char *__DC4C_VERSION = __DC4C_VERSION_1_1_4 ;
 
 #define RSERVER_ARRAYSIZE				8
 
@@ -26,13 +26,6 @@ char *__DC4C_API_VERSION = __DC4C_API_VERSION_1_0_0 ;
 #define WSERVER_SESSION_PROGRESS_FINISHED_WITH_ERROR	3
 
 #define SELECT_TIMEOUT					10
-
-int proto_QueryWorkersRequest( struct SocketSession *psession , int want_count );
-int proto_QueryWorkersResponse( struct SocketSession *psession , query_workers_response *p_rsp );
-int proto_ExecuteProgramRequest( struct SocketSession *psession , char *program_and_params , int timeout , execute_program_request *p_req );
-int proto_ExecuteProgramResponse( struct SocketSession *psession , execute_program_response *p_rsp );
-int proto_DeployProgramRequest( struct SocketSession *psession , deploy_program_request *p_rsp );
-int proto_DeployProgramResponse( struct SocketSession *psession , char *program );
 
 struct Dc4cApiEnv
 {
@@ -62,6 +55,263 @@ struct Dc4cApiEnv
 	unsigned long			options ;
 	int				interrupted_flag ;
 } ;
+
+#define PREFIX_DSCLOG_query_workers_request	DebugLog( __FILE__ , __LINE__ , 
+#define NEWLINE_DSCLOG_query_workers_request
+#include "IDL_query_workers_request.dsc.LOG.c"
+
+#define PREFIX_DSCLOG_query_workers_response	DebugLog( __FILE__ , __LINE__ , 
+#define NEWLINE_DSCLOG_query_workers_response
+#include "IDL_query_workers_response.dsc.LOG.c"
+
+#define PREFIX_DSCLOG_execute_program_request	DebugLog( __FILE__ , __LINE__ , 
+#define NEWLINE_DSCLOG_execute_program_request
+#include "IDL_execute_program_request.dsc.LOG.c"
+
+#define PREFIX_DSCLOG_execute_program_response	DebugLog( __FILE__ , __LINE__ , 
+#define NEWLINE_DSCLOG_execute_program_response
+#include "IDL_execute_program_response.dsc.LOG.c"
+
+#define PREFIX_DSCLOG_deploy_program_request	DebugLog( __FILE__ , __LINE__ , 
+#define NEWLINE_DSCLOG_deploy_program_request
+#include "IDL_deploy_program_request.dsc.LOG.c"
+
+static int proto_QueryWorkersRequest( struct SocketSession *psession , int want_count )
+{
+	struct utsname		uts ;
+	
+	int			msg_len ;
+	
+	int			nret = 0 ;
+	
+	query_workers_request	req ;
+	
+	CleanSendBuffer( psession );
+	
+	DSCINIT_query_workers_request( & req );
+	
+	nret = uname( & uts ) ;
+	if( nret )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "uname failed[%d]" , nret );
+		return -1;
+	}
+	strcpy( req.sysname , uts.sysname );
+	strcpy( req.release , uts.release );
+	req.bits = sizeof(long) * 8 ;
+	req.count = want_count ;
+	
+	DSCLOG_query_workers_request( & req );
+	
+	msg_len = psession->send_buffer_size-1 - LEN_COMMHEAD - LEN_MSGHEAD_MSGTYPE ;
+	nret = DSCSERIALIZE_JSON_COMPACT_query_workers_request( & req , NULL , psession->send_buffer + LEN_COMMHEAD + LEN_MSGHEAD , & msg_len ) ;
+	if( nret )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "DSCSERIALIZE_JSON_COMPACT_query_workers_request failed[%d]" , nret );
+		return -1;
+	}
+	else
+	{
+		DebugLog( __FILE__ , __LINE__ , "DSCSERIALIZE_JSON_COMPACT_query_workers_request ok , [%d]bytes" , msg_len );
+	}
+	
+	FormatSendHead( psession , "QWQ" , msg_len );
+	
+	InfoLog( __FILE__ , __LINE__ , "output buffer [%d]bytes[%.*s]" , psession->total_send_len - LEN_COMMHEAD , psession->total_send_len - LEN_COMMHEAD , psession->send_buffer + LEN_COMMHEAD );
+	
+	return 0;
+}
+
+static int proto_QueryWorkersResponse( struct SocketSession *psession , query_workers_response *p_rsp )
+{
+	int				msg_len ;
+	
+	int				nret = 0 ;
+	
+	InfoLog( __FILE__ , __LINE__ , "input buffer [%d]bytes[%.*s]" , psession->recv_body_len , psession->recv_body_len , psession->recv_buffer + LEN_COMMHEAD );
+	
+	DSCINIT_query_workers_response( p_rsp );
+	
+	msg_len = psession->total_recv_len - LEN_COMMHEAD - LEN_MSGHEAD_MSGTYPE ;
+	nret = DSCDESERIALIZE_JSON_COMPACT_query_workers_response( NULL , psession->recv_buffer + LEN_COMMHEAD + LEN_MSGHEAD_MSGTYPE , & msg_len , p_rsp ) ;
+	if( nret )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "DSCDESERIALIZE_JSON_COMPACT_query_workers_response failed[%d]" , nret );
+		return -1;
+	}
+	else
+	{
+		DebugLog( __FILE__ , __LINE__ , "DSCDESERIALIZE_JSON_COMPACT_query_workers_response ok" );
+	}
+	
+	DSCLOG_query_workers_response( p_rsp );
+	
+	return 0;
+}
+
+static int proto_ExecuteProgramRequest( struct SocketSession *psession , char *program_and_params , int timeout , int options , execute_program_request *p_req )
+{
+	char			program[ MAXLEN_FILENAME + 1 ] ;
+	char			pathfilename[ MAXLEN_FILENAME + 1 ] ;
+	struct timeval		tv ;
+	
+	int			msg_len ;
+	
+	int			nret = 0 ;
+	
+	execute_program_request	req ;
+	
+	CleanSendBuffer( psession );
+	
+	DSCINIT_execute_program_request( & req );
+	
+	strcpy( req.ip , psession->ip );
+	req.port = psession->port ;
+	memset( & tv , 0x00 , sizeof(struct timeval) );
+	gettimeofday( & tv , NULL );
+	SNPRINTF( req.tid , sizeof(req.tid)-1 , "%010d%010d" , (int)(tv.tv_sec) , (int)(tv.tv_usec) );
+	strcpy( req.program_and_params , program_and_params );
+	req.timeout = timeout ;
+	req.bind_cpu_flag = TestAttribute( options , DC4C_OPTIONS_BIND_CPU )?1:0 ;
+	
+	memset( program , 0x00 , sizeof(program) );
+	sscanf( program_and_params , "%s" , program );
+	memset( pathfilename , 0x00 , sizeof(pathfilename) );
+	SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/bin/%s" , getenv("HOME") , program );
+	memset( req.program_md5_exp , 0x00 , sizeof(req.program_md5_exp) );
+	nret = FileMd5( pathfilename , req.program_md5_exp ) ;
+	if( nret )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "FileMd5 failed[%d]" , nret );
+		return DC4C_ERROR_FILE_NOT_FOUND;
+	}
+	
+	DSCLOG_execute_program_request( & req );
+	
+	msg_len = psession->send_buffer_size-1 - LEN_COMMHEAD - LEN_MSGHEAD_MSGTYPE ;
+	nret = DSCSERIALIZE_JSON_COMPACT_execute_program_request( & req , NULL , psession->send_buffer + LEN_COMMHEAD + LEN_MSGHEAD , & msg_len ) ;
+	if( nret )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "DSCSERIALIZE_JSON_COMPACT_execute_program_request failed[%d]" , nret );
+		return -1;
+	}
+	else
+	{
+		DebugLog( __FILE__ , __LINE__ , "DSCSERIALIZE_JSON_COMPACT_execute_program_request ok , [%d]bytes" , msg_len );
+	}
+	
+	FormatSendHead( psession , "EPQ" , msg_len );
+	
+	InfoLog( __FILE__ , __LINE__ , "output buffer [%d]bytes[%.*s]" , psession->total_send_len - LEN_COMMHEAD , psession->total_send_len - LEN_COMMHEAD , psession->send_buffer + LEN_COMMHEAD );
+	
+	if( p_req )
+	{
+		memcpy( p_req , & req , sizeof(execute_program_request) );
+	}
+	
+	return 0;
+}
+
+static int proto_DeployProgramRequest( struct SocketSession *psession , deploy_program_request *p_rsp )
+{
+	int				msg_len ;
+	
+	int				nret = 0 ;
+	
+	InfoLog( __FILE__ , __LINE__ , "input buffer [%d]bytes[%.*s]" , psession->recv_body_len , psession->recv_body_len , psession->recv_buffer + LEN_COMMHEAD );
+	
+	DSCINIT_deploy_program_request( p_rsp );
+	
+	msg_len = psession->total_recv_len - LEN_COMMHEAD - LEN_MSGHEAD_MSGTYPE ;
+	nret = DSCDESERIALIZE_JSON_COMPACT_deploy_program_request( NULL , psession->recv_buffer + LEN_COMMHEAD + LEN_MSGHEAD_MSGTYPE , & msg_len , p_rsp ) ;
+	if( nret )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "DSCDESERIALIZE_JSON_COMPACT_deploy_program_request failed[%d]" , nret );
+		return -1;
+	}
+	else
+	{
+		DebugLog( __FILE__ , __LINE__ , "DSCDESERIALIZE_JSON_COMPACT_deploy_program_request ok" );
+	}
+	
+	DSCLOG_deploy_program_request( p_rsp );
+	
+	return 0;
+}
+
+static int proto_DeployProgramResponse( struct SocketSession *psession , char *program )
+{
+	char			pathfilename[ MAXLEN_FILENAME + 1 ] ;
+	FILE			*fp = NULL ;
+	long			filesize ;
+	
+	int			nret = 0 ;
+	
+	CleanSendBuffer( psession );
+	
+	memset( pathfilename , 0x00 , sizeof(pathfilename) );
+	SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/bin/%s" , getenv("HOME") , program );
+	fp = fopen( pathfilename , "rb" ) ;
+	if( fp == NULL )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "fopen[%s] failed , errno[%d]" , pathfilename , errno );
+		return -1;
+	}
+	
+	fseek( fp , 0L , SEEK_END );
+	filesize = ftell( fp ) ;
+	fseek( fp , 0L , SEEK_SET );
+	
+	if( LEN_COMMHEAD + LEN_MSGHEAD + filesize > psession->send_buffer_size-1 )
+	{
+		nret = ReallocSendBuffer( psession , LEN_COMMHEAD + LEN_MSGHEAD + filesize + 1 ) ;
+		if( nret )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "ReallocSendBuffer ->[%d]bytes failed[%ld] , errno[%d]" , LEN_COMMHEAD + LEN_MSGHEAD + filesize + 1 , nret , errno );
+			return -1;
+		}
+		else
+		{
+			DebugLog( __FILE__ , __LINE__ , "ReallocSendBuffer ->[%d]bytes ok" , psession->send_buffer_size );
+		}
+	}
+	
+	fread( psession->send_buffer + LEN_COMMHEAD + LEN_MSGHEAD , sizeof(char) , filesize , fp );
+	fclose( fp );
+	
+	FormatSendHead( psession , "DPP" , filesize );
+	
+	InfoLog( __FILE__ , __LINE__ , "output buffer [%d]bytes[%.16s]" , psession->total_send_len - LEN_COMMHEAD , psession->send_buffer + LEN_COMMHEAD );
+	
+	return 0;
+}
+
+static int proto_ExecuteProgramResponse( struct SocketSession *psession , execute_program_response *p_rsp )
+{
+	int				msg_len ;
+	
+	int				nret = 0 ;
+	
+	InfoLog( __FILE__ , __LINE__ , "input buffer [%d]bytes[%.*s]" , psession->recv_body_len , psession->recv_body_len , psession->recv_buffer + LEN_COMMHEAD );
+	
+	DSCINIT_execute_program_response( p_rsp );
+	
+	msg_len = psession->total_recv_len - LEN_COMMHEAD - LEN_MSGHEAD_MSGTYPE ;
+	nret = DSCDESERIALIZE_JSON_COMPACT_execute_program_response( NULL , psession->recv_buffer + LEN_COMMHEAD + LEN_MSGHEAD_MSGTYPE , & msg_len , p_rsp ) ;
+	if( nret )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "DSCDESERIALIZE_JSON_COMPACT_execute_program_response failed[%d]" , nret );
+		return -1;
+	}
+	else
+	{
+		DebugLog( __FILE__ , __LINE__ , "DSCDESERIALIZE_JSON_COMPACT_execute_program_response ok" );
+	}
+	
+	DSCLOG_execute_program_response( p_rsp );
+	
+	return 0;
+}
 
 static int ReformingTasksArray( struct Dc4cApiEnv *penv , int tasks_count )
 {
@@ -189,12 +439,10 @@ int DC4CCleanEnv( struct Dc4cApiEnv **ppenv )
 
 int DC4CInitEnv( struct Dc4cApiEnv **ppenv , char *rservers_ip_port )
 {
-	char		buf[ 1024 + 1 ] ;
+	char		rservers_ip_port_copy[ 1024 + 1 ] ;
 	char		*p = NULL ;
 	
 	int		nret = 0 ;
-	
-	InfoLog( __FILE__ , __LINE__ , "dc4c_api v%s ( util v%s )" , __DC4C_API_VERSION , __DC4C_UTIL_VERSION );
 	
 	(*ppenv) = (struct Dc4cApiEnv *)malloc( sizeof(struct Dc4cApiEnv) ) ;
 	if( (*ppenv) == NULL )
@@ -204,10 +452,24 @@ int DC4CInitEnv( struct Dc4cApiEnv **ppenv , char *rservers_ip_port )
 	}
 	memset( (*ppenv) , 0x00 , sizeof(struct Dc4cApiEnv) );
 	
-	strcpy( buf , rservers_ip_port );
-	p = strtok( buf , "," ) ;
+	if( rservers_ip_port && rservers_ip_port[0] )
+	{
+		memset( rservers_ip_port_copy , 0x00 , sizeof(rservers_ip_port_copy) );
+		strncpy( rservers_ip_port_copy , rservers_ip_port , sizeof(rservers_ip_port_copy)-1 );
+	}
+	else if( ( p = getenv("DC4C_RSERVER_IP_PORT") ) )
+	{
+		memset( rservers_ip_port_copy , 0x00 , sizeof(rservers_ip_port_copy) );
+		strncpy( rservers_ip_port_copy , p , sizeof(rservers_ip_port_copy)-1 );
+	}
+	else
+	{
+		return DC4C_ERROR_PARAMETER;
+	}
+	
+	p = strtok( rservers_ip_port_copy , "," ) ;
 	if( p == NULL )
-		p = buf ;
+		p = rservers_ip_port_copy ;
 	for( (*ppenv)->rserver_count = 0 ; (*ppenv)->rserver_count < RSERVER_ARRAYSIZE && p ; (*ppenv)->rserver_count++ )
 	{
 		sscanf( p , "%[^:]:%d" , (*ppenv)->rserver_ip[(*ppenv)->rserver_count] , & ((*ppenv)->rserver_port[(*ppenv)->rserver_count]) );
@@ -260,47 +522,47 @@ int DC4CDoTask( struct Dc4cApiEnv *penv , char *program_and_params , int timeout
 
 int DC4CGetTaskIp( struct Dc4cApiEnv *penv , char **pp_ip )
 {
-	return DC4CGetBatchTasksIp( penv , 1 , pp_ip );
+	return DC4CGetBatchTasksIp( penv , 0 , pp_ip );
 }
 
 int DC4CGetTaskPort( struct Dc4cApiEnv *penv , long *p_port )
 {
-	return DC4CGetBatchTasksPort( penv , 1 , p_port );
+	return DC4CGetBatchTasksPort( penv , 0 , p_port );
 }
 
 int DC4CGetTaskTid( struct Dc4cApiEnv *penv , char **pp_tid )
 {
-	return DC4CGetBatchTasksTid( penv , 1 , pp_tid );
+	return DC4CGetBatchTasksTid( penv , 0 , pp_tid );
 }
 
 int DC4CGetTaskProgramAndParam( struct Dc4cApiEnv *penv , char **pp_program_and_params )
 {
-	return DC4CGetBatchTasksProgramAndParam( penv , 1 , pp_program_and_params );
+	return DC4CGetBatchTasksProgramAndParam( penv , 0 , pp_program_and_params );
 }
 
 int DC4CGetTaskTimeout( struct Dc4cApiEnv *penv , int *p_timeout )
 {
-	return DC4CGetBatchTasksTimeout( penv , 1 , p_timeout );
+	return DC4CGetBatchTasksTimeout( penv , 0 , p_timeout );
 }
 
 int DC4CGetTaskElapse( struct Dc4cApiEnv *penv , int *p_elapse )
 {
-	return DC4CGetBatchTasksElapse( penv , 1 , p_elapse );
+	return DC4CGetBatchTasksElapse( penv , 0 , p_elapse );
 }
 
 int DC4CGetTaskError( struct Dc4cApiEnv *penv , int *p_error )
 {
-	return DC4CGetBatchTasksError( penv , 1 , p_error );
+	return DC4CGetBatchTasksError( penv , 0 , p_error );
 }
 
 int DC4CGetTaskStatus( struct Dc4cApiEnv *penv , int *p_status )
 {
-	return DC4CGetBatchTasksStatus( penv , 1 , p_status );
+	return DC4CGetBatchTasksStatus( penv , 0 , p_status );
 }
 
 int DC4CGetTaskInfo( struct Dc4cApiEnv *penv , char **pp_info )
 {
-	return DC4CGetBatchTasksInfo( penv , 1 , pp_info );
+	return DC4CGetBatchTasksInfo( penv , 0 , pp_info );
 }
 
 #define PREPARE_COUNT_INCREASE													\
@@ -801,7 +1063,7 @@ _GOTO_CONNECT :
 			
 			task_session_ptr->alive_timeout = task_request_ptr->timeout ;
 			
-			nret = proto_ExecuteProgramRequest( task_session_ptr , task_request_ptr->program_and_params , task_request_ptr->timeout , task_request_ptr ) ;
+			nret = proto_ExecuteProgramRequest( task_session_ptr , task_request_ptr->program_and_params , task_request_ptr->timeout , penv->options , task_request_ptr ) ;
 			if( nret )
 			{
 				WarnLog( __FILE__ , __LINE__ , "proto_ExecuteProgramRequest failed[%d]errno[%d]" , nret , errno );
@@ -1165,8 +1427,6 @@ void DC4CSetAppLogFile( char *program )
 		SetLogFile( "%s/log/%s.log" , getenv("HOME") , program );
 	else
 		SetLogFile( "%s/log/dc4c_wserver_%d_%s.%s.log" , getenv("HOME") , atoi(WSERVER_INDEX) , WSERVER_IP_PORT , program );
-	
-	InfoLog( __FILE__ , __LINE__ , "%s ( api v%s )" , program , __DC4C_API_VERSION );
 	
 	return;
 }

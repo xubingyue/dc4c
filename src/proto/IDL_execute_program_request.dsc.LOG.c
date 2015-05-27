@@ -22,5 +22,6 @@ int FUNCNAME_DSCLOG_execute_program_request( execute_program_request *pst )
 	PREFIX_DSCLOG_execute_program_request "execute_program_request.program_and_params[%s]" NEWLINE_DSCLOG_execute_program_request , pst->program_and_params );
 	PREFIX_DSCLOG_execute_program_request "execute_program_request.program_md5_exp[%s]" NEWLINE_DSCLOG_execute_program_request , pst->program_md5_exp );
 	PREFIX_DSCLOG_execute_program_request "execute_program_request.timeout[%d]" NEWLINE_DSCLOG_execute_program_request , pst->timeout );
+	PREFIX_DSCLOG_execute_program_request "execute_program_request.bind_cpu_flag[%d]" NEWLINE_DSCLOG_execute_program_request , pst->bind_cpu_flag );
 	return 0;
 }

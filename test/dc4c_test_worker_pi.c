@@ -46,6 +46,7 @@ int pi_master( char *rservers_ip_port , unsigned long max_x , int tasks_count )
 	}
 	
 	DC4CSetTimeout( penv , 600 );
+	DC4CSetOptions( penv , DC4C_OPTIONS_BIND_CPU );
 	
 	tasks_array = (struct Dc4cBatchTask *)malloc( sizeof(struct Dc4cBatchTask) * tasks_count ) ;
 	if( tasks_array == NULL )
@@ -81,7 +82,7 @@ int pi_master( char *rservers_ip_port , unsigned long max_x , int tasks_count )
 	mpf_init( pi_incr );
 	mpf_init_set_d( pi , 0.00 );
 	
-	for( i = 1 ; i <= tasks_count ; i++ )
+	for( i = 0 ; i < tasks_count ; i++ )
 	{
 		DC4CGetBatchTasksIp( penv , i , & ip );
 		DC4CGetBatchTasksPort( penv , i , & port );
@@ -163,12 +164,6 @@ int pi_worker( unsigned long start_x , unsigned long end_x )
 		if( flag == '-' )
 			mpf_neg( pi_incr , pi_incr );
 		mpf_add( pi , pi , pi_incr );
-		
-		/*
-		memset( output , 0x00 , sizeof(output) );
-		gmp_snprintf( output , sizeof(output)-1 , "[%.Ff] (=%c1/%lu*4) = [%.Ff]" , pi_incr , flag , x , pi );
-		InfoLog( __FILE__ , __LINE__ , "%s" , output );
-		*/
 		
 		flag = '-' + ' ' - flag ;
 	}

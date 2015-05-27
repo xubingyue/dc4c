@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-extern char *__DC4C_API_VERSION ;
+extern char *__DC4C_VERSION ;
 
 #define DC4C_ERROR_INTERNAL			-11
 #define DC4C_ERROR_SOCKET			-12
@@ -41,8 +41,9 @@ extern char *__DC4C_API_VERSION ;
 #define DC4C_ERROR_WRITEFILE			-71
 #define DC4C_ERROR_CREATEPIPE			-72
 #define DC4C_ERROR_FORK				-73
-#define DC4C_ERROR_TIMEOUT			-74
-#define DC4C_ERROR_MD5_NOT_MATCHED_TOO		-75
+#define DC4C_ERROR_EXEC				-74
+#define DC4C_ERROR_TIMEOUT			-75
+#define DC4C_ERROR_MD5_NOT_MATCHED_TOO		-76
 #define DC4C_ERROR_TERMSIG			-81
 #define DC4C_ERROR_SIGNALED			-82
 #define DC4C_ERROR_STOPPED			-83
@@ -52,6 +53,7 @@ extern char *__DC4C_API_VERSION ;
 #define DC4C_WORKER_COUNT_UNLIMITED		0
 
 #define DC4C_OPTIONS_INTERRUPT_BY_APP		1
+#define DC4C_OPTIONS_BIND_CPU			2
 
 struct Dc4cApiEnv ;
 

@@ -44,6 +44,9 @@ int DSCSERIALIZE_JSON_COMPACT_execute_program_request( execute_program_request *
 	len=SNPRINTF(buf,remain_len,","); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\"timeout\":"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"%d",pst->timeout); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,","); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"\"bind_cpu_flag\":"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"%d",pst->bind_cpu_flag); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"}"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	
 	if( p_len ) (*p_len) = (*p_len) - remain_len ;
@@ -90,6 +93,9 @@ int CallbackOnJsonNode_execute_program_request( int type , char *jpath , int jpa
 		/* timeout */
 		if( jpath_len == 8 && strncmp( jpath , "/timeout" , jpath_len ) == 0 )
 		{NATOI(content,content_len,pst->timeout);}
+		/* bind_cpu_flag */
+		if( jpath_len == 14 && strncmp( jpath , "/bind_cpu_flag" , jpath_len ) == 0 )
+		{NATOC(content,content_len,pst->bind_cpu_flag);}
 	}
 	
 	return 0;

@@ -111,8 +111,13 @@ static int ExecuteProgram( struct ServerEnv *penv , struct SocketSession *psessi
 		SNPRINTF( envbuf , sizeof(envbuf)-1 , "%d" , penv->info_pipe[1] );
 		setenv( "WSERVER_INFO_PIPE" , envbuf , 1 );
 		
+		if( p_req->bind_cpu_flag )
+			BindCpuProcessor( penv->wserver_index );
+		
 		InfoLog( __FILE__ , __LINE__ , "execvp [%s] [%s] [%s] [%s] ..." , args[0]?args[0]:"" , args[1]?args[1]:"" , args[2]?args[2]:"" , args[3]?args[3]:"" );
-		return execvp( args[0] , args );
+		nret = execvp( args[0] , args ) ;
+		FatalLog( __FILE__ , __LINE__ , "execvp failed[%d] , errno[%d]" , nret , errno );
+		exit(DC4C_ERROR_EXEC);
 	}
 	else
 	{

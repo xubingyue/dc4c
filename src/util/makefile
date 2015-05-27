@@ -15,8 +15,10 @@ c_FILE		=	\
 ###### 目标文件、安装目录配置区
 LIB		=	libdc4c_util.so
 LIBINST		=	$(HOME)/lib
-HDER		=	dc4c_util.h LOGC.h ListX.h
+HDER		=	dc4c_util.h ListX.h
 HDERINST	=	$(HOME)/include/dc4c_util
+HDER2		=	LOGC.h
+HDERINST2	=	$(HOME)/include/dc4c_api
 
 ###### 编译选项
 CFLAGS		=	-I. \

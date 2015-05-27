@@ -8,9 +8,6 @@
 
 #include "server.h"
 
-char __DC4C_WSERVER_VERSION_1_0_0[] = "1.0.0" ;
-char *__DC4C_WSERVER_VERSION = __DC4C_WSERVER_VERSION_1_0_0 ;
-
 int		g_main_exit_flag = 0 ;
 
 static void main_signal_proc( int signum )
@@ -22,7 +19,7 @@ static void main_signal_proc( int signum )
 
 static void version()
 {
-	printf( "wserver v%s build %s %s ( util v%s , api v%s )\n" , __DC4C_WSERVER_VERSION , __DATE__ , __TIME__ , __DC4C_UTIL_VERSION , __DC4C_API_VERSION );
+	printf( "wserver v%s build %s %s\n" , __DC4C_VERSION , __DATE__ , __TIME__ );
 	printf( "Copyright by calvin<calvinwilliams.c@gmail.com> 2014,2015\n\n" );
 	return;
 }

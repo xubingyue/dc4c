@@ -24,7 +24,7 @@ case $action in
 		call "dc4c_rserver -r 0.0.0.0:12002 $*"
 		# call "dc4c_wserver -r 0.0.0.0:12001 -w 0.0.0.0:13001 -c 1 $*"
 		# call "dc4c_wserver -r 0.0.0.0:12001,0.0.0.0:12002 -w 0.0.0.0:13001 -c 1 $*"
-		call "dc4c_wserver -r 0.0.0.0:12001,0.0.0.0:12002 -w 0.0.0.0:13001 -c 4 $*"
+		call "dc4c_wserver -r 0.0.0.0:12001,0.0.0.0:12002 -w 0.0.0.0:13001 -c 5 $*"
 		;;
 	stop)
 		PID=`ps -f -u $USER | grep -v grep | awk '{if($3=="1"&&$8=="dc4c_wserver")print $2}'`

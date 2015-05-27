@@ -28,8 +28,6 @@
 extern "C" {
 #endif
 
-extern char *__DC4C_WSERVER_VERSION ;
-
 #define EPOLL_FD_COUNT			1024
 #define WAIT_EVENTS_COUNT		100
 
