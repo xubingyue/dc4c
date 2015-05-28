@@ -52,7 +52,7 @@ int main( int argc , char *argv[] )
 		DC4CGetTaskIp( penv , & ip );
 		DC4CGetTaskPort( penv , & port );
 		DC4CGetTaskTid( penv , & tid );
-		DC4CGetTaskProgramAndParam( penv , & program_and_params );
+		DC4CGetTaskProgramAndParams( penv , & program_and_params );
 		DC4CGetTaskTimeout( penv , & timeout );
 		DC4CGetTaskElapse( penv , & elapse );
 		DC4CGetTaskError( penv , & error );

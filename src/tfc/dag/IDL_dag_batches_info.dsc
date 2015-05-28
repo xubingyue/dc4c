@@ -1,7 +1,7 @@
 STRUCT	dag_batches_info
 {
-	STRING	64	schedule_name
-	STRING	64	batch_name
+	STRING	64	schedule_name	NOTNULL
+	STRING	64	batch_name	NOTNULL
 	STRING	64	batch_desc
 	INT	4	view_pos_x
 	INT	4	view_pos_y

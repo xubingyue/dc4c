@@ -26,8 +26,7 @@ BIN		=	\
 			dc4c_test_tfc_dag_master \
 			dc4c_test_worker_sleep \
 			dc4c_test_worker_pi \
-
-#			dc4c_test_tfc_dag_master_pgsql \
+			dc4c_test_tfc_dag_master_pgsql \
 
 BININST		=	$(HOME)/bin
 
@@ -38,8 +37,7 @@ CFLAGS		=	-I. \
 			-I$(HOME)/include/dc4c_proto \
 			-I$(HOME)/include/dc4c_api \
 			-I$(HOME)/include/dc4c_tfc_dag \
-
-#			-I/root/local/postgresql/include \
+			-I/root/local/postgresql/include \
 
 ###### Á´½ÓÑ¡Ïî
 LFLAGS		=	-L. \

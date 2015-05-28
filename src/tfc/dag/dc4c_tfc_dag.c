@@ -542,7 +542,7 @@ int DC4CExecuteDagSchedule( struct Dc4cDagSchedule *p_sched , char *rservers_ip_
 	return 0;
 }
 
-int DC4CUnloadDagSchedule( struct Dc4cDagSchedule **pp_sched )
+void DC4CUnloadDagSchedule( struct Dc4cDagSchedule **pp_sched )
 {
 	if( (*pp_sched) )
 	{
@@ -575,7 +575,7 @@ int DC4CUnloadDagSchedule( struct Dc4cDagSchedule **pp_sched )
 		(*pp_sched) = NULL ;
 	}
 	
-	return 0;
+	return;
 }
 
 int DC4CGetDagScheduleProgress( struct Dc4cDagSchedule *p_sched )
@@ -681,7 +681,7 @@ int DC4CLinkDagBatch( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatch *p_p
 	return 0;
 }
 
-void DC4CSetBatchTasks( struct Dc4cDagBatch *p_batch , struct Dc4cBatchTask *tasks_array , int tasks_count )
+void DC4CSetDagBatchTasks( struct Dc4cDagBatch *p_batch , struct Dc4cBatchTask *tasks_array , int tasks_count )
 {
 	if( p_batch->tasks_array )
 	{
@@ -694,31 +694,33 @@ void DC4CSetBatchTasks( struct Dc4cDagBatch *p_batch , struct Dc4cBatchTask *tas
 	return;
 }
 
-struct Dc4cApiEnv **DC4CGetApiEnvPPtr( struct Dc4cDagBatch *p_batch )
+struct Dc4cApiEnv **DC4CGetDagBatchApiEnvPPtr( struct Dc4cDagBatch *p_batch )
 {
 	return & (p_batch->penv);
 }
 
-void DC4CGetBatchBeginDatetime( struct Dc4cDagBatch *p_batch , char begin_datetime[19+1] , long *p_begin_datetime_stamp )
+void DC4CGetDagBatchBeginDatetime( struct Dc4cDagBatch *p_batch , char begin_datetime[19+1] , long *p_begin_datetime_stamp )
 {
 	strcpy( begin_datetime , p_batch->begin_datetime );
 	(*p_begin_datetime_stamp) = p_batch->begin_datetime_stamp ;
 	return;
 }
 
-void DC4CGetBatchEndDatetime( struct Dc4cDagBatch *p_batch , char end_datetime[19+1] , long *p_end_datetime_stamp )
+void DC4CGetDagBatchEndDatetime( struct Dc4cDagBatch *p_batch , char end_datetime[19+1] , long *p_end_datetime_stamp )
 {
 	strcpy( end_datetime , p_batch->end_datetime );
 	(*p_end_datetime_stamp) = p_batch->end_datetime_stamp ;
 	return;
 }
 
-int DC4CGetBatchProgress( struct Dc4cDagBatch *p_batch )
+void DC4CGetDagBatchProgress( struct Dc4cDagBatch *p_batch , int *p_progress )
 {
-	return p_batch->progress;
+	(*p_progress) = p_batch->progress ;
+	return;
 }
 
-int DC4CGetBatchResult( struct Dc4cDagBatch *p_batch )
+void DC4CGetDagBatchResult( struct Dc4cDagBatch *p_batch , int *p_result )
 {
-	return p_batch->result;
+	(*p_result) = p_batch->result ;
+	return;
 }

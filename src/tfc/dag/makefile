@@ -17,9 +17,9 @@ ec_FILE		=	\
 			IDL_dag_batches_direction.dsc.ESQL.ec \
 			IDL_dag_batches_info.dsc.ESQL.ec \
 			IDL_dag_batches_tasks.dsc.ESQL.ec \
-			
+
 ###### 目标文件、安装目录配置区
-LIB		=	libdc4c_tfc_dag.so # libdc4c_tfc_dag_pgsql.so
+LIB		=	libdc4c_tfc_dag.so libdc4c_tfc_dag_pgsql.so
 LIBINST		=	$(HOME)/lib
 HDER		=	\
 			dc4c_tfc_dag.h IDL_dag_schedule_configfile.dsc.h IDL_dag_schedule.dsc.ESQL.eh IDL_dag_schedule.dsc.h
@@ -31,8 +31,7 @@ CFLAGS		=	-I. \
 			-I$(HOME)/include/fasterjson \
 			-I$(HOME)/include/dc4c_util \
 			-I$(HOME)/include/dc4c_api \
-
-#			-I/root/local/postgresql/include \
+			-I/root/local/postgresql/include \
 
 ###### 链接选项
 LFLAGS		=	-L. \

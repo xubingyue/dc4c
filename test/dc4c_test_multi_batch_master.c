@@ -55,7 +55,6 @@ int main( int argc , char *argv[] )
 			printf( "DC4CInitEnv ok\n" );
 		}
 		
-		DC4CSetTimeout( ppenvs[0] , 60 );
 		DC4CSetOptions( ppenvs[0] , DC4C_OPTIONS_INTERRUPT_BY_APP );
 		
 		nret = DC4CInitEnv( & (ppenvs[1]) , argv[1] ) ;
@@ -69,7 +68,6 @@ int main( int argc , char *argv[] )
 			printf( "DC4CInitEnv ok\n" );
 		}
 		
-		DC4CSetTimeout( ppenvs[1] , 60 );
 		DC4CSetOptions( ppenvs[1] , DC4C_OPTIONS_INTERRUPT_BY_APP );
 		
 		workers_count = atoi(argv[2]) ;
@@ -91,7 +89,7 @@ int main( int argc , char *argv[] )
 		}
 		
 		strcpy( task.program_and_params , "dc4c_test_worker_sleep 3" );
-		task.timeout = DC4CGetTimeout(ppenvs[1]) ;
+		task.timeout = 0 ;
 		
 		nret = DC4CBeginBatchTasks( ppenvs[0] , workers_count , & task , 1 ) ;
 		if( nret )
@@ -114,7 +112,7 @@ int main( int argc , char *argv[] )
 				strcpy( p_task->program_and_params , argv[4] );
 			else
 				strcpy( p_task->program_and_params , argv[4+i] );
-			p_task->timeout = DC4CGetTimeout(ppenvs[1]) ;
+			p_task->timeout = 0 ;
 		}
 		
 		nret = DC4CBeginBatchTasks( ppenvs[1] , workers_count , tasks_array , tasks_count ) ;
@@ -144,15 +142,13 @@ int main( int argc , char *argv[] )
 				
 			}
 			
-			printf( "tasks_count[%d] worker_count[%d] - prepare_count[%d] running_count[%d] finished_count[%d]\n" , DC4CGetTasksCount(penv) , DC4CGetWorkersCount(penv) , DC4CGetPrepareTasksCount(penv) , DC4CGetRunningTasksCount(penv) , DC4CGetFinishedTasksCount(penv) );
-			
 			tasks_count = DC4CGetTasksCount( penv ) ;
 			for( i = 0 ; i < tasks_count ; i++ )
 			{
 				DC4CGetBatchTasksIp( penv , i , & ip );
 				DC4CGetBatchTasksPort( penv , i , & port );
 				DC4CGetBatchTasksTid( penv , i , & tid );
-				DC4CGetBatchTasksProgramAndParam( penv , i , & program_and_params );
+				DC4CGetBatchTasksProgramAndParams( penv , i , & program_and_params );
 				DC4CGetBatchTasksTimeout( penv , i , & timeout );
 				DC4CGetBatchTasksElapse( penv , i , & elapse );
 				DC4CGetBatchTasksError( penv , i , & error );

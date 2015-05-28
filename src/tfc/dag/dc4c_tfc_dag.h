@@ -27,7 +27,7 @@ int DC4CLoadDagScheduleFromFile( struct Dc4cDagSchedule **pp_sched , char *pathf
 int DC4CLoadDagScheduleFromDatabase( struct Dc4cDagSchedule **pp_sched , char *schedule_name , int options );
 void DC4CLogDagSchedule( struct Dc4cDagSchedule *p_sched );
 int DC4CExecuteDagSchedule( struct Dc4cDagSchedule *p_sched , char *rservers_ip_port );
-int DC4CUnloadDagSchedule( struct Dc4cDagSchedule **pp_sched );
+void DC4CUnloadDagSchedule( struct Dc4cDagSchedule **pp_sched );
 
 #define DC4C_DAGSCHELDULE_PROGRESS_INIT		0
 #define DC4C_DAGSCHELDULE_PROGRESS_EXECUTING	1
@@ -47,17 +47,15 @@ BOOL DC4CFreeDagBatch( void *pv );
 
 int DC4CLinkDagBatch( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatch *p_parent_batch , struct Dc4cDagBatch *p_batch );
 
-void DC4CSetBatchTasks( struct Dc4cDagBatch *p_batch , struct Dc4cBatchTask *a_tasks , int tasks_count );
-struct Dc4cApiEnv **DC4CGetApiEnvPPtr( struct Dc4cDagBatch *p_batch );
-
-void DC4CGetBatchBeginDatetime( struct Dc4cDagBatch *p_batch , char begin_datetime[19+1] , long *p_begin_datetime_stamp );
-void DC4CGetBatchEndDatetime( struct Dc4cDagBatch *p_batch , char end_datetime[19+1] , long *p_end_datetime_stamp );
-
+void DC4CSetDagBatchTasks( struct Dc4cDagBatch *p_batch , struct Dc4cBatchTask *a_tasks , int tasks_count );
+struct Dc4cApiEnv **DC4CGetDagBatchApiEnvPPtr( struct Dc4cDagBatch *p_batch );
+void DC4CGetDagBatchBeginDatetime( struct Dc4cDagBatch *p_batch , char begin_datetime[19+1] , long *p_begin_datetime_stamp );
+void DC4CGetDagBatchEndDatetime( struct Dc4cDagBatch *p_batch , char end_datetime[19+1] , long *p_end_datetime_stamp );
 #define DC4C_DAGBATCH_PROGRESS_INIT		0
 #define DC4C_DAGBATCH_PROGRESS_EXECUTING	1
 #define DC4C_DAGBATCH_PROGRESS_FINISHED		2
-int DC4CGetBatchProgress( struct Dc4cDagBatch *p_batch );
-int DC4CGetBatchResult( struct Dc4cDagBatch *p_batch );
+void DC4CGetDagBatchProgress( struct Dc4cDagBatch *p_batch , int *p_progress );
+void DC4CGetDagBatchResult( struct Dc4cDagBatch *p_batch , int *p_result );
 
 #ifdef __cplusplus
 }

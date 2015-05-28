@@ -92,44 +92,44 @@ int DC4CLoadDagScheduleFromDatabase( struct Dc4cDagSchedule **pp_sched , char *s
 		memset( & batches_tasks , 0x00 , sizeof(dag_batches_tasks) );
 		strncpy( batches_tasks.schedule_name , schedule.schedule_name , sizeof(batches_tasks.schedule_name)-1 );
 		strncpy( batches_tasks.batch_name , batches_info.batch_name , sizeof(batches_tasks.batch_name)-1 );
-		DSCSQLACTION_OPEN_CURSOR_dag_batches_tasks_cursor1_SELECT_A_FROM_dag_batches_tasks_WHERE_schedule_name_E_AND_batch_name_E( & batches_tasks );
+		DSCSQLACTION_OPEN_CURSOR_dag_batches_tasks_cursor2_SELECT_A_FROM_dag_batches_tasks_WHERE_schedule_name_E_AND_batch_name_E_ORDER_BY_order_index( & batches_tasks );
 		if( SQLCODE )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "DSCSQLACTION_OPEN_CURSOR_dag_batches_tasks_cursor1_SELECT_A_FROM_dag_batches_tasks_WHERE_schedule_name_E_AND_batch_name_E failed , SQLCODE[%d][%s][%s]" , SQLCODE , SQLSTATE , SQLDESC );
+			ErrorLog( __FILE__ , __LINE__ , "DSCSQLACTION_OPEN_CURSOR_dag_batches_tasks_cursor2_SELECT_A_FROM_dag_batches_tasks_WHERE_schedule_name_E_AND_batch_name_E_ORDER_BY_order_index failed , SQLCODE[%d][%s][%s]" , SQLCODE , SQLSTATE , SQLDESC );
 			free( p_config );
 			return DC4C_ERROR_DATABASE;
 		}
 		else
 		{
-			DebugLog( __FILE__ , __LINE__ , "DSCSQLACTION_OPEN_CURSOR_dag_batches_tasks_cursor1_SELECT_A_FROM_dag_batches_tasks_WHERE_schedule_name_E_AND_batch_name_E ok" );
+			DebugLog( __FILE__ , __LINE__ , "DSCSQLACTION_OPEN_CURSOR_dag_batches_tasks_cursor2_SELECT_A_FROM_dag_batches_tasks_WHERE_schedule_name_E_AND_batch_name_E_ORDER_BY_order_index ok" );
 		}
 		
 		for(	p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_count = 0
 			; p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_count < p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_size
 			; p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_count++ )
 		{
-			DSCSQLACTION_FETCH_CURSOR_dag_batches_tasks_cursor1( & batches_tasks );
+			DSCSQLACTION_FETCH_CURSOR_dag_batches_tasks_cursor2( & batches_tasks );
 			if( SQLCODE == SQLNOTFOUND )
 			{
 				break;
 			}
 			else if( SQLCODE )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "DSCSQLACTION_FETCH_CURSOR_dag_batches_tasks_cursor1 failed , SQLCODE[%d][%s][%s]" , SQLCODE , SQLSTATE , SQLDESC );
+				ErrorLog( __FILE__ , __LINE__ , "DSCSQLACTION_FETCH_CURSOR_dag_batches_tasks_cursor2 failed , SQLCODE[%d][%s][%s]" , SQLCODE , SQLSTATE , SQLDESC );
 				free( p_config );
 				return DC4C_ERROR_DATABASE;
 			}
 			else
 			{
-				DebugLog( __FILE__ , __LINE__ , "DSCSQLACTION_FETCH_CURSOR_dag_batches_tasks_cursor1 ok" );
+				DebugLog( __FILE__ , __LINE__ , "DSCSQLACTION_FETCH_CURSOR_dag_batches_tasks_cursor2 ok" );
 			}
 			
 			strncpy( p_config->batches.batches_info[p_config->batches._batches_info_count].tasks[p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_count].program_and_params , batches_tasks.program_and_params , sizeof(p_config->batches.batches_info[p_config->batches._batches_info_count].tasks[p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_count].program_and_params)-1 );
 			p_config->batches.batches_info[p_config->batches._batches_info_count].tasks[p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_count].timeout = batches_tasks.timeout ;
 		}
 		
-		DSCSQLACTION_CLOSE_CURSOR_dag_batches_tasks_cursor1();
-		DebugLog( __FILE__ , __LINE__ , "DSCSQLACTION_CLOSE_CURSOR_dag_batches_tasks_cursor1 ok" );
+		DSCSQLACTION_CLOSE_CURSOR_dag_batches_tasks_cursor2();
+		DebugLog( __FILE__ , __LINE__ , "DSCSQLACTION_CLOSE_CURSOR_dag_batches_tasks_cursor2 ok" );
 	}
 	
 	DSCSQLACTION_CLOSE_CURSOR_dag_batches_info_cursor1();

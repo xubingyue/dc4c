@@ -57,8 +57,12 @@ extern char *__DC4C_VERSION ;
 
 struct Dc4cApiEnv ;
 
+/********* 用户节点接口 *********/
+
+/* API环境类 */
+
 int DC4CInitEnv( struct Dc4cApiEnv **ppenv , char *rservers_ip_port );
-int DC4CCleanEnv( struct Dc4cApiEnv **ppenv );
+void DC4CCleanEnv( struct Dc4cApiEnv **ppenv );
 
 void DC4CSetTimeout( struct Dc4cApiEnv *penv , int timeout );
 int DC4CGetTimeout( struct Dc4cApiEnv *penv );
@@ -66,12 +70,14 @@ int DC4CGetTimeout( struct Dc4cApiEnv *penv );
 void DC4CSetOptions( struct Dc4cApiEnv *penv , unsigned long options );
 unsigned long DC4CGetOptions( struct Dc4cApiEnv *penv );
 
+/* 同步发起任务类 */
+
 int DC4CDoTask( struct Dc4cApiEnv *penv , char *program_and_params , int timeout );
 
 int DC4CGetTaskIp( struct Dc4cApiEnv *penv , char **pp_ip );
 int DC4CGetTaskPort( struct Dc4cApiEnv *penv , long *p_port );
 int DC4CGetTaskTid( struct Dc4cApiEnv *penv , char **pp_tid );
-int DC4CGetTaskProgramAndParam( struct Dc4cApiEnv *penv , char **pp_program_and_params );
+int DC4CGetTaskProgramAndParams( struct Dc4cApiEnv *penv , char **pp_program_and_params );
 int DC4CGetTaskTimeout( struct Dc4cApiEnv *penv , int *p_timeout );
 int DC4CGetTaskElapse( struct Dc4cApiEnv *penv , int *p_elapse );
 int DC4CGetTaskError( struct Dc4cApiEnv *penv , int *p_error );
@@ -84,15 +90,18 @@ struct Dc4cBatchTask
 	int	timeout ;
 } ;
 
-int DC4CDoBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cBatchTask *p_tasks , int tasks_count );
+int DC4CDoBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cBatchTask *a_tasks , int tasks_count );
 
+/* 异步发起任务类 */
 int DC4CPerformMultiBatchTasks( struct Dc4cApiEnv **ppenvs , int envs_count , struct Dc4cApiEnv **ppenv , int *p_remain_envs_count );
 
-int DC4CBeginBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cBatchTask *p_tasks , int tasks_count );
+/* 低层函数类 */
+
+int DC4CBeginBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cBatchTask *a_tasks , int tasks_count );
 int DC4CQueryWorkers( struct Dc4cApiEnv *penv );
-int DC4CSetBatchTasksFds( struct Dc4cApiEnv *penv , fd_set *read_fds , int *p_max_fd );
-int DC4CSelectBatchTasksFds( fd_set *p_read_fds , int *p_max_fd , int select_timeout );
-int DC4CProcessBatchTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , int *p_max_fd );
+int DC4CSetBatchTasksFds( struct Dc4cApiEnv *penv , fd_set *read_fds , fd_set *write_fds , fd_set *expect_fds , int *p_max_fd );
+int DC4CSelectBatchTasksFds( fd_set *p_read_fds , fd_set *write_fds , fd_set *expect_fds , int *p_max_fd , int select_timeout );
+int DC4CProcessBatchTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , fd_set *write_fds , fd_set *expect_fds );
 
 int DC4CGetTasksCount( struct Dc4cApiEnv *penv );
 int DC4CGetWorkersCount( struct Dc4cApiEnv *penv );
@@ -104,22 +113,24 @@ int DC4CGetFinishedTasksCount( struct Dc4cApiEnv *penv );
 int DC4CGetBatchTasksIp( struct Dc4cApiEnv *penv , int index , char **pp_ip );
 int DC4CGetBatchTasksPort( struct Dc4cApiEnv *penv , int index , long *p_port );
 int DC4CGetBatchTasksTid( struct Dc4cApiEnv *penv , int index , char **pp_tid );
-int DC4CGetBatchTasksProgramAndParam( struct Dc4cApiEnv *penv , int index , char **pp_program_and_params );
+int DC4CGetBatchTasksProgramAndParams( struct Dc4cApiEnv *penv , int index , char **pp_program_and_params );
 int DC4CGetBatchTasksTimeout( struct Dc4cApiEnv *penv , int index , int *p_timeout );
 int DC4CGetBatchTasksElapse( struct Dc4cApiEnv *penv , int index , int *p_elapse );
 int DC4CGetBatchTasksError( struct Dc4cApiEnv *penv , int index , int *p_error );
 int DC4CGetBatchTasksStatus( struct Dc4cApiEnv *penv , int index , int *p_status );
 int DC4CGetBatchTasksInfo( struct Dc4cApiEnv *penv , int index , char **pp_info );
 
+/* 其它类 */
 void DC4CResetFinishedTasksWithError( struct Dc4cApiEnv *penv );
+int DC4CGetUnusedWorkersCount( struct Dc4cApiEnv *penv );
+
+/********* 计算节点接口 *********/
 
 void DC4CSetAppLogFile( char *program );
 
 int DC4CFormatReplyInfo( char *format , ... );
 int DC4CSetReplyInfo( char *str );
 int DC4CSetReplyInfoEx( char *buf , int len );
-
-int DC4CGetUnusedWorkersCount( struct Dc4cApiEnv *penv );
 
 #ifdef __cplusplus
 }

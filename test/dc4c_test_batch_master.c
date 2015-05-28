@@ -101,7 +101,7 @@ int main( int argc , char *argv[] )
 			DC4CGetBatchTasksIp( penv , i , & ip );
 			DC4CGetBatchTasksPort( penv , i , & port );
 			DC4CGetBatchTasksTid( penv , i , & tid );
-			DC4CGetBatchTasksProgramAndParam( penv , i , & program_and_params );
+			DC4CGetBatchTasksProgramAndParams( penv , i , & program_and_params );
 			DC4CGetBatchTasksTimeout( penv , i , & timeout );
 			DC4CGetBatchTasksElapse( penv , i , & elapse );
 			DC4CGetBatchTasksError( penv , i , & error );

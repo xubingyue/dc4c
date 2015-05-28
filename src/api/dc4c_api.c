@@ -398,7 +398,7 @@ static int ReformingTasksArray( struct Dc4cApiEnv *penv , int tasks_count )
 	return 0;
 }
 
-int DC4CCleanEnv( struct Dc4cApiEnv **ppenv )
+void DC4CCleanEnv( struct Dc4cApiEnv **ppenv )
 {
 	int		i ;
 	
@@ -434,7 +434,7 @@ int DC4CCleanEnv( struct Dc4cApiEnv **ppenv )
 	
 	free( (*ppenv) );
 	
-	return 0;
+	return;
 }
 
 int DC4CInitEnv( struct Dc4cApiEnv **ppenv , char *rservers_ip_port )
@@ -457,7 +457,7 @@ int DC4CInitEnv( struct Dc4cApiEnv **ppenv , char *rservers_ip_port )
 		memset( rservers_ip_port_copy , 0x00 , sizeof(rservers_ip_port_copy) );
 		strncpy( rservers_ip_port_copy , rservers_ip_port , sizeof(rservers_ip_port_copy)-1 );
 	}
-	else if( ( p = getenv("DC4C_RSERVER_IP_PORT") ) )
+	else if( ( p = getenv("DC4C_RSERVERS_IP_PORT") ) )
 	{
 		memset( rservers_ip_port_copy , 0x00 , sizeof(rservers_ip_port_copy) );
 		strncpy( rservers_ip_port_copy , p , sizeof(rservers_ip_port_copy)-1 );
@@ -535,9 +535,9 @@ int DC4CGetTaskTid( struct Dc4cApiEnv *penv , char **pp_tid )
 	return DC4CGetBatchTasksTid( penv , 0 , pp_tid );
 }
 
-int DC4CGetTaskProgramAndParam( struct Dc4cApiEnv *penv , char **pp_program_and_params )
+int DC4CGetTaskProgramAndParams( struct Dc4cApiEnv *penv , char **pp_program_and_params )
 {
-	return DC4CGetBatchTasksProgramAndParam( penv , 0 , pp_program_and_params );
+	return DC4CGetBatchTasksProgramAndParams( penv , 0 , pp_program_and_params );
 }
 
 int DC4CGetTaskTimeout( struct Dc4cApiEnv *penv , int *p_timeout )
@@ -589,9 +589,9 @@ int DC4CGetTaskInfo( struct Dc4cApiEnv *penv , char **pp_info )
 	DebugLog( __FILE__ , __LINE__ , "COUNT finished_count[%d]->[%d]" , penv->finished_count , penv->finished_count-1 );	\
 	penv->finished_count--;													\
 
-int DC4CDoBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cBatchTask *p_tasks , int tasks_count )
+int DC4CDoBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cBatchTask *a_tasks , int tasks_count )
 {
-	fd_set		read_fds ;
+	fd_set		read_fds , write_fds , expect_fds ;
 	int		max_fd ;
 	int		select_return_count ;
 	
@@ -600,7 +600,7 @@ int DC4CDoBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cB
 	if( tasks_count == 0 )
 		return 0;
 	
-	nret = DC4CBeginBatchTasks( penv , workers_count , p_tasks , tasks_count ) ;
+	nret = DC4CBeginBatchTasks( penv , workers_count , a_tasks , tasks_count ) ;
 	if( nret )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "DC4CBeginBatchTasks failed[%d]" , nret );
@@ -633,8 +633,10 @@ int DC4CDoBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cB
 		}
 		
 		FD_ZERO( & read_fds );
+		FD_ZERO( & write_fds );
+		FD_ZERO( & expect_fds );
 		max_fd = -1 ;
-		nret = DC4CSetBatchTasksFds( penv , & read_fds , & max_fd ) ;
+		nret = DC4CSetBatchTasksFds( penv , & read_fds , & write_fds , & expect_fds , & max_fd ) ;
 		if( nret == DC4C_INFO_NO_RUNNING )
 		{
 			DebugLog( __FILE__ , __LINE__ , "DC4CSetBatchTasksFds return DC4C_INFO_NO_RUNNING" );
@@ -648,7 +650,7 @@ int DC4CDoBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cB
 		{
 			DebugLog( __FILE__ , __LINE__ , "DC4CSetBatchTasksFds ok" );
 			
-			select_return_count = DC4CSelectBatchTasksFds( & read_fds , & max_fd , 1 ) ;
+			select_return_count = DC4CSelectBatchTasksFds( & read_fds , & write_fds , & expect_fds , & max_fd , 1 ) ;
 			if( select_return_count < 0 )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "DC4CSelectBatchTasksFds failed[%d]" , select_return_count );
@@ -656,7 +658,7 @@ int DC4CDoBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cB
 			}
 			else if( select_return_count > 0 )
 			{
-				nret = DC4CProcessBatchTasks( penv , & read_fds , & max_fd ) ;
+				nret = DC4CProcessBatchTasks( penv , & read_fds , & write_fds , & expect_fds ) ;
 				if( nret == DC4C_INFO_NO_PREPARE_AND_RUNNING )
 				{
 					DebugLog( __FILE__ , __LINE__ , "DC4CProcessBatchTasks return DC4C_INFO_NO_PREPARE_AND_RUNNING" );
@@ -688,7 +690,7 @@ int DC4CPerformMultiBatchTasks( struct Dc4cApiEnv **ppenvs , int envs_count , st
 	int			task_idx ;
 	int			remain_envs_count ;
 	
-	fd_set			read_fds ;
+	fd_set			read_fds , write_fds , expect_fds ;
 	int			max_fd ;
 	int			select_return_count ;
 	
@@ -747,6 +749,8 @@ int DC4CPerformMultiBatchTasks( struct Dc4cApiEnv **ppenvs , int envs_count , st
 		}
 		
 		FD_ZERO( & read_fds );
+		FD_ZERO( & write_fds );
+		FD_ZERO( & expect_fds );
 		max_fd = -1 ;
 		for( envs_index = 0 ; envs_index < envs_count ; envs_index++ )
 		{
@@ -754,7 +758,7 @@ int DC4CPerformMultiBatchTasks( struct Dc4cApiEnv **ppenvs , int envs_count , st
 			if( DC4CGetPrepareTasksCount(penv) == 0 && DC4CGetRunningTasksCount(penv) == 0 )
 				continue;
 			
-			nret = DC4CSetBatchTasksFds( penv , & read_fds , & max_fd ) ;
+			nret = DC4CSetBatchTasksFds( penv , & read_fds , & write_fds , & expect_fds , & max_fd ) ;
 			if( nret == DC4C_INFO_NO_RUNNING )
 			{
 				DebugLog( __FILE__ , __LINE__ , "DC4CSetBatchTasksFds return DC4C_INFO_NO_RUNNING" );
@@ -768,7 +772,7 @@ int DC4CPerformMultiBatchTasks( struct Dc4cApiEnv **ppenvs , int envs_count , st
 		}
 		if( max_fd != -1 )
 		{
-			select_return_count = DC4CSelectBatchTasksFds( & read_fds , & max_fd , 1 ) ;
+			select_return_count = DC4CSelectBatchTasksFds( & read_fds , & write_fds , & expect_fds , & max_fd , 1 ) ;
 			if( select_return_count < 0 )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "DC4CSelectBatchTasksFds failed[%d]" , select_return_count );
@@ -783,7 +787,7 @@ int DC4CPerformMultiBatchTasks( struct Dc4cApiEnv **ppenvs , int envs_count , st
 					if( DC4CGetPrepareTasksCount(penv) == 0 && DC4CGetRunningTasksCount(penv) == 0 )
 						continue;
 					
-					nret = DC4CProcessBatchTasks( penv , & read_fds , & max_fd ) ;
+					nret = DC4CProcessBatchTasks( penv , & read_fds , & write_fds , & expect_fds ) ;
 					if( nret == DC4C_INFO_NO_PREPARE_AND_RUNNING )
 					{
 						DebugLog( __FILE__ , __LINE__ , "DC4CSelectBatchTasksFds return DC4C_INFO_NO_PREPARE_AND_RUNNING" );
@@ -840,7 +844,7 @@ int DC4CPerformMultiBatchTasks( struct Dc4cApiEnv **ppenvs , int envs_count , st
 	}
 }
 
-int DC4CBeginBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cBatchTask *p_tasks , int tasks_count )
+int DC4CBeginBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cBatchTask *a_tasks , int tasks_count )
 {
 	struct Dc4cBatchTask		*p_task = NULL ;
 	int				i ;
@@ -868,7 +872,7 @@ int DC4CBeginBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc
 		DebugLog( __FILE__ , __LINE__ , "ReformingTasksArray ok" );
 	}
 	
-	for( i = 0 , p_task = p_tasks ; i < penv->tasks_count ; i++ , p_task++ )
+	for( i = 0 , p_task = a_tasks ; i < penv->tasks_count ; i++ , p_task++ )
 	{
 		strcpy( penv->tasks_request_array[i].program_and_params , p_task->program_and_params );
 		penv->tasks_request_array[i].timeout = p_task->timeout ;
@@ -1013,7 +1017,7 @@ int DC4CQueryWorkers( struct Dc4cApiEnv *penv )
 	}
 }
 
-int DC4CSetBatchTasksFds( struct Dc4cApiEnv *penv , fd_set *p_read_fds , int *p_max_fd )
+int DC4CSetBatchTasksFds( struct Dc4cApiEnv *penv , fd_set *p_read_fds , fd_set *write_fds , fd_set *expect_fds , int *p_max_fd )
 {
 	execute_program_request		*task_request_ptr = NULL ;
 	execute_program_response	*task_response_ptr = NULL ;
@@ -1106,7 +1110,7 @@ _GOTO_CONNECT :
 		return 0;
 }
 
-int DC4CSelectBatchTasksFds( fd_set *p_read_fds , int *p_max_fd , int select_timeout )
+int DC4CSelectBatchTasksFds( fd_set *p_read_fds , fd_set *write_fds , fd_set *expect_fds , int *p_max_fd , int select_timeout )
 {
 	struct timeval		tv ;
 	int			select_return_count ;
@@ -1120,7 +1124,7 @@ int DC4CSelectBatchTasksFds( fd_set *p_read_fds , int *p_max_fd , int select_tim
 	return select_return_count;
 }
 
-int DC4CProcessBatchTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , int *p_max_fd )
+int DC4CProcessBatchTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , fd_set *write_fds , fd_set *expect_fds )
 {
 	execute_program_request		*task_request_ptr = NULL ;
 	execute_program_response	*task_response_ptr = NULL ;
@@ -1143,15 +1147,15 @@ int DC4CProcessBatchTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , int *p
 			InfoLog( __FILE__ , __LINE__ , "FDSET READY task_idx[%d] FD_SET[%d]" , task_idx , task_session_ptr->sock );
 			
 			task_session_ptr->alive_timeout -= tt - task_session_ptr->active_timestamp ;
-			if( task_session_ptr->alive_timeout <= 0 )
+			if( task_request_ptr->timeout > 0 && task_session_ptr->alive_timeout <= 0 )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "task session timeout" );
 				CloseSocket( task_session_ptr );
 				RUNNING_COUNT_DECREASE
 				FINISHED_COUNT_INCREASE
-				task_session_ptr->progress = WSERVER_SESSION_PROGRESS_FINISHED ;
-				task_response_ptr->status = (DC4C_ERROR_TIMEOUT<<8) ;
-				continue;
+				task_session_ptr->progress = WSERVER_SESSION_PROGRESS_WAITFOR_CONNECTING ;
+				task_response_ptr->error = DC4C_ERROR_TIMEOUT ;
+				return DC4C_ERROR_TIMEOUT;
 			}
 			
 			nret = SyncReceiveSocketData( task_session_ptr , & (task_session_ptr->alive_timeout) ) ; 
@@ -1251,6 +1255,7 @@ int DC4CProcessBatchTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , int *p
 						PREPARE_COUNT_INCREASE
 						RUNNING_COUNT_DECREASE
 						task_session_ptr->progress = WSERVER_SESSION_PROGRESS_FINISHED_WITH_ERROR ;
+						task_response_ptr->error = DC4C_ERROR_APP ;
 						penv->interrupted_flag = 1 ;
 					}
 					else
@@ -1273,7 +1278,7 @@ int DC4CProcessBatchTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , int *p
 		{
 			task_session_ptr->alive_timeout -= tt - task_session_ptr->active_timestamp ;
 			time( & (task_session_ptr->active_timestamp) );
-			if( task_session_ptr->alive_timeout <= 0 )
+			if( task_request_ptr->timeout > 0 && task_session_ptr->alive_timeout <= 0 )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "task session timeout" );
 				CloseSocket( task_session_ptr );
@@ -1281,6 +1286,7 @@ int DC4CProcessBatchTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , int *p
 				FINISHED_COUNT_INCREASE
 				task_session_ptr->progress = WSERVER_SESSION_PROGRESS_FINISHED ;
 				task_response_ptr->error = DC4C_ERROR_TIMEOUT ;
+				return DC4C_ERROR_TIMEOUT;
 			}
 		}
 	}
@@ -1343,7 +1349,7 @@ int DC4CGetBatchTasksTid( struct Dc4cApiEnv *penv , int index , char **pp_tid )
 	return 0;
 }
 
-int DC4CGetBatchTasksProgramAndParam( struct Dc4cApiEnv *penv , int index , char **pp_program_and_params )
+int DC4CGetBatchTasksProgramAndParams( struct Dc4cApiEnv *penv , int index , char **pp_program_and_params )
 {
 	if( index > penv->tasks_array_size )
 		return -1;
@@ -1413,6 +1419,11 @@ void DC4CResetFinishedTasksWithError( struct Dc4cApiEnv *penv )
 	return;
 }
 
+int DC4CGetUnusedWorkersCount( struct Dc4cApiEnv *penv )
+{
+	return penv->qwp._nodes_count - penv->query_count_used ;
+}
+
 void DC4CSetAppLogFile( char *program )
 {
 	char	*WSERVER_INDEX = NULL ;
@@ -1463,10 +1474,5 @@ int DC4CSetReplyInfoEx( char *buf , int len )
 	info_pipe = atoi(envptr) ;
 	
 	return (int)write( info_pipe , buf , (size_t)len );
-}
-
-int DC4CGetUnusedWorkersCount( struct Dc4cApiEnv *penv )
-{
-	return penv->qwp._nodes_count - penv->query_count_used ;
 }
 

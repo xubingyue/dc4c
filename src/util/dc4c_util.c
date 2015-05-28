@@ -807,7 +807,7 @@ int SyncConnectSocket( char *ip , long port , struct SocketSession *psession )
 int SyncReceiveSocketData( struct SocketSession *psession , int *p_timeout )
 {
 	fd_set			read_fds , expt_fds ;
-	struct timeval		tv ;
+	struct timeval		tv , *ptv = NULL ;
 	time_t			tt1 , tt2 ;
 	int			len ;
 	
@@ -823,9 +823,17 @@ int SyncReceiveSocketData( struct SocketSession *psession , int *p_timeout )
 		FD_ZERO( & expt_fds );
 		FD_SET( psession->sock , & read_fds );
 		FD_SET( psession->sock , & expt_fds );
-		tv.tv_sec = (*p_timeout) ;
-		tv.tv_usec = 0 ;
-		nret = select( psession->sock+1 , & read_fds , NULL , & expt_fds , & tv ) ;
+		if( p_timeout && (*p_timeout) > 0 )
+		{
+			tv.tv_sec = (*p_timeout) ;
+			tv.tv_usec = 0 ;
+			ptv = & tv ;
+		}
+		else
+		{
+			ptv = NULL ;
+		}
+		nret = select( psession->sock+1 , & read_fds , NULL , & expt_fds , ptv ) ;
 		if( nret == 0 )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "send timeout when selecting" );
@@ -838,12 +846,15 @@ int SyncReceiveSocketData( struct SocketSession *psession , int *p_timeout )
 			return -2;
 		}
 		
-		time( & tt2 );
-		(*p_timeout) -= ( tt2 - tt1 ) ;
-		if( (*p_timeout) <= 0 )
+		if( p_timeout && (*p_timeout) > 0 )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "send timeout after select" );
-			return RETURN_TIMEOUT;
+			time( & tt2 );
+			(*p_timeout) -= ( tt2 - tt1 ) ;
+			if( (*p_timeout) <= 0 )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "send timeout after select" );
+				return RETURN_TIMEOUT;
+			}
 		}
 		
 		len = (int)recv( psession->sock , psession->recv_buffer + psession->total_recv_len , 8 - psession->total_recv_len , 0 ) ;
@@ -889,9 +900,17 @@ int SyncReceiveSocketData( struct SocketSession *psession , int *p_timeout )
 		FD_ZERO( & expt_fds );
 		FD_SET( psession->sock , & read_fds );
 		FD_SET( psession->sock , & expt_fds );
-		tv.tv_sec = (*p_timeout) ;
-		tv.tv_usec = 0 ;
-		nret = select( psession->sock+1 , & read_fds , NULL , & expt_fds , & tv ) ;
+		if( p_timeout && (*p_timeout) > 0 )
+		{
+			tv.tv_sec = (*p_timeout) ;
+			tv.tv_usec = 0 ;
+			ptv = & tv ;
+		}
+		else
+		{
+			ptv = NULL ;
+		}
+		nret = select( psession->sock+1 , & read_fds , NULL , & expt_fds , ptv ) ;
 		if( nret == 0 )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "send timeout when selecting" );
@@ -904,12 +923,15 @@ int SyncReceiveSocketData( struct SocketSession *psession , int *p_timeout )
 			return -6;
 		}
 		
-		time( & tt2 );
-		(*p_timeout) -= ( tt2 - tt1 ) ;
-		if( (*p_timeout) <= 0 )
+		if( p_timeout && (*p_timeout) > 0 )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "send timeout after select" );
-			return RETURN_TIMEOUT;
+			time( & tt2 );
+			(*p_timeout) -= ( tt2 - tt1 ) ;
+			if( (*p_timeout) <= 0 )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "send timeout after select" );
+				return RETURN_TIMEOUT;
+			}
 		}
 		
 		len = (int)recv( psession->sock , psession->recv_buffer + psession->total_recv_len , 8 + psession->recv_body_len - psession->total_recv_len , 0 ) ;
@@ -943,7 +965,7 @@ int SyncReceiveSocketData( struct SocketSession *psession , int *p_timeout )
 int SyncSendSocketData( struct SocketSession *psession , int *p_timeout )
 {
 	fd_set			write_fds , expt_fds ;
-	struct timeval		tv ;
+	struct timeval		tv , *ptv = NULL ;
 	time_t			tt1 , tt2 ;
 	int			len ;
 	
@@ -957,9 +979,17 @@ int SyncSendSocketData( struct SocketSession *psession , int *p_timeout )
 		FD_ZERO( & expt_fds );
 		FD_SET( psession->sock , & write_fds );
 		FD_SET( psession->sock , & expt_fds );
-		tv.tv_sec = (*p_timeout) ;
-		tv.tv_usec = 0 ;
-		nret = select( psession->sock+1 , NULL , & write_fds , & expt_fds , & tv ) ;
+		if( p_timeout && (*p_timeout) > 0 )
+		{
+			tv.tv_sec = (*p_timeout) ;
+			tv.tv_usec = 0 ;
+			ptv = & tv ;
+		}
+		else
+		{
+			ptv = NULL ;
+		}
+		nret = select( psession->sock+1 , NULL , & write_fds , & expt_fds , ptv ) ;
 		if( nret == 0 )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "send timeout when selecting" );
@@ -972,12 +1002,15 @@ int SyncSendSocketData( struct SocketSession *psession , int *p_timeout )
 			return -2;
 		}
 		
-		time( & tt2 );
-		(*p_timeout) -= ( tt2 - tt1 ) ;
-		if( (*p_timeout) <= 0 )
+		if( p_timeout && (*p_timeout) > 0 )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "send timeout after select" );
-			return RETURN_TIMEOUT;
+			time( & tt2 );
+			(*p_timeout) -= ( tt2 - tt1 ) ;
+			if( (*p_timeout) <= 0 )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "send timeout after select" );
+				return RETURN_TIMEOUT;
+			}
 		}
 		
 		len = (int)send( psession->sock , psession->send_buffer + psession->send_len , psession->total_send_len - psession->send_len , 0 ) ;
