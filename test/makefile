@@ -12,6 +12,7 @@ c_FILE		=	\
 			dc4c_test_batch_master.c \
 			dc4c_test_multi_batch_master.c \
 			dc4c_test_tfc_dag_master.c \
+			dc4c_test_worker_hello.c \
 			dc4c_test_worker_sleep.c \
 			dc4c_test_worker_pi.c \
 
@@ -24,6 +25,7 @@ BIN		=	\
 			dc4c_test_batch_master \
 			dc4c_test_multi_batch_master \
 			dc4c_test_tfc_dag_master \
+			dc4c_test_worker_hello \
 			dc4c_test_worker_sleep \
 			dc4c_test_worker_pi \
 			dc4c_test_tfc_dag_master_pgsql \
@@ -74,6 +76,9 @@ dc4c_test_tfc_dag_master	:	dc4c_test_tfc_dag_master.o
 
 dc4c_test_tfc_dag_master_pgsql	:	dc4c_test_tfc_dag_master_pgsql.o
 	$(CC) -o $@ dc4c_test_tfc_dag_master_pgsql.o $(LFLAGS) -ldc4c_tfc_dag_pgsql -lecpg
+
+dc4c_test_worker_hello	:	dc4c_test_worker_hello.o
+	$(CC) -o $@ dc4c_test_worker_hello.o $(LFLAGS)
 
 dc4c_test_worker_sleep	:	dc4c_test_worker_sleep.o
 	$(CC) -o $@ dc4c_test_worker_sleep.o $(LFLAGS)

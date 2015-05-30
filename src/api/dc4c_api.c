@@ -1073,7 +1073,7 @@ _GOTO_CONNECT :
 				WarnLog( __FILE__ , __LINE__ , "proto_ExecuteProgramRequest failed[%d]errno[%d]" , nret , errno );
 				CloseSocket( task_session_ptr );
 				task_session_ptr->progress = WSERVER_SESSION_PROGRESS_WAITFOR_CONNECTING ;
-				continue;
+				return nret;
 			}
 			else
 			{
@@ -1183,7 +1183,7 @@ int DC4CProcessBatchTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , fd_set
 					RUNNING_COUNT_DECREASE
 					PREPARE_COUNT_INCREASE
 					task_session_ptr->progress = WSERVER_SESSION_PROGRESS_WAITFOR_CONNECTING ;
-					continue;
+					return nret;
 				}
 				else
 				{
@@ -1198,7 +1198,7 @@ int DC4CProcessBatchTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , fd_set
 					RUNNING_COUNT_DECREASE
 					PREPARE_COUNT_INCREASE
 					task_session_ptr->progress = WSERVER_SESSION_PROGRESS_WAITFOR_CONNECTING ;
-					continue;
+					return nret;
 				}
 				else
 				{
@@ -1230,7 +1230,7 @@ int DC4CProcessBatchTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , fd_set
 					RUNNING_COUNT_DECREASE
 					PREPARE_COUNT_INCREASE
 					task_session_ptr->progress = WSERVER_SESSION_PROGRESS_WAITFOR_CONNECTING ;
-					continue;
+					return nret;
 				}
 				else
 				{
