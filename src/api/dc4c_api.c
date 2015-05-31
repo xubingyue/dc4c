@@ -485,6 +485,9 @@ int DC4CInitEnv( struct Dc4cApiEnv **ppenv , char *rservers_ip_port )
 		return DC4C_ERROR_ALLOC;
 	}
 	
+	DSCINIT_query_workers_response( & ((*ppenv)->qwp) );
+	(*ppenv)->query_count_used = 0 ;
+	
 	return 0;
 }
 
@@ -916,26 +919,54 @@ int DC4CBeginBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc
 		}
 	}
 	
-	DSCINIT_query_workers_response( & (penv->qwp) );
-	penv->query_count_used = 0 ;
-	
 	return 0;
 }
 
 int DC4CQueryWorkers( struct Dc4cApiEnv *penv )
 {
+	int			c ;
+	
 	int			query_count ;
 	
 	int			nret = 0 ;
 	
+	if( IsSocketEstablished( & (penv->rserver_session) ) == 0 )
+	{
+		for( c = 0 ; c < penv->rserver_count ; c++ )
+		{
+			nret = SyncConnectSocket( penv->rserver_ip[penv->rserver_index] , penv->rserver_port[penv->rserver_index] , & (penv->rserver_session) ) ;
+			if( nret )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "SyncConnectSocket[%s:%d] failed[%d]errno[%d]" , penv->rserver_ip[penv->rserver_index] , penv->rserver_port[penv->rserver_index] , nret , errno );
+				penv->rserver_index = (penv->rserver_index+1) % penv->rserver_count ;
+			}
+			else
+			{
+				InfoLog( __FILE__ , __LINE__ , "SyncConnectSocket[%s:%d] ok" , penv->rserver_ip[penv->rserver_index] , penv->rserver_port[penv->rserver_index] );
+				break;
+			}
+		}
+		if( c >= penv->rserver_count )
+		{
+			return DC4C_ERROR_CONNECT;
+		}
+	}
+	
 	if( penv->interrupted_flag == 1 )
 		return 0;
 	
-	query_count = penv->prepare_count ;
-	if( query_count > penv->workers_count )
-		query_count = penv->workers_count ;
+	if( penv->prepare_count == 0 && penv->workers_count == 0 && penv->workers_count == 0 )
+	{
+		query_count = -1 ;
+	}
+	else
+	{
+		query_count = penv->prepare_count ;
+		if( query_count > penv->workers_count )
+			query_count = penv->workers_count ;
+	}
 	
-	if( query_count > 0 )
+	if( query_count == -1 || query_count > 0 )
 	{
 		penv->rserver_session.alive_timeout = 60 ;
 		

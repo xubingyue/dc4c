@@ -35,9 +35,10 @@ int main( int argc , char *argv[] )
 	
 	DC4CFormatReplyInfo( "Elapse [%d]seconds" , seconds );
 	
+	/*
 	if( seconds == 0 )
 		return 1;
-	else
-		return 0;
+	*/
+	return 0;
 }
 

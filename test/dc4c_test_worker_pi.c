@@ -48,6 +48,23 @@ int pi_master( char *rservers_ip_port , unsigned long max_x , int tasks_count )
 	DC4CSetTimeout( penv , 600 );
 	DC4CSetOptions( penv , DC4C_OPTIONS_BIND_CPU );
 	
+	if( tasks_count == -2 )
+	{
+		nret = DC4CQueryWorkers( penv ) ;
+		if( nret )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "DC4CQueryWorkers failed[%d]" , nret );
+			return -1;
+		}
+		
+		tasks_count = DC4CGetUnusedWorkersCount( penv ) ;
+		if( tasks_count <= 0 )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "tasks_count[%d] invalid" , tasks_count );
+			return -1;
+		}
+	}
+	
 	tasks_array = (struct Dc4cBatchTask *)malloc( sizeof(struct Dc4cBatchTask) * tasks_count ) ;
 	if( tasks_array == NULL )
 	{
@@ -193,7 +210,7 @@ int main( int argc , char *argv[] )
 	}
 	else
 	{
-		printf( "USAGE : dc4c_test_worker_pi max_x worker_count\n" );
+		printf( "USAGE : dc4c_test_worker_pi rservers_ip_port max_x worker_count\n" );
 		printf( "                            start_x end_x\n" );
 		exit(7);
 	}

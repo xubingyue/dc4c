@@ -4,6 +4,7 @@
 time ./dc4c_test_batch_master 192.168.6.54:12001,192.168.6.54:12002 2 3 "dc4c_test_worker_sleep 1" "dc4c_test_worker_sleep 2" "dc4c_test_worker_sleep 3"
 time ./dc4c_test_batch_master 192.168.6.54:12001,192.168.6.54:12002 4 -10 "dc4c_test_worker_sleep 10"
 time ./dc4c_test_batch_master 192.168.6.54:12001,192.168.6.54:12002 -1 -100 "dc4c_test_worker_sleep -10"
+time ./dc4c_test_batch_master 192.168.6.54:12001,192.168.6.54:12002 -2 -100 "dc4c_test_worker_sleep -10"
 */
 
 int main( int argc , char *argv[] )
@@ -52,8 +53,8 @@ int main( int argc , char *argv[] )
 		
 		if( tasks_count < 0 )
 		{
-			repeat_task_flag = 1 ;
 			tasks_count = -tasks_count ;
+			repeat_task_flag = 1 ;
 		}
 		else
 		{
@@ -62,7 +63,26 @@ int main( int argc , char *argv[] )
 		
 		if( workers_count < 0 )
 		{
-			workers_count = tasks_count ;
+			if( workers_count == -2 )
+			{
+				nret = DC4CQueryWorkers( penv ) ;
+				if( nret )
+				{
+					printf( "DC4CQueryWorkers failed[%d]\n" , nret );
+					return 1;
+				}
+				
+				workers_count = DC4CGetUnusedWorkersCount( penv ) ;
+				if( workers_count <= 0 )
+				{
+					printf( "workers_count[%d] invalid\n" , workers_count );
+					return 1;
+				}
+			}
+			else
+			{
+				workers_count = tasks_count ;
+			}
 		}
 		
 		tasks_array = (struct Dc4cBatchTask *)malloc( sizeof(struct Dc4cBatchTask) * tasks_count ) ;
@@ -93,8 +113,6 @@ int main( int argc , char *argv[] )
 			printf( "DC4CDoBatchTasks ok\n" );
 		}
 		
-		printf( "tasks_count[%d] worker_count[%d] - prepare_count[%d] running_count[%d] finished_count[%d]\n" , DC4CGetTasksCount(penv) , DC4CGetWorkersCount(penv) , DC4CGetPrepareTasksCount(penv) , DC4CGetRunningTasksCount(penv) , DC4CGetFinishedTasksCount(penv) );
-		
 		tasks_count = DC4CGetTasksCount( penv ) ;
 		for( i = 0 ; i < tasks_count ; i++ )
 		{
@@ -115,7 +133,7 @@ int main( int argc , char *argv[] )
 	}
 	else
 	{
-		printf( "USAGE : dc4c_test_batch_master rserver_ip:rserver_port,... workers_count task_count program_and_params_1 ...\n" );
+		printf( "USAGE : dc4c_test_batch_master rserver_ip:rserver_port,... workers_count tasks_count program_and_params_1 ...\n" );
 		exit(7);
 	}
 	
