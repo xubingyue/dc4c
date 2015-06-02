@@ -19,9 +19,11 @@ int FUNCNAME_DSCLOG_execute_program_request( execute_program_request *pst )
 	PREFIX_DSCLOG_execute_program_request "execute_program_request.ip[%s]" NEWLINE_DSCLOG_execute_program_request , pst->ip );
 	PREFIX_DSCLOG_execute_program_request "execute_program_request.port[%d]" NEWLINE_DSCLOG_execute_program_request , pst->port );
 	PREFIX_DSCLOG_execute_program_request "execute_program_request.tid[%s]" NEWLINE_DSCLOG_execute_program_request , pst->tid );
+	PREFIX_DSCLOG_execute_program_request "execute_program_request.order_index[%d]" NEWLINE_DSCLOG_execute_program_request , pst->order_index );
 	PREFIX_DSCLOG_execute_program_request "execute_program_request.program_and_params[%s]" NEWLINE_DSCLOG_execute_program_request , pst->program_and_params );
 	PREFIX_DSCLOG_execute_program_request "execute_program_request.program_md5_exp[%s]" NEWLINE_DSCLOG_execute_program_request , pst->program_md5_exp );
 	PREFIX_DSCLOG_execute_program_request "execute_program_request.timeout[%d]" NEWLINE_DSCLOG_execute_program_request , pst->timeout );
+	PREFIX_DSCLOG_execute_program_request "execute_program_request.begin_datetime_stamp[%d]" NEWLINE_DSCLOG_execute_program_request , pst->begin_datetime_stamp );
 	PREFIX_DSCLOG_execute_program_request "execute_program_request.bind_cpu_flag[%d]" NEWLINE_DSCLOG_execute_program_request , pst->bind_cpu_flag );
 	return 0;
 }

@@ -84,6 +84,7 @@
 typedef struct
 {
 	char	tid[ 20 + 1 ] ;
+	int	end_datetime_stamp ;
 	int	elapse ;
 	int	error ;
 	int	status ;

@@ -114,7 +114,7 @@ int proto_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *ps
 int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession *psession , int error , int status )
 {
 	execute_program_response	rsp ;
-	time_t				end_timestamp ;
+	time_t				end_datetime_stamp ;
 	int				msg_len ;
 	
 	int				nret = 0 ;
@@ -126,8 +126,9 @@ int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession 
 	{
 		strcpy( rsp.tid , penv->epq_array[psession-penv->accepted_session_array].tid );
 	}
-	time( & end_timestamp );
-	rsp.elapse = end_timestamp - penv->begin_timestamp ;
+	time( & end_datetime_stamp );
+	rsp.end_datetime_stamp = end_datetime_stamp ;
+	rsp.elapse = end_datetime_stamp - penv->begin_datetime_stamp ;
 	rsp.error = error ;
 	rsp.status = status ;
 	if( error == 0 )

@@ -1,5 +1,5 @@
 /*
- * tfc_dag for dc4c - Tasks flow controler for dc4c
+ * tfc_dag - DAG tasks engine for dc4c
  * author	: calvin
  * email	: calvinwilliams@163.com
  *
@@ -7,13 +7,12 @@
  */
 
 #include "dc4c_tfc_dag.h"
-
 #include "IDL_dag_schedule.dsc.ESQL.eh"
 #include "IDL_dag_batches_info.dsc.ESQL.eh"
 #include "IDL_dag_batches_tasks.dsc.ESQL.eh"
 #include "IDL_dag_batches_direction.dsc.ESQL.eh"
 
-int DC4CLoadDagScheduleFromDatabase( struct Dc4cDagSchedule **pp_sched , char *schedule_name , int options )
+int DC4CLoadDagScheduleFromDatabase( struct Dc4cDagSchedule **pp_sched , char *schedule_name , char *rservers_ip_port , int options )
 {
 	dag_schedule_configfile *p_config = NULL ;
 	
@@ -49,6 +48,9 @@ int DC4CLoadDagScheduleFromDatabase( struct Dc4cDagSchedule **pp_sched , char *s
 	
 	strncpy( p_config->schedule.schedule_name , schedule.schedule_name , sizeof(p_config->schedule.schedule_name)-1 );
 	strncpy( p_config->schedule.schedule_desc , schedule.schedule_desc , sizeof(p_config->schedule.schedule_desc)-1 );
+	strncpy( p_config->schedule.begin_datetime , schedule.begin_datetime , sizeof(p_config->schedule.begin_datetime)-1 );
+	strncpy( p_config->schedule.end_datetime , schedule.end_datetime , sizeof(p_config->schedule.end_datetime)-1 );
+	p_config->schedule.progress = schedule.progress ;
 	
 	memset( & batches_info , 0x00 , sizeof(dag_batches_info) );
 	strncpy( batches_info.schedule_name , schedule.schedule_name , sizeof(batches_info.schedule_name)-1 );
@@ -106,7 +108,7 @@ int DC4CLoadDagScheduleFromDatabase( struct Dc4cDagSchedule **pp_sched , char *s
 		
 		for(	p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_count = 0
 			; p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_count < p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_size
-			; p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_count++ )
+			; )
 		{
 			DSCSQLACTION_FETCH_CURSOR_dag_batches_tasks_cursor2( & batches_tasks );
 			if( SQLCODE == SQLNOTFOUND )
@@ -124,9 +126,20 @@ int DC4CLoadDagScheduleFromDatabase( struct Dc4cDagSchedule **pp_sched , char *s
 				DebugLog( __FILE__ , __LINE__ , "DSCSQLACTION_FETCH_CURSOR_dag_batches_tasks_cursor2 ok" );
 			}
 			
+			if( batches_tasks.progress == DC4C_DAGTASK_PROGRESS_FINISHED )
+				continue;
+			
 			strncpy( p_config->batches.batches_info[p_config->batches._batches_info_count].tasks[p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_count].program_and_params , batches_tasks.program_and_params , sizeof(p_config->batches.batches_info[p_config->batches._batches_info_count].tasks[p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_count].program_and_params)-1 );
 			p_config->batches.batches_info[p_config->batches._batches_info_count].tasks[p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_count].timeout = batches_tasks.timeout ;
+			p_config->batches.batches_info[p_config->batches._batches_info_count].tasks[p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_count].order_index = batches_tasks.order_index ;
+			p_config->batches.batches_info[p_config->batches._batches_info_count].tasks[p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_count].progress = batches_tasks.progress ;
+			
+			p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_count++;
 		}
+		
+		strncpy( p_config->batches.batches_info[p_config->batches._batches_info_count].begin_datetime , batches_info.begin_datetime , sizeof(p_config->batches.batches_info[p_config->batches._batches_info_count].begin_datetime)-1 );
+		strncpy( p_config->batches.batches_info[p_config->batches._batches_info_count].end_datetime , batches_info.end_datetime , sizeof(p_config->batches.batches_info[p_config->batches._batches_info_count].end_datetime)-1 );
+		p_config->batches.batches_info[p_config->batches._batches_info_count].progress = batches_info.progress ;
 		
 		DSCSQLACTION_CLOSE_CURSOR_dag_batches_tasks_cursor2();
 		DebugLog( __FILE__ , __LINE__ , "DSCSQLACTION_CLOSE_CURSOR_dag_batches_tasks_cursor2 ok" );
@@ -176,7 +189,7 @@ int DC4CLoadDagScheduleFromDatabase( struct Dc4cDagSchedule **pp_sched , char *s
 	DSCSQLACTION_CLOSE_CURSOR_dag_batches_direction_cursor1();
 	DebugLog( __FILE__ , __LINE__ , "DSCSQLACTION_CLOSE_CURSOR_dag_batches_direction_cursor1 ok" );
 	
-	nret = DC4CLoadDagScheduleFromStruct( pp_sched , p_config , options ) ;
+	nret = DC4CLoadDagScheduleFromStruct( pp_sched , p_config , rservers_ip_port , options ) ;
 	free( p_config );
 	if( nret )
 	{
@@ -190,4 +203,3 @@ int DC4CLoadDagScheduleFromDatabase( struct Dc4cDagSchedule **pp_sched , char *s
 	
 	return 0;
 }
-

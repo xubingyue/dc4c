@@ -73,7 +73,7 @@ struct ServerEnv
 	int				info_pipe[ 2 ] ;
 	struct SocketSession		info_session ;
 	pid_t				pid ;
-	time_t				begin_timestamp ;
+	time_t				begin_datetime_stamp ;
 } ;
 
 int server( struct ServerEnv *penv );

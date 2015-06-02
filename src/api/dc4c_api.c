@@ -54,6 +54,7 @@ struct Dc4cApiEnv
 	
 	unsigned long			options ;
 	int				interrupted_flag ;
+	int				finished_flag ;
 } ;
 
 #define PREFIX_DSCLOG_query_workers_request	DebugLog( __FILE__ , __LINE__ , 
@@ -149,11 +150,12 @@ static int proto_QueryWorkersResponse( struct SocketSession *psession , query_wo
 	return 0;
 }
 
-static int proto_ExecuteProgramRequest( struct SocketSession *psession , char *program_and_params , int timeout , int options , execute_program_request *p_req )
+static int proto_ExecuteProgramRequest( struct SocketSession *psession , int order_index , char *program_and_params , int timeout , int options , execute_program_request *p_req )
 {
 	char			program[ MAXLEN_FILENAME + 1 ] ;
 	char			pathfilename[ MAXLEN_FILENAME + 1 ] ;
 	struct timeval		tv ;
+	time_t			tt ;
 	
 	int			msg_len ;
 	
@@ -170,8 +172,11 @@ static int proto_ExecuteProgramRequest( struct SocketSession *psession , char *p
 	memset( & tv , 0x00 , sizeof(struct timeval) );
 	gettimeofday( & tv , NULL );
 	SNPRINTF( req.tid , sizeof(req.tid)-1 , "%010d%010d" , (int)(tv.tv_sec) , (int)(tv.tv_usec) );
+	req.order_index = order_index ;
 	strcpy( req.program_and_params , program_and_params );
 	req.timeout = timeout ;
+	time( & tt );
+	req.begin_datetime_stamp = tt ;
 	req.bind_cpu_flag = TestAttribute( options , DC4C_OPTIONS_BIND_CPU )?1:0 ;
 	
 	memset( program , 0x00 , sizeof(program) );
@@ -402,10 +407,7 @@ void DC4CCleanEnv( struct Dc4cApiEnv **ppenv )
 {
 	int		i ;
 	
-	if( IsSocketEstablished( & ((*ppenv)->rserver_session) ) )
-	{
-		CloseSocket( & ((*ppenv)->rserver_session) );
-	}
+	CloseSocket( & ((*ppenv)->rserver_session) );
 	CleanSocketSession( & ((*ppenv)->rserver_session) );
 	
 	if( (*ppenv)->tasks_request_array )
@@ -523,49 +525,64 @@ int DC4CDoTask( struct Dc4cApiEnv *penv , char *program_and_params , int timeout
 	return DC4CDoBatchTasks( penv , 1 , & task , 1 );
 }
 
-int DC4CGetTaskIp( struct Dc4cApiEnv *penv , char **pp_ip )
+char *DC4CGetTaskIp( struct Dc4cApiEnv *penv )
 {
-	return DC4CGetBatchTasksIp( penv , 0 , pp_ip );
+	return DC4CGetBatchTasksIp( penv , 0 );
 }
 
-int DC4CGetTaskPort( struct Dc4cApiEnv *penv , long *p_port )
+long DC4CGetTaskPort( struct Dc4cApiEnv *penv )
 {
-	return DC4CGetBatchTasksPort( penv , 0 , p_port );
+	return DC4CGetBatchTasksPort( penv , 0 );
 }
 
-int DC4CGetTaskTid( struct Dc4cApiEnv *penv , char **pp_tid )
+char *DC4CGetTaskTid( struct Dc4cApiEnv *penv )
 {
-	return DC4CGetBatchTasksTid( penv , 0 , pp_tid );
+	return DC4CGetBatchTasksTid( penv , 0 );
 }
 
-int DC4CGetTaskProgramAndParams( struct Dc4cApiEnv *penv , char **pp_program_and_params )
+int DC4CGetTaskOrderIndex( struct Dc4cApiEnv *penv )
 {
-	return DC4CGetBatchTasksProgramAndParams( penv , 0 , pp_program_and_params );
+	return DC4CGetBatchTasksOrderIndex( penv , 0 );
 }
 
-int DC4CGetTaskTimeout( struct Dc4cApiEnv *penv , int *p_timeout )
+char *DC4CGetTaskProgramAndParams( struct Dc4cApiEnv *penv )
 {
-	return DC4CGetBatchTasksTimeout( penv , 0 , p_timeout );
+	return DC4CGetBatchTasksProgramAndParams( penv , 0 );
 }
 
-int DC4CGetTaskElapse( struct Dc4cApiEnv *penv , int *p_elapse )
+int DC4CGetTaskTimeout( struct Dc4cApiEnv *penv )
 {
-	return DC4CGetBatchTasksElapse( penv , 0 , p_elapse );
+	return DC4CGetBatchTasksTimeout( penv , 0 );
 }
 
-int DC4CGetTaskError( struct Dc4cApiEnv *penv , int *p_error )
+int DC4CGetTaskBeginTimestamp( struct Dc4cApiEnv *penv )
 {
-	return DC4CGetBatchTasksError( penv , 0 , p_error );
+	return DC4CGetBatchTasksBeginTimestamp( penv , 0 );
 }
 
-int DC4CGetTaskStatus( struct Dc4cApiEnv *penv , int *p_status )
+int DC4CGetTaskEndTimestamp( struct Dc4cApiEnv *penv )
 {
-	return DC4CGetBatchTasksStatus( penv , 0 , p_status );
+	return DC4CGetBatchTasksEndTimestamp( penv , 0 );
 }
 
-int DC4CGetTaskInfo( struct Dc4cApiEnv *penv , char **pp_info )
+int DC4CGetTaskElapse( struct Dc4cApiEnv *penv )
 {
-	return DC4CGetBatchTasksInfo( penv , 0 , pp_info );
+	return DC4CGetBatchTasksElapse( penv , 0 );
+}
+
+int DC4CGetTaskError( struct Dc4cApiEnv *penv )
+{
+	return DC4CGetBatchTasksError( penv , 0 );
+}
+
+int DC4CGetTaskStatus( struct Dc4cApiEnv *penv )
+{
+	return DC4CGetBatchTasksStatus( penv , 0 );
+}
+
+char *DC4CGetTaskInfo( struct Dc4cApiEnv *penv )
+{
+	return DC4CGetBatchTasksInfo( penv , 0 );
 }
 
 #define PREPARE_COUNT_INCREASE													\
@@ -620,8 +637,7 @@ int DC4CDoBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cB
 	{
 		if(	penv->interrupted_flag == 0
 			&& DC4CGetRunningTasksCount(penv) < DC4CGetWorkersCount(penv)
-			&& DC4CGetPrepareTasksCount(penv) > 0
-			&& penv->qwp._nodes_count - penv->query_count_used == 0 )
+			&& DC4CGetPrepareTasksCount(penv) > 0 )
 		{
 			nret = DC4CQueryWorkers( penv ) ;
 			if( nret )
@@ -665,11 +681,13 @@ int DC4CDoBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cB
 				if( nret == DC4C_INFO_NO_PREPARE_AND_RUNNING )
 				{
 					DebugLog( __FILE__ , __LINE__ , "DC4CProcessBatchTasks return DC4C_INFO_NO_PREPARE_AND_RUNNING" );
+					CloseSocket( & (penv->rserver_session) );
 					return 0;
 				}
 				else if( nret )
 				{
 					ErrorLog( __FILE__ , __LINE__ , "DC4CProcessBatchTasks failed[%d]" , nret );
+					CloseSocket( & (penv->rserver_session) );
 					return nret;
 				}
 			}
@@ -704,8 +722,22 @@ int DC4CPerformMultiBatchTasks( struct Dc4cApiEnv **ppenvs , int envs_count , st
 	{
 		penv = ppenvs[envs_index] ;
 		
-		if( DC4CGetPrepareTasksCount(penv) > 0 || DC4CGetRunningTasksCount(penv) > 0 )
+		if( DC4CGetPrepareTasksCount(penv) == 0 && DC4CGetRunningTasksCount(penv) == 0 )
+		{
+			if( penv->finished_flag == 0 )
+			{
+				penv->finished_flag = 1 ;
+				if( p_penv )
+					(*p_penv) = penv ;
+				if( p_remain_envs_count )
+					(*p_remain_envs_count) = remain_envs_count - 1 ;
+				return 0;
+			}
+		}
+		else
+		{
 			remain_envs_count++;
+		}
 		
 		for( task_session_ptr = penv->tasks_session_array , task_idx = 0
 			; task_idx < penv->tasks_count
@@ -734,13 +766,13 @@ int DC4CPerformMultiBatchTasks( struct Dc4cApiEnv **ppenvs , int envs_count , st
 			
 			if(	penv->interrupted_flag == 0
 				&& DC4CGetRunningTasksCount(penv) < DC4CGetWorkersCount(penv)
-				&& DC4CGetPrepareTasksCount(penv) > 0
-				&& penv->qwp._nodes_count - penv->query_count_used == 0 )
+				&& DC4CGetPrepareTasksCount(penv) > 0 )
 			{
 				nret = DC4CQueryWorkers( penv ) ;
 				if( nret )
 				{
-					(*p_penv) = penv ;
+					if( p_penv )
+						(*p_penv) = penv ;
 					ErrorLog( __FILE__ , __LINE__ , "DC4CQueryWorkers failed[%d]" , nret );
 					return nret;
 				}
@@ -768,18 +800,21 @@ int DC4CPerformMultiBatchTasks( struct Dc4cApiEnv **ppenvs , int envs_count , st
 			}
 			else if( nret )
 			{
-				(*p_penv) = penv ;
+				if( p_penv )
+					(*p_penv) = penv ;
 				ErrorLog( __FILE__ , __LINE__ , "DC4CSetBatchTasksFds failed[%d]" , nret );
 				return nret;
 			}
 		}
+		
 		if( max_fd != -1 )
 		{
 			select_return_count = DC4CSelectBatchTasksFds( & read_fds , & write_fds , & expect_fds , & max_fd , 1 ) ;
 			if( select_return_count < 0 )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "DC4CSelectBatchTasksFds failed[%d]" , select_return_count );
-				(*p_penv) = NULL ;
+				if( p_penv )
+					(*p_penv) = NULL ;
 				return select_return_count;
 			}
 			else if( select_return_count > 0 )
@@ -794,6 +829,8 @@ int DC4CPerformMultiBatchTasks( struct Dc4cApiEnv **ppenvs , int envs_count , st
 					if( nret == DC4C_INFO_NO_PREPARE_AND_RUNNING )
 					{
 						DebugLog( __FILE__ , __LINE__ , "DC4CSelectBatchTasksFds return DC4C_INFO_NO_PREPARE_AND_RUNNING" );
+						CloseSocket( & (penv->rserver_session) );
+						penv->finished_flag = 1 ;
 						if( p_penv )
 							(*p_penv) = penv ;
 						if( p_remain_envs_count )
@@ -803,7 +840,9 @@ int DC4CPerformMultiBatchTasks( struct Dc4cApiEnv **ppenvs , int envs_count , st
 					else if( nret )
 					{
 						ErrorLog( __FILE__ , __LINE__ , "DC4CProcessBatchTasks failed[%d]" , nret );
-						(*p_penv) = penv ;
+						CloseSocket( & (penv->rserver_session) );
+						if( p_penv )
+							(*p_penv) = penv ;
 						return nret;
 					}
 				}
@@ -881,7 +920,8 @@ int DC4CBeginBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc
 		penv->tasks_request_array[i].timeout = p_task->timeout ;
 		if( penv->timeout > penv->tasks_request_array[i].timeout )
 			penv->tasks_request_array[i].timeout = penv->timeout ;
-		InfoLog( __FILE__ , __LINE__ , "TASK[%d] [%s] [%d]" , i , penv->tasks_request_array[i].program_and_params , penv->tasks_request_array[i].timeout );
+		penv->tasks_request_array[i].order_index = p_task->order_index ;
+		InfoLog( __FILE__ , __LINE__ , "TASK[%d] [%s] [%d] [%d]" , i , penv->tasks_request_array[i].program_and_params , penv->tasks_request_array[i].timeout , penv->tasks_request_array[i].order_index );
 	}
 	
 	if( workers_count == DC4C_WORKER_COUNT_UNLIMITED || workers_count > penv->tasks_count )
@@ -955,97 +995,96 @@ int DC4CQueryWorkers( struct Dc4cApiEnv *penv )
 	if( penv->interrupted_flag == 1 )
 		return 0;
 	
-	if( penv->prepare_count == 0 && penv->workers_count == 0 && penv->workers_count == 0 )
+	if( penv->prepare_count == 0 )
 	{
-		query_count = -1 ;
+		if( penv->running_count == 0 && penv->finished_count == 0 )
+			query_count = -1 ;
+		else
+			return 0;
 	}
 	else
 	{
+		if( penv->qwp._nodes_count - penv->query_count_used > 0 )
+			return 0;
+		
 		query_count = penv->prepare_count ;
 		if( query_count > penv->workers_count )
 			query_count = penv->workers_count ;
 	}
 	
-	if( query_count == -1 || query_count > 0 )
+	penv->rserver_session.alive_timeout = 60 ;
+	
+	nret = proto_QueryWorkersRequest( & (penv->rserver_session) , query_count ) ;
+	if( nret )
 	{
-		penv->rserver_session.alive_timeout = 60 ;
-		
-		nret = proto_QueryWorkersRequest( & (penv->rserver_session) , query_count ) ;
-		if( nret )
-		{
-			ErrorLog( __FILE__ , __LINE__ , "proto_QueryWorkersRequest failed[%d]errno[%d]" , nret , errno );
-			return nret;
-		}
-		else
-		{
-			InfoLog( __FILE__ , __LINE__ , "proto_QueryWorkersRequest ok" );
-		}
-		
-		nret = SyncSendSocketData( & (penv->rserver_session) , & (penv->rserver_session.alive_timeout) ) ; 
-		if( nret )
-		{
-			ErrorLog( __FILE__ , __LINE__ , "SyncSendSocketData failed[%d]errno[%d]" , nret , errno );
-			CloseSocket( & (penv->rserver_session) );
-			return DC4C_ERROR_CONNECT;
-		}
-		else
-		{
-			InfoLog( __FILE__ , __LINE__ , "SyncSendSocketData ok" );
-		}
-		
-		nret = SyncReceiveSocketData( & (penv->rserver_session) , & (penv->rserver_session.alive_timeout) ) ; 
-		if( nret )
-		{
-			ErrorLog( __FILE__ , __LINE__ , "SyncReceiveSocketData failed[%d]errno[%d]" , nret , errno );
-			CloseSocket( & (penv->rserver_session) );
-			return DC4C_ERROR_CONNECT;
-		}
-		else
-		{
-			InfoLog( __FILE__ , __LINE__ , "SyncReceiveSocketData ok" );
-		}
-		
-		if( STRNCMP( penv->rserver_session.recv_buffer + LEN_COMMHEAD , != , "QWP" , 3 ) )
-		{
-			ErrorLog( __FILE__ , __LINE__ , "invalid msghead.msgtype[%.*s]" , 3 , penv->rserver_session.recv_buffer + LEN_COMMHEAD );
-			CloseSocket( & (penv->rserver_session) );
-			return DC4C_ERROR_INTERNAL;
-		}
-		
-		nret = proto_QueryWorkersResponse( & (penv->rserver_session) , & (penv->qwp) ) ;
-		if( nret )
-		{
-			ErrorLog( __FILE__ , __LINE__ , "proto_QueryWorkersResponse failed[%d]errno[%d]" , nret , errno );
-			CloseSocket( & (penv->rserver_session) );
-			return nret;
-		}
-		else
-		{
-			InfoLog( __FILE__ , __LINE__ , "proto_QueryWorkersResponse ok" );
-		}
-		
-		if( penv->qwp.error == 5 || penv->qwp._nodes_count == 0 )
-		{
-			InfoLog( __FILE__ , __LINE__ , "NO WORKER" );
-			penv->query_count_used = 0 ;
-			return 0;
-		}
-		else if( penv->qwp.error )
-		{
-			ErrorLog( __FILE__ , __LINE__ , "Query workers failed[%d]" , penv->qwp.error );
-			return penv->qwp.error;
-		}
-		else
-		{
-			InfoLog( __FILE__ , __LINE__ , "GOT [%d]WORKERS" , penv->qwp._nodes_count );
-			penv->query_count_used = 0 ;
-			return 0;
-		}
+		ErrorLog( __FILE__ , __LINE__ , "proto_QueryWorkersRequest failed[%d]errno[%d]" , nret , errno );
+		return nret;
 	}
 	else
 	{
-		return 0;
+		InfoLog( __FILE__ , __LINE__ , "proto_QueryWorkersRequest ok" );
 	}
+	
+	nret = SyncSendSocketData( & (penv->rserver_session) , & (penv->rserver_session.alive_timeout) ) ; 
+	if( nret )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "SyncSendSocketData failed[%d]errno[%d]" , nret , errno );
+		CloseSocket( & (penv->rserver_session) );
+		return DC4C_ERROR_CONNECT;
+	}
+	else
+	{
+		InfoLog( __FILE__ , __LINE__ , "SyncSendSocketData ok" );
+	}
+	
+	nret = SyncReceiveSocketData( & (penv->rserver_session) , & (penv->rserver_session.alive_timeout) ) ; 
+	if( nret )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "SyncReceiveSocketData failed[%d]errno[%d]" , nret , errno );
+		CloseSocket( & (penv->rserver_session) );
+		return DC4C_ERROR_CONNECT;
+	}
+	else
+	{
+		InfoLog( __FILE__ , __LINE__ , "SyncReceiveSocketData ok" );
+	}
+	
+	if( STRNCMP( penv->rserver_session.recv_buffer + LEN_COMMHEAD , != , "QWP" , 3 ) )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "invalid msghead.msgtype[%.*s]" , 3 , penv->rserver_session.recv_buffer + LEN_COMMHEAD );
+		CloseSocket( & (penv->rserver_session) );
+		return DC4C_ERROR_INTERNAL;
+	}
+	
+	nret = proto_QueryWorkersResponse( & (penv->rserver_session) , & (penv->qwp) ) ;
+	if( nret )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "proto_QueryWorkersResponse failed[%d]errno[%d]" , nret , errno );
+		CloseSocket( & (penv->rserver_session) );
+		return nret;
+	}
+	else
+	{
+		InfoLog( __FILE__ , __LINE__ , "proto_QueryWorkersResponse ok" );
+	}
+	
+	if( penv->qwp.error == 5 || penv->qwp._nodes_count == 0 )
+	{
+		InfoLog( __FILE__ , __LINE__ , "NO WORKER" );
+		penv->query_count_used = 0 ;
+	}
+	else if( penv->qwp.error )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "Query workers failed[%d]" , penv->qwp.error );
+		return penv->qwp.error;
+	}
+	else
+	{
+		InfoLog( __FILE__ , __LINE__ , "GOT [%d]WORKERS" , penv->qwp._nodes_count );
+		penv->query_count_used = 0 ;
+	}
+	
+	return 0;
 }
 
 int DC4CSetBatchTasksFds( struct Dc4cApiEnv *penv , fd_set *p_read_fds , fd_set *write_fds , fd_set *expect_fds , int *p_max_fd )
@@ -1098,7 +1137,7 @@ _GOTO_CONNECT :
 			
 			task_session_ptr->alive_timeout = task_request_ptr->timeout ;
 			
-			nret = proto_ExecuteProgramRequest( task_session_ptr , task_request_ptr->program_and_params , task_request_ptr->timeout , penv->options , task_request_ptr ) ;
+			nret = proto_ExecuteProgramRequest( task_session_ptr , task_request_ptr->order_index , task_request_ptr->program_and_params , task_request_ptr->timeout , penv->options , task_request_ptr ) ;
 			if( nret )
 			{
 				WarnLog( __FILE__ , __LINE__ , "proto_ExecuteProgramRequest failed[%d]errno[%d]" , nret , errno );
@@ -1343,9 +1382,21 @@ int DC4CGetPrepareTasksCount( struct Dc4cApiEnv *penv )
 	return penv->prepare_count;
 }
 
+void DC4CSetPrepareTasksCount( struct Dc4cApiEnv *penv , int prepare_count )
+{
+	penv->prepare_count = prepare_count ;
+	return;
+}
+
 int DC4CGetRunningTasksCount( struct Dc4cApiEnv *penv )
 {
 	return penv->running_count;
+}
+
+void DC4CSetRunningTasksCount( struct Dc4cApiEnv *penv , int running_count )
+{
+	penv->running_count = running_count ;
+	return;
 }
 
 int DC4CGetFinishedTasksCount( struct Dc4cApiEnv *penv )
@@ -1353,85 +1404,106 @@ int DC4CGetFinishedTasksCount( struct Dc4cApiEnv *penv )
 	return penv->finished_count;
 }
 
-int DC4CGetBatchTasksIp( struct Dc4cApiEnv *penv , int index , char **pp_ip )
+void DC4CSetFinishedTasksCount( struct Dc4cApiEnv *penv , int finished_count )
 {
-	if( index > penv->tasks_array_size )
-		return -1;
-	
-	(*pp_ip) = penv->tasks_request_array[index].ip ;
-	return 0;
+	penv->finished_count = finished_count ;
+	return;
 }
 
-int DC4CGetBatchTasksPort( struct Dc4cApiEnv *penv , int index , long *p_port )
+char *DC4CGetBatchTasksIp( struct Dc4cApiEnv *penv , int index )
 {
 	if( index > penv->tasks_array_size )
-		return -1;
+		return NULL;
 	
-	(*p_port) = penv->tasks_request_array[index].port ;
-	return 0;
+	return penv->tasks_request_array[index].ip;
 }
 
-int DC4CGetBatchTasksTid( struct Dc4cApiEnv *penv , int index , char **pp_tid )
+long DC4CGetBatchTasksPort( struct Dc4cApiEnv *penv , int index )
 {
 	if( index > penv->tasks_array_size )
-		return -1;
+		return 0;
 	
-	(*pp_tid) = penv->tasks_request_array[index].tid ;
-	return 0;
+	return penv->tasks_request_array[index].port;
 }
 
-int DC4CGetBatchTasksProgramAndParams( struct Dc4cApiEnv *penv , int index , char **pp_program_and_params )
+char *DC4CGetBatchTasksTid( struct Dc4cApiEnv *penv , int index )
 {
 	if( index > penv->tasks_array_size )
-		return -1;
+		return NULL;
 	
-	(*pp_program_and_params) = penv->tasks_request_array[index].program_and_params ;
-	return 0;
+	return penv->tasks_request_array[index].tid;
 }
 
-int DC4CGetBatchTasksTimeout( struct Dc4cApiEnv *penv , int index , int *p_timeout )
+int DC4CGetBatchTasksOrderIndex( struct Dc4cApiEnv *penv , int index )
 {
 	if( index > penv->tasks_array_size )
-		return -1;
+		return 0;
 	
-	(*p_timeout) = penv->tasks_request_array[index].timeout ;
-	return 0;
+	return penv->tasks_request_array[index].order_index;
 }
 
-int DC4CGetBatchTasksElapse( struct Dc4cApiEnv *penv , int index , int *p_elapse )
+char *DC4CGetBatchTasksProgramAndParams( struct Dc4cApiEnv *penv , int index )
 {
 	if( index > penv->tasks_array_size )
-		return -1;
+		return NULL;
 	
-	(*p_elapse) = penv->tasks_response_array[index].elapse ;
-	return 0;
+	return penv->tasks_request_array[index].program_and_params;
 }
 
-int DC4CGetBatchTasksError( struct Dc4cApiEnv *penv , int index , int *p_error )
+int DC4CGetBatchTasksTimeout( struct Dc4cApiEnv *penv , int index )
 {
 	if( index > penv->tasks_array_size )
-		return -1;
+		return 0;
 	
-	(*p_error) = penv->tasks_response_array[index].error ;
-	return 0;
+	return penv->tasks_request_array[index].timeout;
 }
 
-int DC4CGetBatchTasksStatus( struct Dc4cApiEnv *penv , int index , int *p_status )
+int DC4CGetBatchTasksBeginTimestamp( struct Dc4cApiEnv *penv , int index )
 {
 	if( index > penv->tasks_array_size )
-		return -1;
+		return 0;
 	
-	(*p_status) = penv->tasks_response_array[index].status ;
-	return 0;
+	return penv->tasks_request_array[index].begin_datetime_stamp;
 }
 
-int DC4CGetBatchTasksInfo( struct Dc4cApiEnv *penv , int index , char **pp_info )
+int DC4CGetBatchTasksEndTimestamp( struct Dc4cApiEnv *penv , int index )
 {
 	if( index > penv->tasks_array_size )
-		return -1;
+		return 0;
 	
-	(*pp_info) = penv->tasks_response_array[index].info ;
-	return 0;
+	return penv->tasks_response_array[index].end_datetime_stamp;
+}
+
+int DC4CGetBatchTasksElapse( struct Dc4cApiEnv *penv , int index )
+{
+	if( index > penv->tasks_array_size )
+		return 0;
+	
+	return penv->tasks_response_array[index].elapse;
+}
+
+int DC4CGetBatchTasksError( struct Dc4cApiEnv *penv , int index )
+{
+	if( index > penv->tasks_array_size )
+		return 0;
+	
+	return penv->tasks_response_array[index].error;
+}
+
+int DC4CGetBatchTasksStatus( struct Dc4cApiEnv *penv , int index )
+{
+	if( index > penv->tasks_array_size )
+		return 0;
+	
+	return penv->tasks_response_array[index].status;
+}
+
+char *DC4CGetBatchTasksInfo( struct Dc4cApiEnv *penv , int index )
+{
+	if( index > penv->tasks_array_size )
+		return NULL;
+	
+	return penv->tasks_response_array[index].info;
 }
 
 void DC4CResetFinishedTasksWithError( struct Dc4cApiEnv *penv )
@@ -1444,7 +1516,10 @@ void DC4CResetFinishedTasksWithError( struct Dc4cApiEnv *penv )
 		; task_session_ptr++ , task_idx++ )
 	{
 		if( task_session_ptr->progress == WSERVER_SESSION_PROGRESS_FINISHED_WITH_ERROR )
+		{
 			task_session_ptr->progress = WSERVER_SESSION_PROGRESS_WAITFOR_CONNECTING ;
+			penv->finished_flag = 0 ;
+		}
 	}
 	
 	return;
@@ -1507,3 +1582,21 @@ int DC4CSetReplyInfoEx( char *buf , int len )
 	return (int)write( info_pipe , buf , (size_t)len );
 }
 
+char *ConvertTimeString( time_t tt , char *buf , size_t bufsize )
+{
+	struct tm	stime ;
+	
+	memset( & stime , 0x00 , sizeof(struct tm) );
+	localtime_r( & tt , & stime );
+	memset( buf , 0x00 , bufsize );
+	strftime( buf , bufsize , "%Y-%m-%d %H:%M:%S" , & stime );
+	
+	return buf;
+}
+
+char *GetTimeStringNow( char *buf , size_t bufsize )
+{
+	time_t	tt ;
+	time( & tt );
+	return ConvertTimeString( tt , buf , bufsize );
+}

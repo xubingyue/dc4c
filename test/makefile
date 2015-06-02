@@ -14,6 +14,7 @@ c_FILE		=	\
 			dc4c_test_tfc_dag_master.c \
 			dc4c_test_worker_hello.c \
 			dc4c_test_worker_sleep.c \
+			dc4c_test_worker_sleep_or_error.c \
 			dc4c_test_worker_pi.c \
 
 ec_FILE		=	\
@@ -27,6 +28,7 @@ BIN		=	\
 			dc4c_test_tfc_dag_master \
 			dc4c_test_worker_hello \
 			dc4c_test_worker_sleep \
+			dc4c_test_worker_sleep_or_error \
 			dc4c_test_worker_pi \
 			dc4c_test_tfc_dag_master_pgsql \
 
@@ -39,7 +41,8 @@ CFLAGS		=	-I. \
 			-I$(HOME)/include/dc4c_proto \
 			-I$(HOME)/include/dc4c_api \
 			-I$(HOME)/include/dc4c_tfc_dag \
-			-I/root/local/postgresql/include \
+
+#			-I/root/local/postgresql/include \
 
 ###### 链接选项
 LFLAGS		=	-L. \
@@ -48,7 +51,8 @@ LFLAGS		=	-L. \
 			-ldc4c_util \
 			-ldc4c_proto \
 			-ldc4c_api \
-			-L/root/local/postgresql/lib \
+
+#			-L/root/local/postgresql/lib \
 
 ###### 额外宏定义区
 CLEAN_ADDITION	=
@@ -82,6 +86,9 @@ dc4c_test_worker_hello	:	dc4c_test_worker_hello.o
 
 dc4c_test_worker_sleep	:	dc4c_test_worker_sleep.o
 	$(CC) -o $@ dc4c_test_worker_sleep.o $(LFLAGS)
+
+dc4c_test_worker_sleep_or_error	:	dc4c_test_worker_sleep_or_error.o
+	$(CC) -o $@ dc4c_test_worker_sleep_or_error.o $(LFLAGS)
 
 dc4c_test_worker_pi	:	dc4c_test_worker_pi.o
 	$(CC) -o $@ dc4c_test_worker_pi.o $(LFLAGS) -lgmp

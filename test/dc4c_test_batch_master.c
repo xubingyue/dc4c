@@ -17,15 +17,8 @@ int main( int argc , char *argv[] )
 	int			repeat_task_flag ;
 	int			i ;
 	
-	char			*ip = NULL ;
-	long			port ;
-	char			*tid = NULL ;
-	char			*program_and_params = NULL ;
-	int			timeout ;
-	int			elapse ;
-	int			error ;
-	int			status ;
-	char			*info = NULL ;
+	char			begin_timebuf[ 256 + 1 ] ;
+	char			end_timebuf[ 256 + 1 ] ;
 	
 	int			nret = 0 ;
 	
@@ -78,6 +71,8 @@ int main( int argc , char *argv[] )
 					printf( "workers_count[%d] invalid\n" , workers_count );
 					return 1;
 				}
+				
+				tasks_count = workers_count ;
 			}
 			else
 			{
@@ -116,16 +111,10 @@ int main( int argc , char *argv[] )
 		tasks_count = DC4CGetTasksCount( penv ) ;
 		for( i = 0 ; i < tasks_count ; i++ )
 		{
-			DC4CGetBatchTasksIp( penv , i , & ip );
-			DC4CGetBatchTasksPort( penv , i , & port );
-			DC4CGetBatchTasksTid( penv , i , & tid );
-			DC4CGetBatchTasksProgramAndParams( penv , i , & program_and_params );
-			DC4CGetBatchTasksTimeout( penv , i , & timeout );
-			DC4CGetBatchTasksElapse( penv , i , & elapse );
-			DC4CGetBatchTasksError( penv , i , & error );
-			DC4CGetBatchTasksStatus( penv , i , & status );
-			DC4CGetBatchTasksInfo( penv , i , & info );
-			printf( "Task[%d]-[%s][%ld]-[%s][%s][%d][%d]-[%d][%d][%s]\n" , i , ip , port , tid , program_and_params , timeout , elapse , error , WEXITSTATUS(status) , info );
+			printf( "[%d]-[%s][%ld]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%s]\n"
+				, i , DC4CGetBatchTasksIp(penv,i) , DC4CGetBatchTasksPort(penv,i)
+				, DC4CGetBatchTasksTid(penv,i) , DC4CGetBatchTasksProgramAndParams(penv,i) , DC4CGetBatchTasksTimeout(penv,i) , ConvertTimeString(DC4CGetBatchTasksBeginTimestamp(penv,i),begin_timebuf,sizeof(begin_timebuf))+11 , ConvertTimeString(DC4CGetBatchTasksEndTimestamp(penv,i),end_timebuf,sizeof(end_timebuf))+11 , DC4CGetBatchTasksElapse(penv,i)
+				, DC4CGetBatchTasksError(penv,i) , WEXITSTATUS(DC4CGetBatchTasksStatus(penv,i)) , DC4CGetBatchTasksInfo(penv,i) );
 		}
 		
 		DC4CCleanEnv( & penv );

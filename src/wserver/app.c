@@ -137,7 +137,7 @@ static int ExecuteProgram( struct ServerEnv *penv , struct SocketSession *psessi
 		
 		penv->pid = pid ;
 		
-		time( & (penv->begin_timestamp) );
+		time( & (penv->begin_datetime_stamp) );
 	}
 	
 	SendWorkerNotice( penv );

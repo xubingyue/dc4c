@@ -1,3 +1,11 @@
+v1.1.6	2015-06-02	calvin
+	* Modify demo for DAG tasks engine , update database status by real time on processing
+	* Adjust some function prototype
+
+v1.1.5	2015-06-01	calvin
+	* Add split-version for DAG tasks engine
+	* Fixed some probloms
+
 v1.1.4	2015-05-27	calvin
 	* Add option DC4C_OPTIONS_BIND_CPU for bind cpu setaffinity in task , useful for intensive computational application
 	* Fixed error process on executing command on computing node
@@ -11,13 +19,13 @@ v1.1.2	2015-05-25	calvin
 	* Add function DC4CResetFinishedTasksWithError for reseting finished tasks with error
 
 v1.1.1	2015-05-24	calvin
-	* Add tasks-flow-controler with directed acyclic graph in `src/tfc/dag' for PostgreSQL , load schedule config from database
-	* Add demo for tasks-flow-controler with directed acyclic graph in `test/dc4c_test_tfc_dag_master_pgsql'
+	* Add DAG tasks engine in `src/tfc/dag' by PostgreSQL , load schedule config from database
+	* Add demo for DAG tasks engine in `test/dc4c_test_tfc_dag_master_pgsql'
 
 v1.1.0	2015-05-23	calvin
 	* Fixed a problom about momery leak in 'util'
-	* Add tasks-flow-controler with directed acyclic graph in `src/tfc/dag' , load schedule config from json file
-	* Add demo for tasks-flow-controler with directed acyclic graph in `test/dc4c_test_tfc_dag_master'
+	* Add DAG tasks engine in `src/tfc/dag' , load schedule config from json file
+	* Add demo for DAG tasks engine in `test/dc4c_test_tfc_dag_master'
 
 v1.0.3	2015-05-20	calvin
 	* Add demo : Distributed computing PI

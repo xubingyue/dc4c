@@ -8,15 +8,8 @@ int main( int argc , char *argv[] )
 {
 	struct Dc4cApiEnv	*penv = NULL ;
 	
-	char			*ip = NULL ;
-	long			port ;
-	char			*tid = NULL ;
-	char			*program_and_params = NULL ;
-	int			timeout ;
-	int			elapse ;
-	int			error ;
-	int			status ;
-	char			*info = NULL ;
+	char			begin_timebuf[ 256 + 1 ] ;
+	char			end_timebuf[ 256 + 1 ] ;
 	
 	int			nret = 0 ;
 	
@@ -49,16 +42,10 @@ int main( int argc , char *argv[] )
 			printf( "DC4CDoTask ok\n" );
 		}
 		
-		DC4CGetTaskIp( penv , & ip );
-		DC4CGetTaskPort( penv , & port );
-		DC4CGetTaskTid( penv , & tid );
-		DC4CGetTaskProgramAndParams( penv , & program_and_params );
-		DC4CGetTaskTimeout( penv , & timeout );
-		DC4CGetTaskElapse( penv , & elapse );
-		DC4CGetTaskError( penv , & error );
-		DC4CGetTaskStatus( penv , & status );
-		DC4CGetTaskInfo( penv , & info );
-		printf( "Task-[%s][%ld]-[%s][%s][%d][%d]-[%d][%d][%s]\n" , ip , port , tid , program_and_params , timeout , elapse , error , WEXITSTATUS(status) , info );
+		printf( "[%s][%ld]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%s]\n"
+			, DC4CGetTaskIp(penv) , DC4CGetTaskPort(penv)
+			, DC4CGetTaskTid(penv) , DC4CGetTaskProgramAndParams(penv) , DC4CGetTaskTimeout(penv) , ConvertTimeString(DC4CGetTaskBeginTimestamp(penv),begin_timebuf,sizeof(begin_timebuf))+11 , ConvertTimeString(DC4CGetTaskEndTimestamp(penv),end_timebuf,sizeof(end_timebuf))+11 , DC4CGetTaskElapse(penv)
+			, DC4CGetTaskError(penv) , WEXITSTATUS(DC4CGetTaskStatus(penv)) , DC4CGetTaskInfo(penv) );
 		
 		DC4CCleanEnv( & penv );
 		printf( "DC4CCleanEnv ok\n" );

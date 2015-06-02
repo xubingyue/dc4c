@@ -86,9 +86,11 @@ typedef struct
 	char	ip[ 40 + 1 ] ;
 	int	port ;
 	char	tid[ 20 + 1 ] ;
+	int	order_index ;
 	char	program_and_params[ 256 + 1 ] ;
 	char	program_md5_exp[ 32 + 1 ] ;
 	int	timeout ;
+	int	begin_datetime_stamp ;
 	char	bind_cpu_flag ;
 } execute_program_request ;
 

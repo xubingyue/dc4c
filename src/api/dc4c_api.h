@@ -24,31 +24,31 @@ extern "C" {
 
 extern char *__DC4C_VERSION ;
 
-#define DC4C_ERROR_INTERNAL			-11
-#define DC4C_ERROR_SOCKET			-12
-#define DC4C_ERROR_CONNECT			-13
-#define DC4C_ERROR_ALLOC			-14
-#define DC4C_ERROR_FILE_NOT_FOUND		-21
-#define DC4C_ERROR_PARAMETER			-22
-#define DC4C_ERROR_NO_WORKER			-23
-#define DC4C_ERROR_DATABASE			-24
-#define DC4C_INFO_NO_PREPARE			31
-#define DC4C_INFO_NO_RUNNING			32
-#define DC4C_INFO_NO_PREPARE_AND_RUNNING	35
-#define DC4C_INFO_NO_UNFINISHED_ENVS		38
-#define DC4C_INFO_ALREADY_EXECUTING		60
-#define DC4C_ERROR_OPENFILE			-70
-#define DC4C_ERROR_WRITEFILE			-71
-#define DC4C_ERROR_CREATEPIPE			-72
-#define DC4C_ERROR_FORK				-73
-#define DC4C_ERROR_EXEC				-74
-#define DC4C_ERROR_TIMEOUT			-75
-#define DC4C_ERROR_MD5_NOT_MATCHED_TOO		-76
-#define DC4C_ERROR_TERMSIG			-81
-#define DC4C_ERROR_SIGNALED			-82
-#define DC4C_ERROR_STOPPED			-83
-#define DC4C_ERROR_APP				-84
-#define DC4C_ERROR_UNKNOW_QUIT			-89
+#define DC4C_ERROR_INTERNAL			-101
+#define DC4C_ERROR_SOCKET			-102
+#define DC4C_ERROR_CONNECT			-103
+#define DC4C_ERROR_ALLOC			-104
+#define DC4C_ERROR_OPENFILE			-105
+#define DC4C_ERROR_WRITEFILE			-106
+#define DC4C_ERROR_CREATEPIPE			-107
+#define DC4C_ERROR_FORK				-108
+#define DC4C_ERROR_EXEC				-109
+#define DC4C_ERROR_PARAMETER			-201
+#define DC4C_ERROR_FILE_NOT_FOUND		-202
+#define DC4C_ERROR_NO_WORKER			-203
+#define DC4C_ERROR_DATABASE			-204
+#define DC4C_ERROR_TIMEOUT			-205
+#define DC4C_ERROR_MD5_NOT_MATCHED_TOO		-206
+#define DC4C_ERROR_TERMSIG			-301
+#define DC4C_ERROR_SIGNALED			-302
+#define DC4C_ERROR_STOPPED			-303
+#define DC4C_ERROR_UNKNOW_QUIT			-304
+#define DC4C_ERROR_APP				-305
+#define DC4C_INFO_NO_PREPARE			601
+#define DC4C_INFO_NO_RUNNING			602
+#define DC4C_INFO_NO_PREPARE_AND_RUNNING	603
+#define DC4C_INFO_NO_UNFINISHED_ENVS		604
+#define DC4C_INFO_ALREADY_EXECUTING		605
 
 #define DC4C_WORKER_COUNT_UNLIMITED		0
 
@@ -74,20 +74,25 @@ unsigned long DC4CGetOptions( struct Dc4cApiEnv *penv );
 
 int DC4CDoTask( struct Dc4cApiEnv *penv , char *program_and_params , int timeout );
 
-int DC4CGetTaskIp( struct Dc4cApiEnv *penv , char **pp_ip );
-int DC4CGetTaskPort( struct Dc4cApiEnv *penv , long *p_port );
-int DC4CGetTaskTid( struct Dc4cApiEnv *penv , char **pp_tid );
-int DC4CGetTaskProgramAndParams( struct Dc4cApiEnv *penv , char **pp_program_and_params );
-int DC4CGetTaskTimeout( struct Dc4cApiEnv *penv , int *p_timeout );
-int DC4CGetTaskElapse( struct Dc4cApiEnv *penv , int *p_elapse );
-int DC4CGetTaskError( struct Dc4cApiEnv *penv , int *p_error );
-int DC4CGetTaskStatus( struct Dc4cApiEnv *penv , int *p_status );
-int DC4CGetTaskInfo( struct Dc4cApiEnv *penv , char **pp_info );
+char *DC4CGetTaskIp( struct Dc4cApiEnv *penv );
+long DC4CGetTaskPort( struct Dc4cApiEnv *penv );
+char *DC4CGetTaskTid( struct Dc4cApiEnv *penv );
+int DC4CGetTaskOrderIndex( struct Dc4cApiEnv *penv );
+char *DC4CGetTaskProgramAndParams( struct Dc4cApiEnv *penv );
+int DC4CGetTaskTimeout( struct Dc4cApiEnv *penv );
+int DC4CGetTaskBeginTimestamp( struct Dc4cApiEnv *penv );
+int DC4CGetTaskEndTimestamp( struct Dc4cApiEnv *penv );
+int DC4CGetTaskElapse( struct Dc4cApiEnv *penv );
+int DC4CGetTaskError( struct Dc4cApiEnv *penv );
+int DC4CGetTaskStatus( struct Dc4cApiEnv *penv );
+char *DC4CGetTaskInfo( struct Dc4cApiEnv *penv );
 
 struct Dc4cBatchTask
 {
 	char	program_and_params[ 256 + 1 ] ;
 	int	timeout ;
+	
+	int	order_index ;
 } ;
 
 int DC4CDoBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cBatchTask *a_tasks , int tasks_count );
@@ -110,15 +115,18 @@ int DC4CGetRunningTasksCount( struct Dc4cApiEnv *penv );
 int DC4CGetFinishedTasksCount( struct Dc4cApiEnv *penv );
 
 /* index based 0 */
-int DC4CGetBatchTasksIp( struct Dc4cApiEnv *penv , int index , char **pp_ip );
-int DC4CGetBatchTasksPort( struct Dc4cApiEnv *penv , int index , long *p_port );
-int DC4CGetBatchTasksTid( struct Dc4cApiEnv *penv , int index , char **pp_tid );
-int DC4CGetBatchTasksProgramAndParams( struct Dc4cApiEnv *penv , int index , char **pp_program_and_params );
-int DC4CGetBatchTasksTimeout( struct Dc4cApiEnv *penv , int index , int *p_timeout );
-int DC4CGetBatchTasksElapse( struct Dc4cApiEnv *penv , int index , int *p_elapse );
-int DC4CGetBatchTasksError( struct Dc4cApiEnv *penv , int index , int *p_error );
-int DC4CGetBatchTasksStatus( struct Dc4cApiEnv *penv , int index , int *p_status );
-int DC4CGetBatchTasksInfo( struct Dc4cApiEnv *penv , int index , char **pp_info );
+char *DC4CGetBatchTasksIp( struct Dc4cApiEnv *penv , int index );
+long DC4CGetBatchTasksPort( struct Dc4cApiEnv *penv , int index );
+char *DC4CGetBatchTasksTid( struct Dc4cApiEnv *penv , int index );
+int DC4CGetBatchTasksOrderIndex( struct Dc4cApiEnv *penv , int index );
+char *DC4CGetBatchTasksProgramAndParams( struct Dc4cApiEnv *penv , int index );
+int DC4CGetBatchTasksTimeout( struct Dc4cApiEnv *penv , int index );
+int DC4CGetBatchTasksBeginTimestamp( struct Dc4cApiEnv *penv , int index );
+int DC4CGetBatchTasksEndTimestamp( struct Dc4cApiEnv *penv , int index );
+int DC4CGetBatchTasksElapse( struct Dc4cApiEnv *penv , int index );
+int DC4CGetBatchTasksError( struct Dc4cApiEnv *penv , int index );
+int DC4CGetBatchTasksStatus( struct Dc4cApiEnv *penv , int index );
+char *DC4CGetBatchTasksInfo( struct Dc4cApiEnv *penv , int index );
 
 /* 其它类 */
 void DC4CResetFinishedTasksWithError( struct Dc4cApiEnv *penv );
@@ -131,6 +139,17 @@ void DC4CSetAppLogFile( char *program );
 int DC4CFormatReplyInfo( char *format , ... );
 int DC4CSetReplyInfo( char *str );
 int DC4CSetReplyInfoEx( char *buf , int len );
+
+/********* 其它接口 *********/
+
+#define SetAttribute(_param_,_attribute_)	(_param_)=(_attribute_);
+#define AddAttribute(_param_,_attribute_)	(_param_)|=(_attribute_);
+#define RemoveAttribute(_param_,_attribute_)	(_param_)&=(_attribute_);
+#define TestAttribute(_param_,_attribute_)	( ((_param_)&(_attribute_)) == (_attribute_) ? 1 : 0 )
+
+#define GENERAL_TIMEFORMAT	
+char *ConvertTimeString( time_t tt , char *buf , size_t bufsize );
+char *GetTimeStringNow( char *buf , size_t bufsize );
 
 #ifdef __cplusplus
 }

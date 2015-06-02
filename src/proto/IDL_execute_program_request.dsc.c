@@ -32,6 +32,9 @@ int DSCSERIALIZE_JSON_COMPACT_execute_program_request( execute_program_request *
 	JSONESCAPE_EXPAND(pst->tid,strlen(pst->tid),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,","); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"\"order_index\":"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"%d",pst->order_index); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,","); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\"program_and_params\":"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	JSONESCAPE_EXPAND(pst->program_and_params,strlen(pst->program_and_params),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
@@ -44,6 +47,9 @@ int DSCSERIALIZE_JSON_COMPACT_execute_program_request( execute_program_request *
 	len=SNPRINTF(buf,remain_len,","); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\"timeout\":"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"%d",pst->timeout); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,","); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"\"begin_datetime_stamp\":"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"%d",pst->begin_datetime_stamp); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,","); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\"bind_cpu_flag\":"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"%d",pst->bind_cpu_flag); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
@@ -84,6 +90,9 @@ int CallbackOnJsonNode_execute_program_request( int type , char *jpath , int jpa
 		/* tid */
 		if( jpath_len == 4 && strncmp( jpath , "/tid" , jpath_len ) == 0 )
 		{JSONUNESCAPE_FOLD(content,content_len,pst->tid,len,sizeof(pst->tid)-1); if(len<0)return -7;}
+		/* order_index */
+		if( jpath_len == 12 && strncmp( jpath , "/order_index" , jpath_len ) == 0 )
+		{NATOI(content,content_len,pst->order_index);}
 		/* program_and_params */
 		if( jpath_len == 19 && strncmp( jpath , "/program_and_params" , jpath_len ) == 0 )
 		{JSONUNESCAPE_FOLD(content,content_len,pst->program_and_params,len,sizeof(pst->program_and_params)-1); if(len<0)return -7;}
@@ -93,6 +102,9 @@ int CallbackOnJsonNode_execute_program_request( int type , char *jpath , int jpa
 		/* timeout */
 		if( jpath_len == 8 && strncmp( jpath , "/timeout" , jpath_len ) == 0 )
 		{NATOI(content,content_len,pst->timeout);}
+		/* begin_datetime_stamp */
+		if( jpath_len == 21 && strncmp( jpath , "/begin_datetime_stamp" , jpath_len ) == 0 )
+		{NATOI(content,content_len,pst->begin_datetime_stamp);}
 		/* bind_cpu_flag */
 		if( jpath_len == 14 && strncmp( jpath , "/bind_cpu_flag" , jpath_len ) == 0 )
 		{NATOC(content,content_len,pst->bind_cpu_flag);}

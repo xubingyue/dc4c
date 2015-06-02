@@ -9,10 +9,20 @@
 #@ c_FILE
 c_FILE		=	\
 			dc4c_tfc_dag.c \
+			$(c_FILE2) \
+
+c_FILE2		=	\
 			IDL_dag_schedule_configfile.dsc.c \
+			IDL_dag_schedule.dsc.c \
+			IDL_dag_batches_direction.dsc.c \
+			IDL_dag_batches_info.dsc.c \
+			IDL_dag_batches_tasks.dsc.c \
 
 ec_FILE		=	\
 			dc4c_tfc_dag_pgsql.ec \
+			$(ec_FILE2) \
+
+ec_FILE2	=	\
 			IDL_dag_schedule.dsc.ESQL.ec \
 			IDL_dag_batches_direction.dsc.ESQL.ec \
 			IDL_dag_batches_info.dsc.ESQL.ec \
@@ -21,8 +31,7 @@ ec_FILE		=	\
 ###### 目标文件、安装目录配置区
 LIB		=	libdc4c_tfc_dag.so libdc4c_tfc_dag_pgsql.so
 LIBINST		=	$(HOME)/lib
-HDER		=	\
-			dc4c_tfc_dag.h IDL_dag_schedule_configfile.dsc.h IDL_dag_schedule.dsc.ESQL.eh IDL_dag_schedule.dsc.h
+HDER		=	dc4c_tfc_dag.h $(c_FILE2:.c=.h) $(ec_FILE2:.ec=.eh) $(c_FILE2:.c=.LOG.c)
 HDERINST	=	$(HOME)/include/dc4c_tfc_dag
 NOINST_OBJ	=	sizeof
 
@@ -31,7 +40,6 @@ CFLAGS		=	-I. \
 			-I$(HOME)/include/fasterjson \
 			-I$(HOME)/include/dc4c_util \
 			-I$(HOME)/include/dc4c_api \
-			-I/root/local/postgresql/include \
 
 ###### 链接选项
 LFLAGS		=	-L. \
@@ -39,7 +47,6 @@ LFLAGS		=	-L. \
 			-lfasterjson \
 			-ldc4c_util \
 			-ldc4c_api \
-			-L/root/local/postgresql/lib \
 
 ###### 额外宏定义区
 CLEAN_ADDITION	=	sizeof.o

@@ -12,15 +12,6 @@ int pi_master( char *rservers_ip_port , unsigned long max_x , int tasks_count )
 	
 	int			i ;
 	struct Dc4cBatchTask	*p_task = NULL ;
-	char			*ip = NULL ;
-	long			port ;
-	char			*tid = NULL ;
-	char			*program_and_params = NULL ;
-	int			timeout ;
-	int			elapse ;
-	int			error ;
-	int			status ;
-	char			*info = NULL ;
 	
 	mpf_t			pi_incr ;
 	mpf_t			pi ;
@@ -101,18 +92,7 @@ int pi_master( char *rservers_ip_port , unsigned long max_x , int tasks_count )
 	
 	for( i = 0 ; i < tasks_count ; i++ )
 	{
-		DC4CGetBatchTasksIp( penv , i , & ip );
-		DC4CGetBatchTasksPort( penv , i , & port );
-		DC4CGetBatchTasksTid( penv , i , & tid );
-		DC4CGetBatchTasksProgramAndParams( penv , i , & program_and_params );
-		DC4CGetBatchTasksTimeout( penv , i , & timeout );
-		DC4CGetBatchTasksElapse( penv , i , & elapse );
-		DC4CGetBatchTasksError( penv , i , & error );
-		DC4CGetBatchTasksStatus( penv , i , & status );
-		DC4CGetBatchTasksInfo( penv , i , & info );
-		InfoLog( __FILE__ , __LINE__ ,  "Task[%d]-[%s][%ld]-[%s][%s][%d][%d]-[%d][%d][%s]" , i , ip , port , tid , program_and_params , timeout , elapse , error , WEXITSTATUS(status) , info );
-		
-		mpf_set_str( pi_incr , info , 10 );
+		mpf_set_str( pi_incr , DC4CGetBatchTasksInfo(penv,i) , 10 );
 		mpf_add( pi , pi , pi_incr );
 	}
 	

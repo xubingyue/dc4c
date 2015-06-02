@@ -4,6 +4,9 @@ STRUCT	dag_schedule_configfile
 	{
 		STRING	64	schedule_name
 		STRING	256	schedule_desc
+		STRING	19	begin_datetime
+		STRING	19	end_datetime
+		INT	4	progress
 	}
 	STRUCT	batches
 	{
@@ -17,7 +20,12 @@ STRUCT	dag_schedule_configfile
 			{
 				STRING	256	program_and_params
 				INT	4	timeout
+				INT	4	order_index
+				INT	4	progress
 			}
+			STRING	19	begin_datetime
+			STRING	19	end_datetime
+			INT	4	progress
 		}
 		STRUCT	batches_direction	ARRAY	1000
 		{

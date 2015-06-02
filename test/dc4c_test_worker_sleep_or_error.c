@@ -11,7 +11,7 @@ int main( int argc , char *argv[] )
 	struct timeval		tv ;
 	int			seconds ;
 	
-	DC4CSetAppLogFile( "dc4c_test_worker_sleep" );
+	DC4CSetAppLogFile( "dc4c_test_worker_sleep_or_error" );
 	SetLogLevel( LOGLEVEL_DEBUG );
 	
 	gettimeofday( & tv , NULL );
@@ -35,6 +35,9 @@ int main( int argc , char *argv[] )
 	
 	DC4CFormatReplyInfo( "Elapse [%d]seconds" , seconds );
 	
-	return 0;
+	if( seconds == 0 )
+		return 1;
+	else
+		return 0;
 }
 

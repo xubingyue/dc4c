@@ -172,11 +172,6 @@ int FileMd5( char *pathfilename , char *program_md5_exp ); /* char program_md5_e
 int BindCpuProcessor( int processor_no );
 int UnbindCpuProcessor();
 
-#define SetAttribute(_param_,_attribute_)	(_param_)=(_attribute_);
-#define AddAttribute(_param_,_attribute_)	(_param_)|=(_attribute_);
-#define RemoveAttribute(_param_,_attribute_)	(_param_)&=(_attribute_);
-#define TestAttribute(_param_,_attribute_)	( ((_param_)&(_attribute_)) == (_attribute_) ? TRUE : FALSE )
-
 #ifdef __cplusplus
 }
 #endif

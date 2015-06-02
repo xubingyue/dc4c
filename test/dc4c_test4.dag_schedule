@@ -5,7 +5,7 @@
                "dc4c_test_worker_sleep 1"                    "dc4c_test_worker_sleep 3"
                   /               \                                      |
             BATCH_A21              BATCH_A22                            BATCH_B2
-  "dc4c_test_worker_sleep 4" "dc4c_test_worker_sleep 5"      "dc4c_test_worker_sleep 6"
+                ""         "dc4c_test_worker_sleep 5"      "dc4c_test_worker_sleep 6"
                   \               /                                      |
                          BATCH_A3                                        /
                 "dc4c_test_worker_sleep 2"                         /
@@ -24,12 +24,12 @@
 				{ "program_and_params":"dc4c_test_worker_sleep 1", "timeout":60" }
 			] } ,
 			{ "batch_name":"BATCH_A21", "batch_desc":"", "view_pos_x":0, "view_pos_y":0, "tasks": [
-				{ "program_and_params":"dc4c_test_worker_sleep 4", "timeout":60" }
 			] } ,
 			{ "batch_name":"BATCH_A22", "batch_desc":"", "view_pos_x":0, "view_pos_y":0, "tasks": [
 				{ "program_and_params":"dc4c_test_worker_sleep 5", "timeout":60" }
 			] } ,
 			{ "batch_name":"BATCH_A3", "batch_desc":"", "view_pos_x":0, "view_pos_y":0, "tasks": [
+				{ "program_and_params":"dc4c_test_worker_sleep 3", "timeout":60" } ,
 				{ "program_and_params":"dc4c_test_worker_sleep 2", "timeout":60" } ,
 				{ "program_and_params":"dc4c_test_worker_sleep 1", "timeout":60" }
 			] } ,
