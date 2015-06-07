@@ -28,7 +28,7 @@ LFLAGS		=	-L. \
 			-lcrypto \
 
 ###### 额外宏定义区
-CLEAN_ADDITION	=
+CLEAN_ADDITION	=	
 
 ###### 加载mktpl模板库
 #@ make_all

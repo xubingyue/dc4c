@@ -10,27 +10,47 @@
 c_FILE		=	\
 			dc4c_test_master.c \
 			dc4c_test_batch_master.c \
+			dc4c_test_batch_master_stepbystep.c \
 			dc4c_test_multi_batch_master.c \
+			dc4c_test_multi_batch_master_stepbystep.c \
 			dc4c_test_tfc_dag_master.c \
+			dc4c_test_tfc_dag_master_stepbystep.c \
 			dc4c_test_worker_hello.c \
 			dc4c_test_worker_sleep.c \
 			dc4c_test_worker_sleep_or_error.c \
 			dc4c_test_worker_pi.c \
+			$(c_FILE2) \
+
+c_FILE2		=	\
+			IDL_dag_schedule.dsc.c \
+			IDL_dag_batches_direction.dsc.c \
+			IDL_dag_batches_info.dsc.c \
+			IDL_dag_batches_tasks.dsc.c \
 
 ec_FILE		=	\
-			dc4c_test_tfc_dag_master_pgsql.ec \
+			dc4c_test_tfc_dag_master_pgsql_stepbystep.ec \
+			$(ec_FILE2) \
 			
+ec_FILE2	=	\
+			IDL_dag_schedule.dsc.ESQL.ec \
+			IDL_dag_batches_direction.dsc.ESQL.ec \
+			IDL_dag_batches_info.dsc.ESQL.ec \
+			IDL_dag_batches_tasks.dsc.ESQL.ec \
+
 ###### 目标文件、安装目录配置区
 BIN		=	\
 			dc4c_test_master \
 			dc4c_test_batch_master \
+			dc4c_test_batch_master_stepbystep \
 			dc4c_test_multi_batch_master \
+			dc4c_test_multi_batch_master_stepbystep \
 			dc4c_test_tfc_dag_master \
+			dc4c_test_tfc_dag_master_stepbystep \
+			dc4c_test_tfc_dag_master_pgsql_stepbystep \
 			dc4c_test_worker_hello \
 			dc4c_test_worker_sleep \
 			dc4c_test_worker_sleep_or_error \
 			dc4c_test_worker_pi \
-			dc4c_test_tfc_dag_master_pgsql \
 
 BININST		=	$(HOME)/bin
 
@@ -42,8 +62,6 @@ CFLAGS		=	-I. \
 			-I$(HOME)/include/dc4c_api \
 			-I$(HOME)/include/dc4c_tfc_dag \
 
-#			-I/root/local/postgresql/include \
-
 ###### 链接选项
 LFLAGS		=	-L. \
 			-L$(HOME)/lib \
@@ -51,8 +69,7 @@ LFLAGS		=	-L. \
 			-ldc4c_util \
 			-ldc4c_proto \
 			-ldc4c_api \
-
-#			-L/root/local/postgresql/lib \
+			-ldc4c_tfc_dag \
 
 ###### 额外宏定义区
 CLEAN_ADDITION	=
@@ -72,14 +89,23 @@ dc4c_test_master	:	dc4c_test_master.o
 dc4c_test_batch_master	:	dc4c_test_batch_master.o
 	$(CC) -o $@ dc4c_test_batch_master.o $(LFLAGS)
 
+dc4c_test_batch_master_stepbystep	:	dc4c_test_batch_master_stepbystep.o
+	$(CC) -o $@ dc4c_test_batch_master_stepbystep.o $(LFLAGS)
+
 dc4c_test_multi_batch_master	:	dc4c_test_multi_batch_master.o
 	$(CC) -o $@ dc4c_test_multi_batch_master.o $(LFLAGS)
+
+dc4c_test_multi_batch_master_stepbystep	:	dc4c_test_multi_batch_master_stepbystep.o
+	$(CC) -o $@ dc4c_test_multi_batch_master_stepbystep.o $(LFLAGS)
 
 dc4c_test_tfc_dag_master	:	dc4c_test_tfc_dag_master.o
 	$(CC) -o $@ dc4c_test_tfc_dag_master.o $(LFLAGS) -ldc4c_tfc_dag
 
-dc4c_test_tfc_dag_master_pgsql	:	dc4c_test_tfc_dag_master_pgsql.o
-	$(CC) -o $@ dc4c_test_tfc_dag_master_pgsql.o $(LFLAGS) -ldc4c_tfc_dag_pgsql -lecpg
+dc4c_test_tfc_dag_master_stepbystep	:	dc4c_test_tfc_dag_master_stepbystep.o
+	$(CC) -o $@ dc4c_test_tfc_dag_master_stepbystep.o $(LFLAGS) -ldc4c_tfc_dag
+
+dc4c_test_tfc_dag_master_pgsql_stepbystep	:	dc4c_test_tfc_dag_master_pgsql_stepbystep.o $(ec_FILE2_o)
+	$(CC) -o $@ dc4c_test_tfc_dag_master_pgsql_stepbystep.o $(LFLAGS) $(ec_FILE2_o) -lecpg
 
 dc4c_test_worker_hello	:	dc4c_test_worker_hello.o
 	$(CC) -o $@ dc4c_test_worker_hello.o $(LFLAGS)

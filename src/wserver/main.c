@@ -105,6 +105,8 @@ int main( int argc , char *argv[] )
 {
 	struct ServerEnv	env , *penv = & env ;
 	
+	struct sigaction	act , oact ;
+	
 	int			rserver_index ;
 	pid_t			pid , pids[ MAXCOUNT_WSERVERS ] ;
 	int			status ;
@@ -137,7 +139,11 @@ int main( int argc , char *argv[] )
 	signal( SIGCHLD , SIG_DFL );
 	signal( SIGPIPE , SIG_IGN );
 	
-	signal( SIGTERM , & main_signal_proc );
+	memset( & act , 0x00 , sizeof(struct sigaction) );
+	act.sa_handler = main_signal_proc ;
+	sigemptyset( & (act.sa_mask) );
+	act.sa_flags = 0 ;
+	sigaction( SIGTERM , & act , & oact );
 	
 	for( penv->wserver_index = 0 ; penv->wserver_index < penv->param.wserver_count ; penv->wserver_index++ )
 	{
@@ -164,10 +170,21 @@ int main( int argc , char *argv[] )
 	{
 		pid = waitpid( -1 , & status , 0 ) ;
 		if( g_main_exit_flag )
+		{
+			for( penv->wserver_index = 0 ; penv->wserver_index < penv->param.wserver_count ; penv->wserver_index++ )
+			{
+				InfoLog( __FILE__ , __LINE__ , "kill [%d]" , pids[penv->wserver_index] );
+				kill( pids[penv->wserver_index] , SIGTERM );
+			}
 			break;
+		}
+		
 		for( penv->wserver_index = 0 ; penv->wserver_index < penv->param.wserver_count ; penv->wserver_index++ )
+		{
 			if( pids[penv->wserver_index] == pid )
 				break;
+		}
+		
 		if( penv->wserver_index >= penv->param.wserver_count )
 		{
 			FatalLog( __FILE__ , __LINE__ , "pid[%d] invalid" , (int)pid );
@@ -175,19 +192,19 @@ int main( int argc , char *argv[] )
 		}
 		if( WTERMSIG(status) )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "wserver[%d] terminated" , (int)pid );
+			ErrorLog( __FILE__ , __LINE__ , "wserver[%d] terminated - [%d]" , (int)pid , penv->wserver_index+1 );
 		}
 		else if( WIFSIGNALED(status) )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "wserver[%d] signaled" , (int)pid );
+			ErrorLog( __FILE__ , __LINE__ , "wserver[%d] signaled - [%d]" , (int)pid , penv->wserver_index+1 );
 		}
 		else if( WIFSTOPPED(status) )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "wserver[%d] stoped" , (int)pid );
+			ErrorLog( __FILE__ , __LINE__ , "wserver[%d] stoped - [%d]" , (int)pid , penv->wserver_index+1 );
 		}
 		else if( WIFEXITED(status) )
 		{
-			InfoLog( __FILE__ , __LINE__ , "wserver[%d] exit[%d]" , (int)pid , WEXITSTATUS(status) );
+			InfoLog( __FILE__ , __LINE__ , "wserver[%d] exit[%d] - [%d]" , (int)pid , WEXITSTATUS(status) , penv->wserver_index+1 );
 		}
 		
 		sleep(10);
@@ -210,7 +227,7 @@ int main( int argc , char *argv[] )
 		}
 	}
 	
-	InfoLog( __FILE__ , __LINE__ , "--- wserver [%s:%d] --- end" , penv->param.wserver_ip , penv->param.wserver_port );
+	InfoLog( __FILE__ , __LINE__ , "--- wserver [%s:%d] --- end" , penv->param.wserver_ip , penv->param.wserver_port_base );
 	
 	return 0;
 }

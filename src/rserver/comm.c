@@ -14,6 +14,7 @@ int comm_CloseAcceptedSocket( struct ServerEnv *penv , struct SocketSession *pse
 	
 	DeleteSockFromEpoll( penv->epoll_socks , psession );
 	CloseSocket( psession );
+	CleanSocketSession( psession );
 	
 	return 0;
 }
@@ -29,6 +30,14 @@ int comm_OnListenSocketInput( struct ServerEnv *penv , struct SocketSession *pse
 		ErrorLog( __FILE__ , __LINE__ , "GetUnusedSocketSession failed , too many sessions" );
 		DiscardAcceptSocket( psession->sock );
 		return 0;
+	}
+	
+	nret = InitSocketSession( p_new_session ) ;
+	if( nret )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "InitSocketSession failed[%d]errno[%d]" , nret , errno );
+		DiscardAcceptSocket( psession->sock );
+		return -1;
 	}
 	
 	nret = AcceptSocket( psession->sock , p_new_session ) ;

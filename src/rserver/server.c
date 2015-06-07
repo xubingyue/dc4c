@@ -19,8 +19,6 @@ static void server_signal_proc( int signum )
 
 int server( struct ServerEnv *penv )
 {
-	int			i ;
-	
 	time_t			now ;
 	long			epoll_timeout ;
 	struct epoll_event	events[ WAIT_EVENTS_COUNT ] ;
@@ -28,8 +26,11 @@ int server( struct ServerEnv *penv )
 	int			epoll_ready_index ;
 	struct epoll_event	*pevent ;
 	struct SocketSession	*psession = NULL ;
+	int			accepted_session_index ;
 	
 	int			nret = 0 ;
+	
+	signal( SIGTERM , & server_signal_proc );
 	
 	SetLogFile( "%s/log/dc4c_rserver_1_%s:%d.log" , getenv("HOME") , penv->param.rserver_ip , penv->param.rserver_port );
 	if( penv->param.loglevel_debug == 1 )
@@ -37,7 +38,7 @@ int server( struct ServerEnv *penv )
 	else
 		SetLogLevel( LOGLEVEL_INFO );
 	
-	penv->epoll_socks = epoll_create( EPOLL_FD_COUNT ) ;
+	penv->epoll_socks = epoll_create( EPOLL_FDS_COUNT ) ;
 	if( penv->epoll_socks < 0 )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "epoll_create failed[%d]errno[%d]" , penv->epoll_socks , errno );
@@ -75,24 +76,26 @@ int server( struct ServerEnv *penv )
 		return -1;
 	}
 	memset( penv->accepted_session_array , 0x00 , sizeof(struct SocketSession) * MAXCOUNT_ACCEPTED_SESSION );
-	for( i = 0 ; i < MAXCOUNT_ACCEPTED_SESSION ; i++ )
+	/*
+	for( accepted_session_index = 0 ; accepted_session_index < MAXCOUNT_ACCEPTED_SESSION ; accepted_session_index++ )
 	{
-		nret = InitSocketSession( penv->accepted_session_array+i ) ;
+		nret = InitSocketSession( penv->accepted_session_array+accepted_session_index ) ;
 		if( nret )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "InitSocketSession failed[%d]errno[%d]" , nret , errno );
 			return -1;
 		}
 	}
-	
-	signal( SIGTERM , & server_signal_proc );
+	*/
 	
 	epoll_timeout = 1 ;
 	while( ! g_server_exit_flag )
 	{
 		memset( events , 0x00 , sizeof(events) );
+		if( g_server_exit_flag || getppid() == 1 )
+			break;
 		epoll_ready_count = epoll_wait( penv->epoll_socks , events , WAIT_EVENTS_COUNT , epoll_timeout * 1000 ) ;
-		if( g_server_exit_flag )
+		if( g_server_exit_flag || getppid() == 1 )
 			break;
 		
 		DebugLog( __FILE__ , __LINE__ , "epoll_wait [%d]events reached" , epoll_ready_count );
@@ -159,16 +162,20 @@ int server( struct ServerEnv *penv )
 		app_HeartBeatRequest( penv , & now , & epoll_timeout );
 	}
 	
+	for( accepted_session_index = 0 ; accepted_session_index < MAXCOUNT_ACCEPTED_SESSION ; accepted_session_index++ )
+	{
+		CleanSocketSession( penv->accepted_session_array+accepted_session_index );
+	}
+	free( penv->accepted_session_array );
+	
+	DeleteSockFromEpoll( penv->epoll_socks , & (penv->listen_session) );
+	CloseSocket( & (penv->listen_session) );
+	CleanSocketSession( & (penv->listen_session) );
+	
 	close( penv->epoll_socks );
 	InfoLog( __FILE__ , __LINE__ , "close all socks and epoll_socks" );
 	
-	for( i = 0 ; i < MAXCOUNT_ACCEPTED_SESSION ; i++ )
-	{
-		CleanSocketSession( penv->accepted_session_array+i );
-	}
-	CleanSocketSession( & (penv->listen_session) );
-	
-	free( penv->accepted_session_array );
+	InfoLog( __FILE__ , __LINE__ , "--- rserver [%s:%d] - [1] --- end" , penv->param.rserver_ip , penv->param.rserver_port );
 	
 	return 0;
 }

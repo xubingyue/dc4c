@@ -1,48 +1,63 @@
-v1.1.6	2015-06-02	calvin
-	* 有向无环图示例程序演示了处理任务流实时更新数据库状态
-	* 调整了一些函数接口原型
+ver 1.2.0	2015-06-07	calvin
+		* 重构了发起任务的高层和低层函数API
 
-v1.1.5	2015-06-01	calvin
-	* 有向无环图任务调度引擎执行函数提供了分拆版本
-	* 解决了一些问题
+ver 1.1.7	2015-06-04	calvin
+		* src/tfc/dag/dc4c_tfc_dag_pgsql.ec并入test/dc4c_test_tfc_dag_master_pgsql.ec
+		* 扩大限制：
+		  注册节点接受计算节点数量扩大到10万个
+		  计算节点最多接受100个用户节点持久连接
+		  用户节点一次最多查询到1000个计算节点信息
+		* 优化内存使用，尽量少占内存
+		* 解决了一些问题
+		* 完善文档
 
-v1.1.4	2015-05-27	calvin
-	* 新增选项DC4C_OPTIONS_BIND_CPU在计算节点绑定CPU执行任务，用于计算密集型分布式应用
-	* 完善了计算节点执行命令时失败时的错误处理
-	* 环境变量DC4C_RSERVERS_IP_PORT用于替代用户节点配置注册服务器地址
+ver 1.1.6	2015-06-02	calvin
+		* 有向无环图示例程序演示了处理任务流实时更新数据库状态
+		* 调整了一些函数接口原型
+		* 注册节点守护和计算节点守护父进程结束前会清理子进程
 
-v1.1.3	2015-05-26	calvin
-	* 随DirectStruct V1.4.5重新生成相关自动化代码
+ver 1.1.5	2015-06-01	calvin
+		* 有向无环图任务调度引擎执行函数提供了分拆版本
+		* 解决了一些问题
 
-v1.1.2	2015-05-25	calvin
-	* 新增函数DC4CSetOptions给予选项DC4C_OPTIONS_INTERRUPT_BY_APP允许批量任务处理中报错时立即返回
-	* 新增函数DC4CResetFinishedTasksWithError用于重置批量中失败结束的任务集合
+ver 1.1.4	2015-05-27	calvin
+		* 新增选项DC4C_OPTIONS_BIND_CPU在计算节点绑定CPU执行任务，用于计算密集型分布式应用
+		* 完善了计算节点执行命令时失败时的错误处理
+		* 环境变量DC4C_RSERVERS_IP_PORT用于替代用户节点配置注册服务器地址
 
-v1.1.1	2015-05-24	calvin
-	* 新增有向无环图任务流控制器src/tfc/dag for PostgreSQL版本，支持从数据库载入schedule配置
-	* 新增有向无环图任务流控制器示例test/dc4c_test_tfc_dag_master_pgsql
+ver 1.1.3	2015-05-26	calvin
+		* 随DirectStruct V1.4.5重新生成相关自动化代码
 
-v1.1.0	2015-05-23	calvin
-	* 解决了util中的内存泄露问题
-	* 新增有向无环图任务流控制器src/tfc/dag，支持从json文件载入schedule配置
-	* 新增有向无环图任务流控制器示例test/dc4c_test_tfc_dag_master
+ver 1.1.2	2015-05-25	calvin
+		* 新增函数DC4CSetOptions给予选项DC4C_OPTIONS_INTERRUPT_BY_APP允许批量任务处理中报错时立即返回
+		* 新增函数DC4CResetFinishedTasksWithError用于重置批量中失败结束的任务集合
+
+ver 1.1.1	2015-05-24	calvin
+		* 新增有向无环图任务流控制器src/tfc/dag for PostgreSQL版本，支持从数据库载入schedule配置
+		* 新增有向无环图任务流控制器示例test/dc4c_test_tfc_dag_master_pgsql
+
+ver 1.1.0	2015-05-23	calvin
+		* 解决了util中的内存泄露问题
+		* 新增有向无环图任务流控制器src/tfc/dag，支持从json文件载入schedule配置
+		* 新增有向无环图任务流控制器示例test/dc4c_test_tfc_dag_master
 	
-v1.0.3	2015-05-20	calvin
-	* 新增示例：分布式计算圆周率
+ver 1.0.3	2015-05-20	calvin
+		* 新增示例：分布式计算圆周率
 
-v1.0.2	2015-05-18	calvin
-	* 注册节点最多支持8个，计算节点最多支持10万个
-	* 编写介绍幻灯片doc/DC4C.ppt
+ver 1.0.2	2015-05-18	calvin
+		* 注册节点最多支持8个，计算节点最多支持10万个
+		* 编写介绍幻灯片doc/DC4C.ppt
 
-v1.0.1	2015-05-17	calvin
-	* 计算节点能回复信息给用户节点了
-	  ，计算节点调用函数DC4CSetReplyInfo生成信息
-	  ，用户节点调用函数DC4CGetTaskInfo,DC4CGetBatchTasksInfo获取
-	* 新增函数DC4CPerformMultiBatchTasks用于多批量任务处理
-	  ，同步新增示例代码dc4c_test_multi_batch_master.c
+ver 1.0.1	2015-05-17	calvin
+		* 计算节点能回复信息给用户节点了
+		  ，计算节点调用函数DC4CSetReplyInfo生成信息
+		  ，用户节点调用函数DC4CGetTaskInfo,DC4CGetBatchTasksInfo获取
+		* 新增函数DC4CPerformMultiBatchTasks用于多批量任务处理
+		  ，同步新增示例代码dc4c_test_multi_batch_master.c
 
-v1.0.0	2015-05-15	calvin
-	* 发布第一版
+ver 1.0.0	2015-05-15	calvin
+		* 发布第一版
 
-v0.0.1	2015-04-15	calvin
-	* 创建
+ver 0.0.1	2015-04-15	calvin
+		* 创建
+

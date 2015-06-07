@@ -55,21 +55,11 @@ int comm_AsyncConnectToRegisterServer( struct ServerEnv *penv , struct SocketSes
 	return 0;
 }
 
-int comm_CloseConnectedSocket( struct ServerEnv *penv , struct SocketSession *psession )
-{
-	DeleteSockFromEpoll( penv->epoll_socks , psession );
-	CloseSocket( psession );
-	
-	psession->progress = CONNECT_SESSION_PROGRESS_CLOSED ;
-	
-	return 0;
-}
-
 static void KillChildProcess( struct ServerEnv *penv , struct SocketSession *psession )
 {
 	int		nret = 0 ;
 	
-	if( psession->p1 == & (penv->info_session) && IsSocketEstablished( & (penv->info_session) ) )
+	if( psession->p1 == & (penv->executing_session) && IsSocketEstablished( & (penv->executing_session) ) )
 	{
 		nret = kill( penv->pid , SIGTERM ) ;
 		InfoLog( __FILE__ , __LINE__ , "kill [%ld] return errno[%d]" , penv->pid , errno );
@@ -85,10 +75,8 @@ static void KillChildProcess( struct ServerEnv *penv , struct SocketSession *pse
 	return;
 }
 
-int comm_CloseAcceptedSocket( struct ServerEnv *penv , struct SocketSession *psession )
+int comm_CloseConnectedSocket( struct ServerEnv *penv , struct SocketSession *psession )
 {
-	KillChildProcess( penv , psession );
-	
 	DeleteSockFromEpoll( penv->epoll_socks , psession );
 	CloseSocket( psession );
 	
@@ -245,6 +233,17 @@ int comm_OnInfoPipeError( struct ServerEnv *penv , struct SocketSession *psessio
 	return 0;
 }
 
+static int comm_CloseAcceptedSocket( struct ServerEnv *penv , struct SocketSession *psession )
+{
+	KillChildProcess( penv , psession );
+	
+	DeleteSockFromEpoll( penv->epoll_socks , psession );
+	CloseSocket( psession );
+	CleanSocketSession( psession );
+	
+	return 0;
+}
+
 int comm_OnListenSocketInput( struct ServerEnv *penv , struct SocketSession *psession )
 {
 	struct SocketSession	*p_new_session = NULL ;
@@ -257,6 +256,14 @@ int comm_OnListenSocketInput( struct ServerEnv *penv , struct SocketSession *pse
 		ErrorLog( __FILE__ , __LINE__ , "GetUnusedSocketSession failed , too many sessions" );
 		DiscardAcceptSocket( psession->sock );
 		return 0;
+	}
+	
+	nret = InitSocketSession( p_new_session ) ;
+	if( nret )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "InitSocketSession failed[%d]errno[%d]" , nret , errno );
+		DiscardAcceptSocket( psession->sock );
+		return -1;
 	}
 	
 	nret = AcceptSocket( psession->sock , p_new_session ) ;

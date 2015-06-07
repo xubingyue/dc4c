@@ -88,7 +88,7 @@ int proto_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *ps
 	req.bits = sizeof(long) * 8 ;
 	strcpy( req.ip , penv->param.wserver_ip );
 	req.port = penv->param.wserver_port ;
-	req.is_working = IsSocketEstablished( & (penv->info_session) ) ;
+	req.is_working = IsSocketEstablished( & (penv->executing_session) ) ;
 	
 	DSCLOG_worker_notice_request( & req );
 	
@@ -273,7 +273,7 @@ int proto( void *_penv , struct SocketSession *psession )
 	}
 	else if( STRNCMP( psession->recv_buffer + LEN_COMMHEAD , == , "DPP" , LEN_MSGHEAD_MSGTYPE ) )
 	{
-		if( IsSocketEstablished( & (penv->info_session) ) )
+		if( IsSocketEstablished( & (penv->executing_session) ) )
 		{
 			nret = proto_ExecuteProgramResponse( penv , psession , DC4C_INFO_ALREADY_EXECUTING , 0 ) ;
 			if( nret )

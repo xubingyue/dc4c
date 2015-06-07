@@ -13,6 +13,7 @@ int main( int argc , char *argv[] )
 	struct Dc4cBatchTask	*tasks_array = NULL ;
 	struct Dc4cBatchTask	*p_task = NULL ;
 	int			tasks_count ;
+	int			task_index ;
 	int			workers_count ;
 	int			repeat_task_flag ;
 	int			i ;
@@ -22,7 +23,7 @@ int main( int argc , char *argv[] )
 	
 	int			nret = 0 ;
 	
-	DC4CSetAppLogFile( "dc4c_test_batch_master" );
+	DC4CSetAppLogFile( "dc4c_test_batch_master_stepbystep" );
 	SetLogLevel( LOGLEVEL_DEBUG );
 	
 	if( argc >= 1 + 3 )
@@ -97,24 +98,48 @@ int main( int argc , char *argv[] )
 			p_task->timeout = DC4CGetTimeout(penv) ;
 		}
 		
-		nret = DC4CDoBatchTasks( penv , workers_count , tasks_array , tasks_count ) ;
+		nret = DC4CBeginBatchTasks( penv , workers_count , tasks_array , tasks_count ) ;
 		free( tasks_array );
 		if( nret )
 		{
-			printf( "DC4CDoBatchTasks failed[%d]\n" , nret );
+			printf( "DC4CBeginBatchTasks failed[%d]\n" , nret );
 		}
 		else
 		{
-			printf( "DC4CDoBatchTasks ok\n" );
+			printf( "DC4CBeginBatchTasks ok\n" );
 		}
 		
-		tasks_count = DC4CGetTasksCount( penv ) ;
-		for( i = 0 ; i < tasks_count ; i++ )
+		while(1)
 		{
-			printf( "[%d]-[%s][%ld]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%s]\n"
-				, i , DC4CGetBatchTasksIp(penv,i) , DC4CGetBatchTasksPort(penv,i)
-				, DC4CGetBatchTasksTid(penv,i) , DC4CGetBatchTasksProgramAndParams(penv,i) , DC4CGetBatchTasksTimeout(penv,i) , ConvertTimeString(DC4CGetBatchTasksBeginTimestamp(penv,i),begin_timebuf,sizeof(begin_timebuf))+11 , ConvertTimeString(DC4CGetBatchTasksEndTimestamp(penv,i),end_timebuf,sizeof(end_timebuf))+11 , DC4CGetBatchTasksElapse(penv,i)
-				, DC4CGetBatchTasksError(penv,i) , WEXITSTATUS(DC4CGetBatchTasksStatus(penv,i)) , DC4CGetBatchTasksInfo(penv,i) );
+			nret = DC4CPerformBatchTasks( penv , & task_index ) ;
+			if( nret == DC4C_INFO_TASK_FINISHED )
+			{
+				printf( "DC4CPerformBatchTasks return DC4C_INFO_TASK_FINISHED\n" );
+				printf( "[%d]-[%s][%ld]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%s]\n"
+					, task_index , DC4CGetBatchTasksIp(penv,task_index) , DC4CGetBatchTasksPort(penv,task_index)
+					, DC4CGetBatchTasksTid(penv,task_index) , DC4CGetBatchTasksProgramAndParams(penv,task_index) , DC4CGetBatchTasksTimeout(penv,task_index) , ConvertTimeString(DC4CGetBatchTasksBeginTimestamp(penv,task_index),begin_timebuf,sizeof(begin_timebuf))+11 , ConvertTimeString(DC4CGetBatchTasksEndTimestamp(penv,task_index),end_timebuf,sizeof(end_timebuf))+11 , DC4CGetBatchTasksElapse(penv,task_index)
+					, DC4CGetBatchTasksError(penv,task_index) , WEXITSTATUS(DC4CGetBatchTasksStatus(penv,task_index)) , DC4CGetBatchTasksInfo(penv,task_index) );
+			}
+			else if( nret == DC4C_INFO_BATCH_TASKS_FINISHED )
+			{
+				printf( "DC4CPerformBatchTasks return DC4C_INFO_BATCH_TASKS_FINISHED\n" );
+				break;
+			}
+			else if( nret == DC4C_ERROR_TIMEOUT )
+			{
+				printf( "DC4CPerformBatchTasks return DC4C_ERROR_TIMEOUT\n" );
+				break;
+			}
+			else if( nret == DC4C_ERROR_APP )
+			{
+				printf( "DC4CPerformBatchTasks return DC4C_ERROR_APP\n" );
+				break;
+			}
+			else
+			{
+				printf( "DC4CPerformBatchTasks failed[%d]\n" , nret );
+				break;
+			}
 		}
 		
 		DC4CCleanEnv( & penv );

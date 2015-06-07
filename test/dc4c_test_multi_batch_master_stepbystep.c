@@ -7,15 +7,14 @@ time ./dc4c_test_multi_batch_master 192.168.6.54:12001,192.168.6.54:12002 3 -1 -
 int main( int argc , char *argv[] )
 {
 	struct Dc4cApiEnv	**a_penv = NULL ;
-	int			*a_tasks_count ;
-	int			*a_workers_count ;
-	struct Dc4cBatchTask	**a_tasks_array = NULL ;
 	int			envs_count ;
 	int			envs_index ;
 	struct Dc4cApiEnv	*penv = NULL ;
-	int			tasks_count ;
-	int			task_index ;
+	struct Dc4cBatchTask	*tasks_array = NULL ;
 	struct Dc4cBatchTask	*p_task = NULL ;
+	int			tasks_count ;
+	int			workers_count ;
+	int			task_index ;
 	int			repeat_task_flag ;
 	
 	char			begin_timebuf[ 256 + 1 ] ;
@@ -23,13 +22,12 @@ int main( int argc , char *argv[] )
 	
 	int			nret = 0 ;
 	
-	DC4CSetAppLogFile( "dc4c_test_multi_batch_master" );
+	DC4CSetAppLogFile( "dc4c_test_multi_batch_master_stepbystep" );
 	SetLogLevel( LOGLEVEL_DEBUG );
 	
 	if( argc >= 1 + 4 )
 	{
 		envs_count = atoi(argv[2]) ;
-		
 		a_penv = (struct Dc4cApiEnv**)malloc( sizeof(struct Dc4cApiEnv*) * envs_count ) ;
 		if( a_penv == NULL )
 		{
@@ -37,30 +35,6 @@ int main( int argc , char *argv[] )
 			return 1;
 		}
 		memset( a_penv , 0x00 , sizeof(struct Dc4cApiEnv*) * envs_count );
-		
-		a_tasks_count = (int*)malloc( sizeof(int) * envs_count ) ;
-		if( a_tasks_count == NULL )
-		{
-			printf( "malloc failed[%d] , errno[%d]\n" , nret , errno );
-			return 1;
-		}
-		memset( a_tasks_count , 0x00 , sizeof(int) * envs_count );
-		
-		a_workers_count = (int*)malloc( sizeof(int) * envs_count ) ;
-		if( a_workers_count == NULL )
-		{
-			printf( "malloc failed[%d] , errno[%d]\n" , nret , errno );
-			return 1;
-		}
-		memset( a_workers_count , 0x00 , sizeof(int) * envs_count );
-		
-			
-		if( a_tasks_array == NULL )
-		{
-			printf( "malloc failed[%d] , errno[%d]\n" , nret , errno );
-			return 1;
-		}
-		memset( a_tasks_array , 0x00 , sizeof(struct Dc4cBatchTask*) * envs_count );
 		
 		for( envs_index = 0 ; envs_index < envs_count ; envs_index++ )
 		{
@@ -78,12 +52,12 @@ int main( int argc , char *argv[] )
 			DC4CSetTimeout( a_penv[envs_index] , 15 );
 			DC4CSetOptions( a_penv[envs_index] , DC4C_OPTIONS_INTERRUPT_BY_APP );
 			
-			a_workers_count[envs_index] = atoi(argv[3]) ;
-			a_tasks_count[envs_index] = atoi(argv[4]) ;
+			workers_count = atoi(argv[3]) ;
+			tasks_count = atoi(argv[4]) ;
 			
-			if( a_tasks_count[envs_index] < 0 )
+			if( tasks_count < 0 )
 			{
-				a_tasks_count[envs_index] = -a_tasks_count[envs_index] ;
+				tasks_count = -tasks_count ;
 				repeat_task_flag = 1 ;
 			}
 			else
@@ -91,9 +65,9 @@ int main( int argc , char *argv[] )
 				repeat_task_flag = 0 ;
 			}
 			
-			if( a_workers_count[envs_index] < 0 )
+			if( workers_count < 0 )
 			{
-				if( a_workers_count[envs_index] == -2 )
+				if( workers_count == -2 )
 				{
 					nret = DC4CQueryWorkers( penv ) ;
 					if( nret )
@@ -102,32 +76,32 @@ int main( int argc , char *argv[] )
 						return 1;
 					}
 					
-					a_workers_count[envs_index] = DC4CGetUnusedWorkersCount( penv ) ;
-					if( a_workers_count[envs_index] <= 0 )
+					workers_count = DC4CGetUnusedWorkersCount( penv ) ;
+					if( workers_count <= 0 )
 					{
-						printf( "workers_count[%d] invalid\n" , a_workers_count[envs_index] );
+						printf( "workers_count[%d] invalid\n" , workers_count );
 						return 1;
 					}
 					
-					a_tasks_count[envs_index] = a_workers_count[envs_index] ;
+					tasks_count = workers_count ;
 				}
 				else
 				{
-					a_workers_count[envs_index] = a_tasks_count[envs_index] ;
+					workers_count = tasks_count ;
 				}
 			}
 			
-			a_tasks_array[envs_index] = (struct Dc4cBatchTask *)malloc( sizeof(struct Dc4cBatchTask) * a_tasks_count[envs_index] ) ;
-			if( a_tasks_array[envs_index] == NULL )
+			tasks_array = (struct Dc4cBatchTask *)malloc( sizeof(struct Dc4cBatchTask) * tasks_count ) ;
+			if( tasks_array == NULL )
 			{
 				printf( "alloc failed , errno[%d]\n" , errno );
 				return 1;
 			}
-			memset( a_tasks_array[envs_index] , 0x00 , sizeof(struct Dc4cBatchTask) * a_tasks_count[envs_index] );
+			memset( tasks_array , 0x00 , sizeof(struct Dc4cBatchTask) * tasks_count );
 			
-			for( task_index = 0 ; task_index < a_tasks_count[envs_index] ; task_index++ )
+			for( task_index = 0 ; task_index < tasks_count ; task_index++ )
 			{
-				p_task = & (a_tasks_array[envs_index][task_index]) ;
+				p_task = & (tasks_array[task_index]) ;
 				
 				p_task->order_index = task_index ;
 				if( repeat_task_flag == 1 )
@@ -136,42 +110,59 @@ int main( int argc , char *argv[] )
 					strcpy( p_task->program_and_params , argv[5+task_index] );
 				p_task->timeout = DC4CGetTimeout(a_penv[envs_index]) ;
 			}
-		}
-		
-		nret = DC4CDoMultiBatchTasks( a_penv , envs_count , a_workers_count , a_tasks_array , a_tasks_count ) ;
-		if( nret )
-		{
-			printf( "DC4CDoMultiBatchTasks failed[%d] , penv[%p]\n" , nret , penv );
-		}
-		else
-		{
-			printf( "DC4CDoMultiBatchTasks ok\n" );
 			
-		}
-		
-		for( envs_index = 0 ; envs_index < envs_count ; envs_index++ )
-		{
-			penv = a_penv[envs_index] ;
-			printf( "penv[%p]\n" , penv );
-			tasks_count = DC4CGetTasksCount( penv ) ;
-			for( task_index = 0 ; task_index < tasks_count ; task_index++ )
+			nret = DC4CBeginBatchTasks( a_penv[envs_index] , workers_count , tasks_array , tasks_count ) ;
+			free( tasks_array );
+			if( nret )
 			{
-				printf( "[%d]-[%s][%ld]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%s]\n"
-					, task_index , DC4CGetBatchTasksIp(penv,task_index) , DC4CGetBatchTasksPort(penv,task_index)
-					, DC4CGetBatchTasksTid(penv,task_index) , DC4CGetBatchTasksProgramAndParams(penv,task_index) , DC4CGetBatchTasksTimeout(penv,task_index) , ConvertTimeString(DC4CGetBatchTasksBeginTimestamp(penv,task_index),begin_timebuf,sizeof(begin_timebuf))+11 , ConvertTimeString(DC4CGetBatchTasksEndTimestamp(penv,task_index),end_timebuf,sizeof(end_timebuf))+11 , DC4CGetBatchTasksElapse(penv,task_index)
-					, DC4CGetBatchTasksError(penv,task_index) , WEXITSTATUS(DC4CGetBatchTasksStatus(penv,task_index)) , DC4CGetBatchTasksInfo(penv,task_index) );
+				printf( "DC4CBeginBatchTasks failed[%d] , errno[%d]\n" , nret , errno );
+				return 1;
 			}
 		}
 		
+		while(1)
+		{
+			nret = DC4CPerformMultiBatchTasks( a_penv , envs_count , & penv , & task_index ) ;
+			if( nret == DC4C_INFO_TASK_FINISHED )
+			{
+				printf( "DC4CPerformMultiBatchTasks return DC4C_INFO_TASK_FINISHED , penv[%p]\n" , penv );
+				printf( "[%p][%d]-[%s][%ld]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%s]\n"
+					, penv , task_index , DC4CGetBatchTasksIp(penv,task_index) , DC4CGetBatchTasksPort(penv,task_index)
+					, DC4CGetBatchTasksTid(penv,task_index) , DC4CGetBatchTasksProgramAndParams(penv,task_index) , DC4CGetBatchTasksTimeout(penv,task_index) , ConvertTimeString(DC4CGetBatchTasksBeginTimestamp(penv,task_index),begin_timebuf,sizeof(begin_timebuf))+11 , ConvertTimeString(DC4CGetBatchTasksEndTimestamp(penv,task_index),end_timebuf,sizeof(end_timebuf))+11 , DC4CGetBatchTasksElapse(penv,task_index)
+					, DC4CGetBatchTasksError(penv,task_index) , WEXITSTATUS(DC4CGetBatchTasksStatus(penv,task_index)) , DC4CGetBatchTasksInfo(penv,task_index) );
+			}
+			else if( nret == DC4C_INFO_BATCH_TASKS_FINISHED )
+			{
+				printf( "DC4CPerformMultiBatchTasks return DC4C_INFO_BATCH_TASKS_FINISHED , penv[%p]\n" , penv );
+			}
+			else if( nret == DC4C_INFO_ALL_ENVS_FINISHED )
+			{
+				printf( "DC4CPerformMultiBatchTasks return DC4C_INFO_ALL_ENVS_FINISHED , penv[%p]\n" , penv );
+				break;
+			}
+			else if( nret == DC4C_ERROR_TIMEOUT )
+			{
+				printf( "DC4CPerformMultiBatchTasks return DC4C_ERROR_TIMEOUT\n" );
+			}
+			else if( nret == DC4C_ERROR_APP )
+			{
+				printf( "DC4CPerformMultiBatchTasks return DC4C_ERROR_APP\n" );
+			}
+			else
+			{
+				printf( "DC4CPerformMultiBatchTasks failed[%d] , penv[%p]\n" , nret , penv );
+				break;
+			}
+			
+			if( nret == DC4C_ERROR_APP )
+				DC4CResetFinishedTasksWithError( penv );
+		}
+		
 		for( envs_index = 0 ; envs_index < envs_count ; envs_index++ )
 		{
-			free( a_tasks_array[envs_index] );
 			DC4CCleanEnv( & (a_penv[envs_index]) );
 		}
-		free( a_tasks_count );
-		free( a_workers_count );
 		free( a_penv );
-		free( a_tasks_array );
 		printf( "DC4CCleanEnv ok\n" );
 	}
 	else

@@ -1,7 +1,7 @@
 STRUCT	query_workers_response
 {
 	INT	4	error
-	STRUCT	nodes	ARRAY	100
+	STRUCT	nodes	ARRAY	1000
 	{
 		STRUCT	node
 		{

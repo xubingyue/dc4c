@@ -29,7 +29,7 @@ int main( int argc , char *argv[] )
 			printf( "DC4CInitEnv ok\n" );
 		}
 		
-		DC4CSetTimeout( penv , 60 );
+		DC4CSetTimeout( penv , 15 );
 		DC4CSetOptions( penv , DC4C_OPTIONS_INTERRUPT_BY_APP );
 		
 		nret = DC4CDoTask( penv , argv[2] , DC4CGetTimeout(penv) ) ;

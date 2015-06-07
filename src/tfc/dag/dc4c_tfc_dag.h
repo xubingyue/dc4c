@@ -22,26 +22,25 @@ extern "C" {
 #define DC4C_DAGSCHEDULE_PROGRESS_INIT			0
 #define DC4C_DAGSCHEDULE_PROGRESS_EXECUTING		1
 #define DC4C_DAGSCHEDULE_PROGRESS_FINISHED		2
-#define DC4C_DAGSCHEDULE_PROGRESS_FINISHED_WITH_ERROR	23
+#define DC4C_DAGSCHEDULE_PROGRESS_FINISHED_WITH_ERROR	4
 
 struct Dc4cDagSchedule ;
 
 #define DC4C_DAGBATCH_PROGRESS_INIT			0
 #define DC4C_DAGBATCH_PROGRESS_EXECUTING		1
 #define DC4C_DAGBATCH_PROGRESS_FINISHED			2
-#define DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR	23
+#define DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR	4
 
 struct Dc4cDagBatch ;
 
 #define DC4C_DAGTASK_PROGRESS_INIT			0
 #define DC4C_DAGTASK_PROGRESS_EXECUTING			1
 #define DC4C_DAGTASK_PROGRESS_FINISHED			2
-#define DC4C_DAGTASK_PROGRESS_FINISHED_WITH_ERROR	23
+#define DC4C_DAGTASK_PROGRESS_FINISHED_WITH_ERROR	4
 
 /********* ¸ß²ãº¯Êý *********/
 
 int DC4CLoadDagScheduleFromFile( struct Dc4cDagSchedule **pp_sched , char *pathfilename , char *rservers_ip_port , int options );
-int DC4CLoadDagScheduleFromDatabase( struct Dc4cDagSchedule **pp_sched , char *schedule_name , char *rservers_ip_port , int options );
 void DC4CUnloadDagSchedule( struct Dc4cDagSchedule **pp_sched );
 
 void DC4CLogDagSchedule( struct Dc4cDagSchedule *p_sched );
@@ -49,7 +48,7 @@ void DC4CLogDagSchedule( struct Dc4cDagSchedule *p_sched );
 int DC4CExecuteDagSchedule( struct Dc4cDagSchedule *p_sched );
 
 int DC4CBeginDagSchedule( struct Dc4cDagSchedule *p_sched );
-int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatch **pp_batch );
+int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatch **pp_batch , struct Dc4cApiEnv **ppenv , int *p_task_index );
 
 char *DC4CGetDagScheduleName( struct Dc4cDagSchedule *p_sched );
 int DC4CGetDagScheduleProgress( struct Dc4cDagSchedule *p_sched );

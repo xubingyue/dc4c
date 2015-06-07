@@ -68,6 +68,8 @@
 extern "C" {
 #endif
 
+extern char *__DC4C_VERSION ;
+
 #define MAXCNT_LISTEN_BAKLOG		10000
 
 #define LEN_COMMHEAD			8
@@ -76,6 +78,9 @@ extern "C" {
 
 #define COMMPROTO_PRELEN		0
 #define COMMPROTO_LINE			1
+
+#define DEFAULT_RECV_BUFFERSIZE		100*1024
+#define DEFAULT_SEND_BUFFERSIZE		100*1024
 
 struct SocketSession
 {

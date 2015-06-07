@@ -48,13 +48,13 @@ static int SendWorkerNotice( struct ServerEnv *penv )
 	return 0;
 }
 
-static int ExecuteProgram( struct ServerEnv *penv , struct SocketSession *psession , execute_program_request *p_req )
+static int app_ExecuteProgram( struct ServerEnv *penv , struct SocketSession *psession , execute_program_request *p_req )
 {
 	pid_t		pid ;
 	
 	int		nret = 0 ;
 	
-	nret = pipe( penv->info_pipe ) ;
+	nret = pipe( penv->executing_pipe ) ;
 	if( nret )
 	{
 		FatalLog( __FILE__ , __LINE__ , "pipe failed , errno[%d]" , errno );
@@ -66,8 +66,8 @@ static int ExecuteProgram( struct ServerEnv *penv , struct SocketSession *psessi
 	if( pid < 0 )
 	{
 		FatalLog( __FILE__ , __LINE__ , "fork failed , errno[%d]" , errno );
-		close( penv->info_pipe[0] );
-		close( penv->info_pipe[1] );
+		close( penv->executing_pipe[0] );
+		close( penv->executing_pipe[1] );
 		nret = proto_ExecuteProgramResponse( penv , psession , DC4C_ERROR_FORK , 0 ) ;
 		return -1;
 	}
@@ -78,8 +78,11 @@ static int ExecuteProgram( struct ServerEnv *penv , struct SocketSession *psessi
 		int		i ;
 		char		envbuf[ 100 + 1 ] ;
 		
-		close( penv->info_pipe[0] );
-		SetNonBlocking( penv->info_pipe[1] );
+		int		accepted_session_index ;
+		int		rserver_index ;
+		
+		close( penv->executing_pipe[0] );
+		SetNonBlocking( penv->executing_pipe[1] );
 		
 		InfoLog( __FILE__ , __LINE__ , "[%d]fork[%d] ok" , (int)getppid() , (int)getpid() );
 		
@@ -108,11 +111,40 @@ static int ExecuteProgram( struct ServerEnv *penv , struct SocketSession *psessi
 		setenv( "WSERVER_IP_PORT" , envbuf , 1 );
 		
 		memset( envbuf , 0x00 , sizeof(envbuf) );
-		SNPRINTF( envbuf , sizeof(envbuf)-1 , "%d" , penv->info_pipe[1] );
+		SNPRINTF( envbuf , sizeof(envbuf)-1 , "%d" , penv->executing_pipe[1] );
 		setenv( "WSERVER_INFO_PIPE" , envbuf , 1 );
 		
+		for( accepted_session_index = 0 ; accepted_session_index < MAXCOUNT_ACCEPTED_SESSION ; accepted_session_index++ )
+		{
+			if( IsSocketEstablished( penv->accepted_session_array+accepted_session_index ) )
+			{
+				if( & (penv->accepted_session_array[accepted_session_index]) != penv->executing_session.p1 )
+				{
+					CloseSocket( penv->accepted_session_array+accepted_session_index );
+					CleanSocketSession( penv->accepted_session_array+accepted_session_index );
+				}
+			}
+		}
+		free( penv->accepted_session_array );
+		
+		if( IsSocketEstablished( & (penv->listen_session) ) )
+		{
+			CloseSocket( & (penv->listen_session) );
+			CleanSocketSession( & (penv->listen_session) );
+		}
+		
+		for( rserver_index = 0 ; rserver_index < penv->rserver_count ; rserver_index++ )
+		{
+			CloseSocket( & (penv->connect_session[rserver_index]) );
+			CleanSocketSession( & (penv->connect_session[rserver_index]) );
+		}
+		
+		close( penv->epoll_socks );
+		
 		if( p_req->bind_cpu_flag )
+		{
 			BindCpuProcessor( penv->wserver_index );
+		}
 		
 		InfoLog( __FILE__ , __LINE__ , "execvp [%s] [%s] [%s] [%s] ..." , args[0]?args[0]:"" , args[1]?args[1]:"" , args[2]?args[2]:"" , args[3]?args[3]:"" );
 		nret = execvp( args[0] , args ) ;
@@ -121,17 +153,17 @@ static int ExecuteProgram( struct ServerEnv *penv , struct SocketSession *psessi
 	}
 	else
 	{
-		penv->is_working = 1 ;
+		penv->is_executing = 1 ;
 		
-		close( penv->info_pipe[1] );
-		SetNonBlocking( penv->info_pipe[0] );
+		close( penv->executing_pipe[1] );
+		SetNonBlocking( penv->executing_pipe[0] );
 		
-		penv->info_session.sock = penv->info_pipe[0] ;
-		DebugLog( __FILE__ , __LINE__ , "info_pipe[%d]" , penv->info_pipe[0] );
-		SetSocketEstablished( & (penv->info_session) );
-		psession->p1 = & (penv->info_session) ;
-		penv->info_session.p1 = psession ;
-		AddInputSockToEpoll( penv->epoll_socks , & (penv->info_session) );
+		penv->executing_session.sock = penv->executing_pipe[0] ;
+		DebugLog( __FILE__ , __LINE__ , "executing_pipe[%d]" , penv->executing_pipe[0] );
+		SetSocketEstablished( & (penv->executing_session) );
+		psession->p1 = & (penv->executing_session) ;
+		penv->executing_session.p1 = psession ;
+		AddInputSockToEpoll( penv->epoll_socks , & (penv->executing_session) );
 		
 		InfoLog( __FILE__ , __LINE__ , "[%d]fork[%d] ok" , (int)getpid() , (int)pid );
 		
@@ -188,7 +220,7 @@ int app_WaitProgramExiting( struct ServerEnv *penv , struct SocketSession *p_exe
 		error = DC4C_ERROR_UNKNOW_QUIT ;
 	}
 	
-	penv->is_working = 0 ;
+	penv->is_executing = 0 ;
 	
 	p_accepted_session = p_execute_session->p1 ;
 	if( p_accepted_session && IsSocketEstablished( p_accepted_session ) )
@@ -232,7 +264,7 @@ int app_ExecuteProgramRequest( struct ServerEnv *penv , struct SocketSession *ps
 	
 	int		nret = 0 ;
 	
-	if( penv->is_working == 1 )
+	if( penv->is_executing == 1 )
 	{
 		proto_ExecuteProgramResponse( penv , psession , DC4C_INFO_ALREADY_EXECUTING , 0 );
 		return 0;
@@ -263,7 +295,7 @@ int app_ExecuteProgramRequest( struct ServerEnv *penv , struct SocketSession *ps
 	
 	unlock_file( & lock_fd );
 	
-	return ExecuteProgram( penv , psession , p_req );
+	return app_ExecuteProgram( penv , psession , p_req );
 }
 
 int app_DeployProgramResponse( struct ServerEnv *penv , struct SocketSession *psession )
@@ -318,7 +350,7 @@ int app_DeployProgramResponse( struct ServerEnv *penv , struct SocketSession *ps
 	
 	unlock_file( & lock_fd );
 	
-	return ExecuteProgram( penv , psession , & (penv->epq_array[psession-penv->accepted_session_array]) );
+	return app_ExecuteProgram( penv , psession , & (penv->epq_array[psession-penv->accepted_session_array]) );
 }
 
 int app_HeartBeatRequest( struct ServerEnv *penv , long *p_now , long *p_epoll_timeout )

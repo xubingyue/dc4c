@@ -91,7 +91,7 @@ typedef struct
 			char	ip[ 40 + 1 ] ;
 			int	port ;
 		} node ;
-	} nodes [ 100 ] ;
+	} nodes [ 1000 ] ;
 	int	_nodes_count ;
 	int	_nodes_size ;
 } query_workers_response ;

@@ -3,7 +3,7 @@
 int main( int argc , char *argv[] )
 {
 	DC4CSetAppLogFile( "dc4c_test_worker_hello" );
-	SetLogLevel( LOGLEVEL_DEBUG );
+	SetLogLevel( LOGLEVEL_INFO );
 	
 	if( argc == 1 + 1 )
 	{

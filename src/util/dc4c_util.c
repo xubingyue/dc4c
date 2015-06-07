@@ -8,6 +8,9 @@
 
 #include "dc4c_util.h"
 
+char __DC4C_VERSION_1_1_7[] = "1.1.7" ;
+char *__DC4C_VERSION = __DC4C_VERSION_1_1_7 ;
+
 int ConvertToDaemonServer()
 {
 	int pid;
@@ -95,7 +98,7 @@ int InitSocketSession( struct SocketSession *psession )
 {
 	memset( psession , 0x00 , sizeof(struct SocketSession) );
 	
-	psession->recv_buffer_size = 1024+1 ;
+	psession->recv_buffer_size = DEFAULT_RECV_BUFFERSIZE+1 ;
 	psession->recv_buffer = (char*) malloc( psession->recv_buffer_size ) ;
 	if( psession->recv_buffer == NULL )
 	{
@@ -104,7 +107,7 @@ int InitSocketSession( struct SocketSession *psession )
 	}
 	CleanRecvBuffer( psession );
 	
-	psession->send_buffer_size = 1024+1 ;
+	psession->send_buffer_size = DEFAULT_SEND_BUFFERSIZE+1 ;
 	psession->send_buffer = (char*) malloc( psession->send_buffer_size ) ;
 	if( psession->send_buffer == NULL )
 	{
@@ -836,7 +839,7 @@ int SyncReceiveSocketData( struct SocketSession *psession , int *p_timeout )
 		nret = select( psession->sock+1 , & read_fds , NULL , & expt_fds , ptv ) ;
 		if( nret == 0 )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "send timeout when selecting" );
+			ErrorLog( __FILE__ , __LINE__ , "recv timeout when selecting" );
 			return RETURN_TIMEOUT;
 		}
 		
@@ -852,7 +855,7 @@ int SyncReceiveSocketData( struct SocketSession *psession , int *p_timeout )
 			(*p_timeout) -= ( tt2 - tt1 ) ;
 			if( (*p_timeout) <= 0 )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "send timeout after select" );
+				ErrorLog( __FILE__ , __LINE__ , "recv timeout after select" );
 				return RETURN_TIMEOUT;
 			}
 		}
@@ -868,7 +871,7 @@ int SyncReceiveSocketData( struct SocketSession *psession , int *p_timeout )
 		{
 			if( psession->total_recv_len == 0 )
 			{
-				InfoLog( __FILE__ , __LINE__ , "detected sock[%d] close on waiting for first byte" , psession->sock );
+				InfoLog( __FILE__ , __LINE__ , "detected sock[%d] close on waiting for receiving first byte" , psession->sock );
 				return -4;
 			}
 			else
@@ -913,7 +916,7 @@ int SyncReceiveSocketData( struct SocketSession *psession , int *p_timeout )
 		nret = select( psession->sock+1 , & read_fds , NULL , & expt_fds , ptv ) ;
 		if( nret == 0 )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "send timeout when selecting" );
+			ErrorLog( __FILE__ , __LINE__ , "recv timeout when selecting" );
 			return RETURN_TIMEOUT;
 		}
 		
@@ -929,7 +932,7 @@ int SyncReceiveSocketData( struct SocketSession *psession , int *p_timeout )
 			(*p_timeout) -= ( tt2 - tt1 ) ;
 			if( (*p_timeout) <= 0 )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "send timeout after select" );
+				ErrorLog( __FILE__ , __LINE__ , "recv timeout after select" );
 				return RETURN_TIMEOUT;
 			}
 		}

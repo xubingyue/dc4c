@@ -73,7 +73,9 @@ int main( int argc , char *argv[] )
 {
 	struct ServerEnv	env , *penv = & env ;
 	
-	pid_t			pid ;
+	struct sigaction	act , oact ;
+	
+	pid_t			pid , pids[1] ;
 	int			status ;
 	
 	int			nret = 0 ;
@@ -100,27 +102,36 @@ int main( int argc , char *argv[] )
 	signal( SIGCHLD , SIG_DFL );
 	signal( SIGPIPE , SIG_IGN );
 	
-	signal( SIGTERM , & main_signal_proc );
+	memset( & act , 0x00 , sizeof(struct sigaction) );
+	act.sa_handler = main_signal_proc ;
+	sigemptyset( & (act.sa_mask) );
+	act.sa_flags = 0 ;
+	sigaction( SIGTERM , & act , & oact );
 	
 	while( ! g_main_exit_flag )
 	{
-		pid = fork() ;
-		if( pid < 0 )
+		pids[0] = fork() ;
+		if( pids[0] < 0 )
 		{
-			FatalLog( __FILE__ , __LINE__ , "fork failed , errno[%d]" , (int)pid );
+			FatalLog( __FILE__ , __LINE__ , "fork failed , errno[%d]" , (int)pids[0] );
 		}
-		else if( pid == 0 )
+		else if( pids[0] == 0 )
 		{
 			nret = server( penv ) ;
 			exit(-nret);
 		}
 		else
 		{
-			InfoLog( __FILE__ , __LINE__ , "[%d]fork[%d]" , (int)getpid() , (int)pid );
+			InfoLog( __FILE__ , __LINE__ , "[%d]fork[%d]" , (int)getpid() , (int)pids[0] );
 			
-			pid = wait( & status ) ;
+			pid = waitpid( pids[0] , & status , 0 ) ;
 			if( g_main_exit_flag )
+			{
+				InfoLog( __FILE__ , __LINE__ , "kill [%d]" , pids[0] );
+				kill( pids[0] , SIGTERM );
 				break;
+			}
+			
 			if( WTERMSIG(status) )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "rserver[%d] terminated" , (int)pid );

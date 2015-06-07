@@ -20,6 +20,7 @@ static void server_signal_proc( int signum )
 int server( struct ServerEnv *penv )
 {
 	time_t			now ;
+	int			all_total_send_len ;
 	long			epoll_timeout ;
 	struct epoll_event	events[ WAIT_EVENTS_COUNT ] ;
 	int			epoll_ready_count ;
@@ -31,13 +32,15 @@ int server( struct ServerEnv *penv )
 	
 	int			nret = 0 ;
 	
+	signal( SIGTERM , & server_signal_proc );
+	
 	SetLogFile( "%s/log/dc4c_wserver_%d_%s:%d.log" , getenv("HOME") , penv->wserver_index+1 , penv->param.wserver_ip , penv->param.wserver_port );
 	if( penv->param.loglevel_debug == 1 )
 		SetLogLevel( LOGLEVEL_DEBUG );
 	else
 		SetLogLevel( LOGLEVEL_INFO );
 	
-	penv->epoll_socks = epoll_create( EPOLL_FD_COUNT ) ;
+	penv->epoll_socks = epoll_create( EPOLL_FDS_COUNT ) ;
 	if( penv->epoll_socks < 0 )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "epoll_create failed[%d]errno[%d]" , penv->epoll_socks , errno );
@@ -75,15 +78,6 @@ int server( struct ServerEnv *penv )
 		return -1;
 	}
 	memset( penv->accepted_session_array , 0x00 , sizeof(struct SocketSession) * MAXCOUNT_ACCEPTED_SESSION );
-	for( accepted_session_index = 0 ; accepted_session_index < MAXCOUNT_ACCEPTED_SESSION ; accepted_session_index++ )
-	{
-		nret = InitSocketSession( & (penv->accepted_session_array[accepted_session_index]) ) ;
-		if( nret )
-		{
-			ErrorLog( __FILE__ , __LINE__ , "InitSocketSession failed[%d]errno[%d]" , nret , errno );
-			return -1;
-		}
-	}
 	
 	penv->epq_array = (execute_program_request *)malloc( sizeof(execute_program_request) * MAXCOUNT_ACCEPTED_SESSION ) ;
 	if( penv->epq_array == NULL )
@@ -125,15 +119,44 @@ int server( struct ServerEnv *penv )
 		}
 	}
 	
-	signal( SIGTERM , & server_signal_proc );
-	
+	all_total_send_len = 0 ;
 	epoll_timeout = 1 ;
-	while( ! g_server_exit_flag )
+	while( g_server_exit_flag == 0 || penv->is_executing == 1 || all_total_send_len > 0 )
 	{
+		if( getppid() == 1 && g_server_exit_flag == 0 )
+		{
+			g_server_exit_flag = 1 ;
+		}
+		
+		if( g_server_exit_flag == 1 )
+		{
+			if( IsSocketEstablished( & (penv->listen_session) ) )
+			{
+				InfoLog( __FILE__ , __LINE__ , "signal TERM cleanning" );
+				
+				DeleteSockFromEpoll( penv->epoll_socks , & (penv->listen_session) );
+				CloseSocket( & (penv->listen_session) );
+				CleanSocketSession( & (penv->listen_session) );
+				
+				for( accepted_session_index = 0 ; accepted_session_index < MAXCOUNT_ACCEPTED_SESSION ; accepted_session_index++ )
+				{
+					if( IsSocketEstablished( & (penv->accepted_session_array[accepted_session_index]) ) )
+					{
+						if( ! ( penv->is_executing && & (penv->accepted_session_array[accepted_session_index]) == penv->executing_session.p1 ) )
+						{
+							DeleteSockFromEpoll( penv->epoll_socks , & (penv->accepted_session_array[accepted_session_index]) );
+							CloseSocket( & (penv->accepted_session_array[accepted_session_index]) );
+							CleanSocketSession( & (penv->accepted_session_array[accepted_session_index]) );
+						}
+					}
+				}
+			}
+			
+			epoll_timeout = 1 ;
+		}
+		
 		memset( events , 0x00 , sizeof(events) );
-		epoll_ready_count = epoll_wait( penv->epoll_socks , events , WAIT_EVENTS_COUNT , epoll_timeout*1000 ) ;
-		if( g_server_exit_flag )
-			break;
+		epoll_ready_count = epoll_wait( penv->epoll_socks , events , WAIT_EVENTS_COUNT , epoll_timeout * 1000 ) ;
 		
 		for( rserver_index = 0 ; rserver_index < penv->rserver_count ; rserver_index++ )
 		{
@@ -215,7 +238,7 @@ int server( struct ServerEnv *penv )
 						return nret;
 				}
 			}
-			else if( psession == & (penv->info_session) )
+			else if( psession == & (penv->executing_session) )
 			{
 				if( pevent->events & EPOLLIN || pevent->events & EPOLLHUP )
 				{
@@ -272,21 +295,52 @@ int server( struct ServerEnv *penv )
 		}
 		
 		app_HeartBeatRequest( penv , & now , & epoll_timeout );
+		
+		if( g_server_exit_flag == 1 )
+		{
+			all_total_send_len = 0 ;
+			for( accepted_session_index = 0 ; accepted_session_index < MAXCOUNT_ACCEPTED_SESSION ; accepted_session_index++ )
+			{
+				if( IsSocketEstablished( penv->accepted_session_array+accepted_session_index ) )
+				{
+					all_total_send_len += penv->accepted_session_array[accepted_session_index].total_send_len ;
+				}
+			}
+		}
 	}
 	
-	DeleteSockFromEpoll( penv->epoll_socks , & (penv->listen_session) );
-	CloseSocket( & (penv->listen_session) );
-	CleanSocketSession( & (penv->listen_session) );
+	for( accepted_session_index = 0 ; accepted_session_index < MAXCOUNT_ACCEPTED_SESSION ; accepted_session_index++ )
+	{
+		if( IsSocketEstablished( & (penv->accepted_session_array[accepted_session_index]) ) )
+		{
+			DeleteSockFromEpoll( penv->epoll_socks , & (penv->accepted_session_array[accepted_session_index]) );
+			CloseSocket( & (penv->accepted_session_array[accepted_session_index]) );
+			CleanSocketSession( & (penv->accepted_session_array[accepted_session_index]) );
+		}
+	}
+	free( penv->accepted_session_array );
+	
+	if( IsSocketEstablished( & (penv->listen_session) ) )
+	{
+		DeleteSockFromEpoll( penv->epoll_socks , & (penv->listen_session) );
+		CloseSocket( & (penv->listen_session) );
+		CleanSocketSession( & (penv->listen_session) );
+	}
 	
 	for( rserver_index = 0 ; rserver_index < penv->rserver_count ; rserver_index++ )
 	{
-		DeleteSockFromEpoll( penv->epoll_socks , & (penv->connect_session[rserver_index]) );
-		CloseSocket( & (penv->connect_session[rserver_index]) );
-		CleanSocketSession( & (penv->connect_session[rserver_index]) );
+		if( IsSocketEstablished( & (penv->connect_session[rserver_index]) ) )
+		{
+			DeleteSockFromEpoll( penv->epoll_socks , & (penv->connect_session[rserver_index]) );
+			CloseSocket( & (penv->connect_session[rserver_index]) );
+			CleanSocketSession( & (penv->connect_session[rserver_index]) );
+		}
 	}
 	
 	close( penv->epoll_socks );
 	InfoLog( __FILE__ , __LINE__ , "close all socks and epoll_socks" );
+	
+	InfoLog( __FILE__ , __LINE__ , "--- wserver [%s:%d] - [%d] --- end" , penv->param.wserver_ip , penv->param.wserver_port , penv->wserver_index+1 );
 	
 	return 0;
 }

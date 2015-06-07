@@ -5,10 +5,10 @@ int DSCINIT_query_workers_response( query_workers_response *pst )
 {
 	int	index[10] = { 0 } ; index[0] = 0 ;
 	memset( pst , 0x00 , sizeof(query_workers_response) );
-		for( index[1] = 0 ; index[1] < 100 ; index[1]++ )
+		for( index[1] = 0 ; index[1] < 1000 ; index[1]++ )
 		{
 		}
-		pst->_nodes_size = 100 ;
+		pst->_nodes_size = 1000 ;
 	return 0;
 }
 
@@ -41,7 +41,7 @@ int DSCSERIALIZE_JSON_COMPACT_query_workers_response( query_workers_response *ps
 	len=SNPRINTF(buf,remain_len,"\"port\":"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"%d",pst->nodes[index[1]].node.port); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"}"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-			if((pst->_nodes_count==0)?(index[1]<100-1):(index[1]<pst->_nodes_count-1))
+			if((pst->_nodes_count==0)?(index[1]<1000-1):(index[1]<pst->_nodes_count-1))
 			{ len=SNPRINTF(buf,remain_len,"},"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len; }
 			else
 			{ len=SNPRINTF(buf,remain_len,"}"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len; }
@@ -69,7 +69,7 @@ int CallbackOnJsonNode_query_workers_response( int type , char *jpath , int jpat
 		if( type & FASTERJSON_NODE_ENTER )
 		{
 		if( jpath_len == 6 && strncmp( jpath , "/nodes" , jpath_len ) == 0 )
-		{if(pst->_nodes_count>=100)return -8;}
+		{if(pst->_nodes_count>=1000)return -8;}
 		}
 		else if( type & FASTERJSON_NODE_LEAVE )
 		{

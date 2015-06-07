@@ -28,7 +28,7 @@
 extern "C" {
 #endif
 
-#define EPOLL_FD_COUNT			1024
+#define EPOLL_FDS_COUNT			1024
 #define WAIT_EVENTS_COUNT		100
 
 #define RSERVER_ARRAYSIZE		8
@@ -69,9 +69,9 @@ struct ServerEnv
 	execute_program_request		*epq_array ;
 	execute_program_response	*epp_array ;
 	
-	int				is_working ;
-	int				info_pipe[ 2 ] ;
-	struct SocketSession		info_session ;
+	int				is_executing ;
+	int				executing_pipe[ 2 ] ;
+	struct SocketSession		executing_session ;
 	pid_t				pid ;
 	time_t				begin_datetime_stamp ;
 } ;
@@ -80,7 +80,6 @@ int server( struct ServerEnv *penv );
 
 int comm_AsyncConnectToRegisterServer( struct ServerEnv *penv , struct SocketSession *psession , int skip_connect_flag );
 int comm_CloseConnectedSocket( struct ServerEnv *penv , struct SocketSession *psession );
-int comm_CloseAcceptedSocket( struct ServerEnv *penv , struct SocketSession *psession );
 int comm_OnConnectedSocketInput( struct ServerEnv *penv , struct SocketSession *psession );
 int comm_OnConnectedSocketOutput( struct ServerEnv *penv , struct SocketSession *psession );
 int comm_OnConnectedSocketError( struct ServerEnv *penv , struct SocketSession *psession );

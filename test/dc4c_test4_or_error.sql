@@ -14,9 +14,9 @@ INSERT INTO dag_batches_info VALUES ( 'TEST_SCHEDULE_NAME' , 'BATCH_B2' , 'BATCH
 
 INSERT INTO dag_batches_tasks VALUES ( 'TEST_SCHEDULE_NAME' , 'BATCH_A1' , 1 , 'dc4c_test_worker_sleep 1' , 60 , '' , '' , 0 , 0 , 0 );
 INSERT INTO dag_batches_tasks VALUES ( 'TEST_SCHEDULE_NAME' , 'BATCH_A22' , 1 , 'dc4c_test_worker_sleep 5' , 60 , '' , '' , 0 , 0 , 0 );
-INSERT INTO dag_batches_tasks VALUES ( 'TEST_SCHEDULE_NAME' , 'BATCH_A3' , 1 , 'dc4c_test_worker_sleep 1' , 60 , '' , '' , 0 , 0 , 0 );
-INSERT INTO dag_batches_tasks VALUES ( 'TEST_SCHEDULE_NAME' , 'BATCH_A3' , 2 , 'dc4c_test_worker_sleep 2' , 60 , '' , '' , 0 , 0 , 0 );
-INSERT INTO dag_batches_tasks VALUES ( 'TEST_SCHEDULE_NAME' , 'BATCH_A3' , 3 , 'dc4c_test_worker_sleep 3' , 60 , '' , '' , 0 , 0 , 0 );
+INSERT INTO dag_batches_tasks VALUES ( 'TEST_SCHEDULE_NAME' , 'BATCH_A3' , 1 , 'dc4c_test_worker_sleep_or_error -2' , 60 , '' , '' , 0 , 0 , 0 );
+INSERT INTO dag_batches_tasks VALUES ( 'TEST_SCHEDULE_NAME' , 'BATCH_A3' , 2 , 'dc4c_test_worker_sleep_or_error -2' , 60 , '' , '' , 0 , 0 , 0 );
+INSERT INTO dag_batches_tasks VALUES ( 'TEST_SCHEDULE_NAME' , 'BATCH_A3' , 3 , 'dc4c_test_worker_sleep_or_error -2' , 60 , '' , '' , 0 , 0 , 0 );
 INSERT INTO dag_batches_tasks VALUES ( 'TEST_SCHEDULE_NAME' , 'BATCH_B1' , 1 , 'dc4c_test_worker_sleep 3' , 60 , '' , '' , 0 , 0 , 0 );
 INSERT INTO dag_batches_tasks VALUES ( 'TEST_SCHEDULE_NAME' , 'BATCH_B2' , 1 , 'dc4c_test_worker_sleep 6' , 60 , '' , '' , 0 , 0 , 0 );
 

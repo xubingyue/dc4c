@@ -1,6 +1,6 @@
 cd ..
 OS=`uname`
-VERSION=`head -1 ChangeLog-CN | awk '{print $1}'`
+VERSION=`head -1 ChangeLog-CN | awk '{print $2}'`
 
 cd
 tar cvzf dc4c-${OS}-bin-${VERSION}.tar.gz \

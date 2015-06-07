@@ -21,7 +21,7 @@ int pi_master( char *rservers_ip_port , unsigned long max_x , int tasks_count )
 	int			nret = 0 ;
 	
 	DC4CSetAppLogFile( "pi_master" );
-	SetLogLevel( LOGLEVEL_DEBUG );
+	SetLogLevel( LOGLEVEL_INFO );
 	
 	InfoLog( __FILE__ , __LINE__ , "pi_master" );
 	
@@ -36,7 +36,6 @@ int pi_master( char *rservers_ip_port , unsigned long max_x , int tasks_count )
 		InfoLog( __FILE__ , __LINE__ , "DC4CInitEnv ok" );
 	}
 	
-	DC4CSetTimeout( penv , 600 );
 	DC4CSetOptions( penv , DC4C_OPTIONS_BIND_CPU );
 	
 	if( tasks_count == -2 )
@@ -120,7 +119,7 @@ int pi_worker( unsigned long start_x , unsigned long end_x )
 	char		output[ 1024 + 1 ] ;
 	
 	DC4CSetAppLogFile( "pi_worker" );
-	SetLogLevel( LOGLEVEL_DEBUG );
+	SetLogLevel( LOGLEVEL_INFO );
 	
 	InfoLog( __FILE__ , __LINE__ , "pi_worker" );
 	

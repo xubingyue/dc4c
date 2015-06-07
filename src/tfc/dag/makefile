@@ -13,25 +13,14 @@ c_FILE		=	\
 
 c_FILE2		=	\
 			IDL_dag_schedule_configfile.dsc.c \
-			IDL_dag_schedule.dsc.c \
-			IDL_dag_batches_direction.dsc.c \
-			IDL_dag_batches_info.dsc.c \
-			IDL_dag_batches_tasks.dsc.c \
 
 ec_FILE		=	\
 			dc4c_tfc_dag_pgsql.ec \
-			$(ec_FILE2) \
-
-ec_FILE2	=	\
-			IDL_dag_schedule.dsc.ESQL.ec \
-			IDL_dag_batches_direction.dsc.ESQL.ec \
-			IDL_dag_batches_info.dsc.ESQL.ec \
-			IDL_dag_batches_tasks.dsc.ESQL.ec \
 
 ###### 目标文件、安装目录配置区
-LIB		=	libdc4c_tfc_dag.so libdc4c_tfc_dag_pgsql.so
+LIB		=	libdc4c_tfc_dag.so
 LIBINST		=	$(HOME)/lib
-HDER		=	dc4c_tfc_dag.h $(c_FILE2:.c=.h) $(ec_FILE2:.ec=.eh) $(c_FILE2:.c=.LOG.c)
+HDER		=	dc4c_tfc_dag.h $(c_FILE2:.c=.h) $(c_FILE2:.c=.LOG.c)
 HDERINST	=	$(HOME)/include/dc4c_tfc_dag
 NOINST_OBJ	=	sizeof
 
@@ -64,9 +53,6 @@ include $(MKTPLDIR)/makeobj_$(MKTPLOS).inc
 ###### 目标文件依赖关系
 libdc4c_tfc_dag.so		:	$(c_FILE_o)
 	$(CC) -o $@ $(c_FILE_o) $(SOFLAGS) $(LFLAGS)
-
-libdc4c_tfc_dag_pgsql.so	:	$(c_FILE_o) $(ec_FILE_o)
-	$(CC) -o $@ $(c_FILE_o) $(ec_FILE_o) $(SOFLAGS) $(LFLAGS) -lecpg
 
 sizeof		:	sizeof.o libdc4c_tfc_dag.so
 	$(CC) -o $@ sizeof.o libdc4c_tfc_dag.so
