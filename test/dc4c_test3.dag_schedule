@@ -14,11 +14,11 @@
 	"batches" : {
 		"batches_info" : [
 			{ "batch_name":"BATCH_A1", "batch_desc":"", "view_pos_x":0, "view_pos_y":0, "tasks": [
-				{ "program_and_params":"dc4c_test_worker_sleep 3", "timeout":60" }
-			] } ,
+				{ "order_index":1 , "program_and_params":"dc4c_test_worker_sleep 3", "timeout":60" }
+			] , "interrupt_by_app":1 } ,
 			{ "batch_name":"BATCH_B1", "batch_desc":"", "view_pos_x":0, "view_pos_y":0, "tasks": [
-				{ "program_and_params":"dc4c_test_worker_sleep 5", "timeout":60" }
-			] }
+				{ "order_index":1 , "program_and_params":"dc4c_test_worker_sleep 5", "timeout":60" }
+			] , "interrupt_by_app":1 }
 		] ,
 		"batches_direction" : [
 			{ "from_batch":"", "to_batch":"BATCH_A1" } ,

@@ -4,7 +4,7 @@ STRUCT	dag_batches_tasks
 	STRING	64	batch_name		NOTNULL
 	INT	4	order_index		NOTNULL
 	STRING	256	program_and_params	NOTNULL
-	INT	4	timeout			NOTNULL
+	INT	4	timeout
 	STRING	19	begin_datetime
 	STRING	19	end_datetime
 	INT	4	progress

@@ -90,6 +90,10 @@ int DSCSERIALIZE_JSON_dag_schedule_configfile( dag_schedule_configfile *pst , ch
 	len=SNPRINTF(buf,remain_len,"%d",pst->batches.batches_info[index[2]].view_pos_y); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len," ,\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"			"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"\"interrupt_by_app\" : "); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"%d",pst->batches.batches_info[index[2]].interrupt_by_app); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len," ,\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"			"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\"begin_datetime\" : "); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	JSONESCAPE_EXPAND(pst->batches.batches_info[index[2]].begin_datetime,strlen(pst->batches.batches_info[index[2]].begin_datetime),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
@@ -111,6 +115,10 @@ int DSCSERIALIZE_JSON_dag_schedule_configfile( dag_schedule_configfile *pst , ch
 					{
 	len=SNPRINTF(buf,remain_len,"			{\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"				"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"\"order_index\" : "); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"%d",pst->batches.batches_info[index[2]].tasks[index[3]].order_index); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len," ,\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"				"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\"program_and_params\" : "); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	JSONESCAPE_EXPAND(pst->batches.batches_info[index[2]].tasks[index[3]].program_and_params,strlen(pst->batches.batches_info[index[2]].tasks[index[3]].program_and_params),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
@@ -119,10 +127,6 @@ int DSCSERIALIZE_JSON_dag_schedule_configfile( dag_schedule_configfile *pst , ch
 	len=SNPRINTF(buf,remain_len,"				"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\"timeout\" : "); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"%d",pst->batches.batches_info[index[2]].tasks[index[3]].timeout); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	len=SNPRINTF(buf,remain_len," ,\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	len=SNPRINTF(buf,remain_len,"				"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	len=SNPRINTF(buf,remain_len,"\"order_index\" : "); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	len=SNPRINTF(buf,remain_len,"%d",pst->batches.batches_info[index[2]].tasks[index[3]].order_index); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len," ,\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"				"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\"progress\" : "); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
@@ -231,6 +235,9 @@ int CallbackOnJsonNode_dag_schedule_configfile( int type , char *jpath , int jpa
 				/* view_pos_y */
 				if( jpath_len == 32 && strncmp( jpath , "/batches/batches_info/view_pos_y" , jpath_len ) == 0 )
 				{NATOI(content,content_len,pst->batches.batches_info[pst->batches._batches_info_count].view_pos_y);}
+				/* interrupt_by_app */
+				if( jpath_len == 38 && strncmp( jpath , "/batches/batches_info/interrupt_by_app" , jpath_len ) == 0 )
+				{NATOI(content,content_len,pst->batches.batches_info[pst->batches._batches_info_count].interrupt_by_app);}
 				/* begin_datetime */
 				if( jpath_len == 36 && strncmp( jpath , "/batches/batches_info/begin_datetime" , jpath_len ) == 0 )
 				{JSONUNESCAPE_FOLD(content,content_len,pst->batches.batches_info[pst->batches._batches_info_count].begin_datetime,len,sizeof(pst->batches.batches_info[pst->batches._batches_info_count].begin_datetime)-1); if(len<0)return -7;}
@@ -240,15 +247,15 @@ int CallbackOnJsonNode_dag_schedule_configfile( int type , char *jpath , int jpa
 				/* progress */
 				if( jpath_len == 30 && strncmp( jpath , "/batches/batches_info/progress" , jpath_len ) == 0 )
 				{NATOI(content,content_len,pst->batches.batches_info[pst->batches._batches_info_count].progress);}
+					/* order_index */
+					if( jpath_len == 39 && strncmp( jpath , "/batches/batches_info/tasks/order_index" , jpath_len ) == 0 )
+					{NATOI(content,content_len,pst->batches.batches_info[pst->batches._batches_info_count].tasks[pst->batches.batches_info[pst->batches._batches_info_count]._tasks_count].order_index);}
 					/* program_and_params */
 					if( jpath_len == 46 && strncmp( jpath , "/batches/batches_info/tasks/program_and_params" , jpath_len ) == 0 )
 					{JSONUNESCAPE_FOLD(content,content_len,pst->batches.batches_info[pst->batches._batches_info_count].tasks[pst->batches.batches_info[pst->batches._batches_info_count]._tasks_count].program_and_params,len,sizeof(pst->batches.batches_info[pst->batches._batches_info_count].tasks[pst->batches.batches_info[pst->batches._batches_info_count]._tasks_count].program_and_params)-1); if(len<0)return -7;}
 					/* timeout */
 					if( jpath_len == 35 && strncmp( jpath , "/batches/batches_info/tasks/timeout" , jpath_len ) == 0 )
 					{NATOI(content,content_len,pst->batches.batches_info[pst->batches._batches_info_count].tasks[pst->batches.batches_info[pst->batches._batches_info_count]._tasks_count].timeout);}
-					/* order_index */
-					if( jpath_len == 39 && strncmp( jpath , "/batches/batches_info/tasks/order_index" , jpath_len ) == 0 )
-					{NATOI(content,content_len,pst->batches.batches_info[pst->batches._batches_info_count].tasks[pst->batches.batches_info[pst->batches._batches_info_count]._tasks_count].order_index);}
 					/* progress */
 					if( jpath_len == 36 && strncmp( jpath , "/batches/batches_info/tasks/progress" , jpath_len ) == 0 )
 					{NATOI(content,content_len,pst->batches.batches_info[pst->batches._batches_info_count].tasks[pst->batches.batches_info[pst->batches._batches_info_count]._tasks_count].progress);}

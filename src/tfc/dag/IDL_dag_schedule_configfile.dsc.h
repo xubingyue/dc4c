@@ -99,14 +99,15 @@ typedef struct
 			char	batch_desc[ 256 + 1 ] ;
 			int	view_pos_x ;
 			int	view_pos_y ;
+			int	interrupt_by_app ;
 			char	begin_datetime[ 19 + 1 ] ;
 			char	end_datetime[ 19 + 1 ] ;
 			int	progress ;
 			struct
 			{
+				int	order_index ;
 				char	program_and_params[ 256 + 1 ] ;
 				int	timeout ;
-				int	order_index ;
 				int	progress ;
 			} tasks [ 1000 ] ;
 			int	_tasks_count ;

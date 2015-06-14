@@ -46,6 +46,7 @@ struct Dc4cDagBatch
 	struct Dc4cBatchTask	*tasks_array ;
 	int			tasks_count ;
 	struct Dc4cApiEnv	*penv ;
+	int			interrupt_by_app ;
 	
 	char			begin_datetime[ 19 + 1 ] ;
 	char			end_datetime[ 19 + 1 ] ;
@@ -135,15 +136,16 @@ int _LoadDagScheduleFromStruct( struct Dc4cDagSchedule *p_sched , dag_schedule_c
 						{
 							if( p_config->batches.batches_info[j].tasks[k].progress != DC4C_DAGTASK_PROGRESS_FINISHED )
 							{
+								p_batch->tasks_array[k].order_index = p_config->batches.batches_info[j].tasks[k].order_index ;
 								strncpy( p_batch->tasks_array[k].program_and_params , p_config->batches.batches_info[j].tasks[k].program_and_params , sizeof(p_batch->tasks_array[k].program_and_params)-1 );
 								p_batch->tasks_array[k].timeout = p_config->batches.batches_info[j].tasks[k].timeout ;
-								p_batch->tasks_array[k].order_index = p_config->batches.batches_info[j].tasks[k].order_index ;
 								p_config->batches.batches_info[j].tasks[k].progress = DC4C_DAGTASK_PROGRESS_INIT ;
 								
 								p_batch->tasks_count++;
 							}
 						}
 					}
+					p_batch->interrupt_by_app = p_config->batches.batches_info[j].interrupt_by_app ;
 					
 					strncpy( p_batch->begin_datetime , p_config->batches.batches_info[j].begin_datetime , sizeof(p_batch->begin_datetime) );
 					strncpy( p_batch->end_datetime , p_config->batches.batches_info[j].end_datetime , sizeof(p_batch->end_datetime) );
@@ -517,7 +519,11 @@ static int MovedownExecutingTree( struct Dc4cDagSchedule *p_sched , SListNode *p
 				DebugLog( __FILE__ , __LINE__ , "DC4CInitEnv ok" );
 			}
 			
-			DC4CSetOptions( p_postdepend_branch_batch->penv , p_sched->options );
+InfoLog( __FILE__ , __LINE__ , "calvintest - p_postdepend_branch_batch->batch_name[%s] p_postdepend_branch_batch->interrupt_by_app[%d]" , p_postdepend_branch_batch->batch_name , p_postdepend_branch_batch->interrupt_by_app );
+			if( p_postdepend_branch_batch->interrupt_by_app )
+				DC4CSetOptions( p_postdepend_branch_batch->penv , DC4C_OPTIONS_INTERRUPT_BY_APP );
+			else
+				DC4CSetOptions( p_postdepend_branch_batch->penv , p_sched->options );
 			
 			InfoLog( __FILE__ , __LINE__ , "DAG ACT batch - batch_name[%s] tasks_count[%d]" , p_postdepend_branch_batch->batch_name , p_postdepend_branch_batch->tasks_count );
 			nret = DC4CBeginBatchTasks( p_postdepend_branch_batch->penv , p_postdepend_branch_batch->tasks_count , p_postdepend_branch_batch->tasks_array , p_postdepend_branch_batch->tasks_count ) ;
@@ -604,7 +610,10 @@ int DC4CBeginDagSchedule( struct Dc4cDagSchedule *p_sched )
 			return nret;
 		}
 		
-		DC4CSetOptions( p_branch_batch->penv , p_sched->options );
+		if( p_branch_batch->interrupt_by_app )
+			DC4CSetOptions( p_branch_batch->penv , DC4C_OPTIONS_INTERRUPT_BY_APP );
+		else
+			DC4CSetOptions( p_branch_batch->penv , p_sched->options );
 		
 		nret = DC4CBeginBatchTasks( p_branch_batch->penv , p_branch_batch->tasks_count , p_branch_batch->tasks_array , p_branch_batch->tasks_count ) ;
 		InfoLog( __FILE__ , __LINE__ , "DAG ACT batch - batch_name[%s] tasks_count[%d]" , p_branch_batch->batch_name , p_branch_batch->tasks_count );
@@ -734,7 +743,7 @@ int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatc
 	
 	if( perform_return == DC4C_INFO_TASK_FINISHED )
 	{
-		InfoLog( __FILE__ , __LINE__ , "DAG FIN task - batch_name[%s] tasks_index[%d]" , p_branch_batch->batch_name , task_index );
+		InfoLog( __FILE__ , __LINE__ , "DAG FIN task - batch_name[%s] tasks_index[%d] error[%d] status[%d]" , p_branch_batch->batch_name , task_index , DC4CGetBatchTasksError(p_branch_batch->penv,task_index) , DC4CGetBatchTasksStatus(p_branch_batch->penv,task_index) );
 	}
 	else if( perform_return == DC4C_INFO_BATCH_TASKS_FINISHED )
 	{

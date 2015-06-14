@@ -2,7 +2,7 @@ STRUCT	dag_batches_direction
 {
 	STRING	64	schedule_name	NOTNULL
 	STRING	64	from_batch	NOTNULL
-	STRING	64	to_batch
+	STRING	64	to_batch	NOTNULL
 	
 	CREATE_SQL	"CREATE INDEX dag_batches_direction_idx1 ON dag_batches_direction ( schedule_name , from_batch ) ;"
 	DROP_SQL	"DROP INDEX dag_batches_direction_idx1 ;"

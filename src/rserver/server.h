@@ -93,7 +93,7 @@ int comm_OnAcceptedSocketOutput( struct ServerEnv *penv , struct SocketSession *
 int comm_OnAcceptedSocketError( struct ServerEnv *penv , struct SocketSession *psession );
 
 int proto_CommandLine( struct ServerEnv *penv , struct SocketSession *psession );
-#define RETURN_QUIT	1
+#define RETURN_CLOSE	1
 int proto( void *_penv , struct SocketSession *psession );
 int proto_HeartBeatRequest( struct ServerEnv *penv , struct SocketSession *psession );
 

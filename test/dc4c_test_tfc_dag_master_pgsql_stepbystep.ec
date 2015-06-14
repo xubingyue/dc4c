@@ -155,13 +155,14 @@ static int DC4CLoadDagScheduleFromDatabase( struct Dc4cDagSchedule **pp_sched , 
 			if( batches_tasks.progress == DC4C_DAGTASK_PROGRESS_FINISHED )
 				continue;
 			
+			p_config->batches.batches_info[p_config->batches._batches_info_count].tasks[p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_count].order_index = batches_tasks.order_index ;
 			strncpy( p_config->batches.batches_info[p_config->batches._batches_info_count].tasks[p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_count].program_and_params , batches_tasks.program_and_params , sizeof(p_config->batches.batches_info[p_config->batches._batches_info_count].tasks[p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_count].program_and_params)-1 );
 			p_config->batches.batches_info[p_config->batches._batches_info_count].tasks[p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_count].timeout = batches_tasks.timeout ;
-			p_config->batches.batches_info[p_config->batches._batches_info_count].tasks[p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_count].order_index = batches_tasks.order_index ;
 			p_config->batches.batches_info[p_config->batches._batches_info_count].tasks[p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_count].progress = batches_tasks.progress ;
 			
 			p_config->batches.batches_info[p_config->batches._batches_info_count]._tasks_count++;
 		}
+		p_config->batches.batches_info[p_config->batches._batches_info_count].interrupt_by_app = batches_info.interrupt_by_app ;
 		
 		strncpy( p_config->batches.batches_info[p_config->batches._batches_info_count].begin_datetime , batches_info.begin_datetime , sizeof(p_config->batches.batches_info[p_config->batches._batches_info_count].begin_datetime)-1 );
 		strncpy( p_config->batches.batches_info[p_config->batches._batches_info_count].end_datetime , batches_info.end_datetime , sizeof(p_config->batches.batches_info[p_config->batches._batches_info_count].end_datetime)-1 );
@@ -320,7 +321,7 @@ static int DC4CUnloadDagScheduleToDatabase( struct Dc4cDagSchedule **pp_sched )
 	DSCDBCOMMIT();
 	
 	DC4CUnloadDagSchedule( pp_sched );
-	ErrorLog( __FILE__ , __LINE__ , "DC4CUnloadDagSchedule ok" );
+	InfoLog( __FILE__ , __LINE__ , "DC4CUnloadDagSchedule ok" );
 	
 	return 0;
 }
@@ -335,7 +336,7 @@ static int TestDagSchedule( char *schedule_name , char *rservers_ip_port )
 	int			perform_return = 0 ;
 	int			nret = 0 ;
 	
-	nret = DC4CLoadDagScheduleFromDatabase( & p_sched , schedule_name , rservers_ip_port , DC4C_OPTIONS_INTERRUPT_BY_APP ) ;
+	nret = DC4CLoadDagScheduleFromDatabase( & p_sched , schedule_name , rservers_ip_port , 0 ) ;
 	if( nret )
 	{
 		printf( "DC4CLoadDagScheduleFromDatabase failed[%d]\n" , nret );
@@ -390,7 +391,6 @@ static int TestDagSchedule( char *schedule_name , char *rservers_ip_port )
 		else if( perform_return == DC4C_ERROR_APP )
 		{
 			printf( "DC4CPerformDagSchedule return DC4C_ERROR_APP\n" );
-			break;
 		}
 		else
 		{
@@ -408,6 +408,9 @@ static int TestDagSchedule( char *schedule_name , char *rservers_ip_port )
 		{
 			printf( "DC4CUpdateBatchTasks ok\n" );
 		}
+		
+		if( perform_return == DC4C_ERROR_APP )
+			break;
 	}
 	
 	nret = DC4CUnloadDagScheduleToDatabase( & p_sched ) ;

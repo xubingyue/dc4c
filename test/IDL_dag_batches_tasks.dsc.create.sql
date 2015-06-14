@@ -6,7 +6,7 @@ CREATE TABLE dag_batches_tasks
 	batch_name	CHARACTER VARYING(64) NOT NULL ,
 	order_index	INTEGER NOT NULL ,
 	program_and_params	CHARACTER VARYING(256) NOT NULL ,
-	timeout	INTEGER NOT NULL ,
+	timeout	INTEGER ,
 	begin_datetime	CHARACTER VARYING(19) ,
 	end_datetime	CHARACTER VARYING(19) ,
 	progress	INTEGER ,

@@ -189,6 +189,17 @@ int proto_DeployProgramRequest( struct ServerEnv *penv , struct SocketSession *p
 	return 0;
 }
 
+int proto_HeartBeatRequest( struct ServerEnv *penv , struct SocketSession *psession )
+{
+	CleanSendBuffer( psession );
+	
+	FormatSendHead( psession , "HBQ" , 0 );
+	
+	InfoLog( __FILE__ , __LINE__ , "OUTPUT [%d]bytes[%.*s]" , psession->total_send_len - LEN_COMMHEAD , psession->total_send_len - LEN_COMMHEAD , psession->send_buffer + LEN_COMMHEAD );
+	
+	return 0;
+}
+
 funcDoProtocol proto ;
 int proto( void *_penv , struct SocketSession *psession )
 {
@@ -327,17 +338,6 @@ int proto( void *_penv , struct SocketSession *psession )
 	{
 		InfoLog( __FILE__ , __LINE__ , "OUTPUT [%d]bytes[%.*s]" , psession->total_send_len - LEN_COMMHEAD , psession->total_send_len - LEN_COMMHEAD , psession->send_buffer + LEN_COMMHEAD );
 	}
-	
-	return 0;
-}
-
-int proto_HeartBeatRequest( struct ServerEnv *penv , struct SocketSession *psession )
-{
-	CleanSendBuffer( psession );
-	
-	FormatSendHead( psession , "HBQ" , 0 );
-	
-	InfoLog( __FILE__ , __LINE__ , "OUTPUT [%d]bytes[%.*s]" , psession->total_send_len - LEN_COMMHEAD , psession->total_send_len - LEN_COMMHEAD , psession->send_buffer + LEN_COMMHEAD );
 	
 	return 0;
 }

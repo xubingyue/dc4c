@@ -5,6 +5,7 @@ STRUCT	dag_batches_info
 	STRING	64	batch_desc
 	INT	4	view_pos_x
 	INT	4	view_pos_y
+	INT	4	interrupt_by_app
 	STRING	19	begin_datetime
 	STRING	19	end_datetime
 	INT	4	progress

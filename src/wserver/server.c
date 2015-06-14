@@ -251,10 +251,8 @@ int server( struct ServerEnv *penv )
 				else if( pevent->events & EPOLLOUT )
 				{
 					DebugLog( __FILE__ , __LINE__ , "EPOLLOUT on info pipe[%d]" , psession->sock );
-					
-					nret = comm_OnInfoPipeError( penv , psession ) ;
-					if( nret < 0 )
-						return nret;
+					g_server_exit_flag = 1 ;
+					break;
 				}
 				else if( pevent->events & EPOLLERR )
 				{
@@ -309,6 +307,16 @@ int server( struct ServerEnv *penv )
 		}
 	}
 	
+	for( rserver_index = 0 ; rserver_index < penv->rserver_count ; rserver_index++ )
+	{
+		if( IsSocketEstablished( & (penv->connect_session[rserver_index]) ) )
+		{
+			DeleteSockFromEpoll( penv->epoll_socks , & (penv->connect_session[rserver_index]) );
+			CloseSocket( & (penv->connect_session[rserver_index]) );
+			CleanSocketSession( & (penv->connect_session[rserver_index]) );
+		}
+	}
+	
 	for( accepted_session_index = 0 ; accepted_session_index < MAXCOUNT_ACCEPTED_SESSION ; accepted_session_index++ )
 	{
 		if( IsSocketEstablished( & (penv->accepted_session_array[accepted_session_index]) ) )
@@ -325,16 +333,6 @@ int server( struct ServerEnv *penv )
 		DeleteSockFromEpoll( penv->epoll_socks , & (penv->listen_session) );
 		CloseSocket( & (penv->listen_session) );
 		CleanSocketSession( & (penv->listen_session) );
-	}
-	
-	for( rserver_index = 0 ; rserver_index < penv->rserver_count ; rserver_index++ )
-	{
-		if( IsSocketEstablished( & (penv->connect_session[rserver_index]) ) )
-		{
-			DeleteSockFromEpoll( penv->epoll_socks , & (penv->connect_session[rserver_index]) );
-			CloseSocket( & (penv->connect_session[rserver_index]) );
-			CleanSocketSession( & (penv->connect_session[rserver_index]) );
-		}
 	}
 	
 	close( penv->epoll_socks );

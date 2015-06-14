@@ -88,6 +88,7 @@ typedef struct
 	char	batch_desc[ 64 + 1 ] ;
 	int	view_pos_x ;
 	int	view_pos_y ;
+	int	interrupt_by_app ;
 	char	begin_datetime[ 19 + 1 ] ;
 	char	end_datetime[ 19 + 1 ] ;
 	int	progress ;

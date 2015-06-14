@@ -30,6 +30,7 @@ EXEC SQL BEGIN DECLARE SECTION ;
 	extern char dag_batches_info_batch_desc[ 64 + 1 ] ;	extern short dag_batches_info_batch_desc_id ;
 	extern int dag_batches_info_view_pos_x ;	extern short dag_batches_info_view_pos_x_id ;
 	extern int dag_batches_info_view_pos_y ;	extern short dag_batches_info_view_pos_y_id ;
+	extern int dag_batches_info_interrupt_by_app ;	extern short dag_batches_info_interrupt_by_app_id ;
 	extern char dag_batches_info_begin_datetime[ 19 + 1 ] ;	extern short dag_batches_info_begin_datetime_id ;
 	extern char dag_batches_info_end_datetime[ 19 + 1 ] ;	extern short dag_batches_info_end_datetime_id ;
 	extern int dag_batches_info_progress ;	extern short dag_batches_info_progress_id ;
@@ -41,6 +42,7 @@ EXEC SQL END DECLARE SECTION ;
 	batch_desc , \
 	view_pos_x , \
 	view_pos_y , \
+	interrupt_by_app , \
 	begin_datetime , \
 	end_datetime , \
 	progress
@@ -51,6 +53,7 @@ EXEC SQL END DECLARE SECTION ;
 	:dag_batches_info_batch_desc , \
 	:dag_batches_info_view_pos_x , \
 	:dag_batches_info_view_pos_y , \
+	:dag_batches_info_interrupt_by_app , \
 	:dag_batches_info_begin_datetime , \
 	:dag_batches_info_end_datetime , \
 	:dag_batches_info_progress
@@ -61,6 +64,7 @@ EXEC SQL END DECLARE SECTION ;
 	:dag_batches_info_batch_desc :dag_batches_info_batch_desc_id , \
 	:dag_batches_info_view_pos_x :dag_batches_info_view_pos_x_id , \
 	:dag_batches_info_view_pos_y :dag_batches_info_view_pos_y_id , \
+	:dag_batches_info_interrupt_by_app :dag_batches_info_interrupt_by_app_id , \
 	:dag_batches_info_begin_datetime :dag_batches_info_begin_datetime_id , \
 	:dag_batches_info_end_datetime :dag_batches_info_end_datetime_id , \
 	:dag_batches_info_progress :dag_batches_info_progress_id

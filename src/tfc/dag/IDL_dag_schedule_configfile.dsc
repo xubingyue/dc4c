@@ -18,11 +18,12 @@ STRUCT	dag_schedule_configfile
 			INT	4	view_pos_y
 			STRUCT	tasks	ARRAY	1000
 			{
+				INT	4	order_index
 				STRING	256	program_and_params
 				INT	4	timeout
-				INT	4	order_index
 				INT	4	progress
 			}
+			INT	4	interrupt_by_app
 			STRING	19	begin_datetime
 			STRING	19	end_datetime
 			INT	4	progress

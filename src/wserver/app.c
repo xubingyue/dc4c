@@ -21,7 +21,7 @@ int app_WorkerRegisterResponse( struct ServerEnv *penv , struct SocketSession *p
 	return 0;
 }
 
-static int SendWorkerNotice( struct ServerEnv *penv )
+static int app_SendWorkerNotice( struct ServerEnv *penv )
 {
 	int		rserver_index ;
 	
@@ -154,6 +154,7 @@ static int app_ExecuteProgram( struct ServerEnv *penv , struct SocketSession *ps
 	else
 	{
 		penv->is_executing = 1 ;
+		psession->progress = ACCEPTED_SESSION_PROGRESS_DO_EXECUTE ;
 		
 		close( penv->executing_pipe[1] );
 		SetNonBlocking( penv->executing_pipe[0] );
@@ -172,7 +173,7 @@ static int app_ExecuteProgram( struct ServerEnv *penv , struct SocketSession *ps
 		time( & (penv->begin_datetime_stamp) );
 	}
 	
-	SendWorkerNotice( penv );
+	app_SendWorkerNotice( penv );
 	
 	return 0;
 }
@@ -225,6 +226,8 @@ int app_WaitProgramExiting( struct ServerEnv *penv , struct SocketSession *p_exe
 	p_accepted_session = p_execute_session->p1 ;
 	if( p_accepted_session && IsSocketEstablished( p_accepted_session ) )
 	{
+		p_accepted_session->progress = ACCEPTED_SESSION_PROGRESS_WAITFOR_REQUEST ;
+		
 		nret = proto_ExecuteProgramResponse( penv , p_accepted_session , error , status ) ;
 		if( nret )
 		{
@@ -249,7 +252,7 @@ int app_WaitProgramExiting( struct ServerEnv *penv , struct SocketSession *p_exe
 	DeleteSockFromEpoll( penv->epoll_socks , p_execute_session );
 	CloseSocket( p_execute_session );
 	
-	SendWorkerNotice( penv );
+	app_SendWorkerNotice( penv );
 	
 	return 0;
 }
@@ -270,6 +273,12 @@ int app_ExecuteProgramRequest( struct ServerEnv *penv , struct SocketSession *ps
 		return 0;
 	}
 	
+	if( psession->progress != ACCEPTED_SESSION_PROGRESS_WAITFOR_REQUEST )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "progress[%d] invalid" , psession->progress );
+		return RETURN_CLOSE;
+	}
+	
 	lock_file( & lock_fd );
 	
 	memcpy( & (penv->epq_array[psession-penv->accepted_session_array]) , p_req , sizeof(execute_program_request) );
@@ -285,6 +294,7 @@ int app_ExecuteProgramRequest( struct ServerEnv *penv , struct SocketSession *ps
 	{
 		InfoLog( __FILE__ , __LINE__ , "FileMd5[%s][%d] or MD5[%s] and req[%s] not matched" , pathfilename , nret , program_md5_exp , p_req->program_md5_exp );
 		proto_DeployProgramRequest( penv , psession , p_req );
+		psession->progress = ACCEPTED_SESSION_PROGRESS_DO_DEPLOY_BEFORE_EXECUTING ;
 		unlock_file( & lock_fd );
 		return 0;
 	}
@@ -309,6 +319,12 @@ int app_DeployProgramResponse( struct ServerEnv *penv , struct SocketSession *ps
 	char		program_md5_exp[ sizeof(((execute_program_request*)NULL)->program_md5_exp) ] ;
 	
 	int		nret = 0 ;
+	
+	if( psession->progress != ACCEPTED_SESSION_PROGRESS_DO_DEPLOY_BEFORE_EXECUTING )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "progress[%d] invalid" , psession->progress );
+		return RETURN_CLOSE;
+	}
 	
 	lock_file( & lock_fd );
 	

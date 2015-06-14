@@ -8,6 +8,7 @@ EXEC SQL BEGIN DECLARE SECTION ;
 	char dag_batches_info_batch_desc[ 64 + 1 ] ;	short dag_batches_info_batch_desc_id ;
 	int dag_batches_info_view_pos_x ;	short dag_batches_info_view_pos_x_id ;
 	int dag_batches_info_view_pos_y ;	short dag_batches_info_view_pos_y_id ;
+	int dag_batches_info_interrupt_by_app ;	short dag_batches_info_interrupt_by_app_id ;
 	char dag_batches_info_begin_datetime[ 19 + 1 ] ;	short dag_batches_info_begin_datetime_id ;
 	char dag_batches_info_end_datetime[ 19 + 1 ] ;	short dag_batches_info_end_datetime_id ;
 	int dag_batches_info_progress ;	short dag_batches_info_progress_id ;
@@ -25,6 +26,8 @@ void DSCINITV_dag_batches_info()
 	dag_batches_info_view_pos_x_id = 0 ;
 	dag_batches_info_view_pos_y = 0 ;
 	dag_batches_info_view_pos_y_id = 0 ;
+	dag_batches_info_interrupt_by_app = 0 ;
+	dag_batches_info_interrupt_by_app_id = 0 ;
 	memset( dag_batches_info_begin_datetime , 0x00 , sizeof(dag_batches_info_begin_datetime) );
 	dag_batches_info_begin_datetime_id = 0 ;
 	memset( dag_batches_info_end_datetime , 0x00 , sizeof(dag_batches_info_end_datetime) );
@@ -41,6 +44,7 @@ void DSCVTOS_dag_batches_info( dag_batches_info *pst )
 	strcpy( pst->batch_desc , dag_batches_info_batch_desc );
 	pst->view_pos_x = dag_batches_info_view_pos_x ;
 	pst->view_pos_y = dag_batches_info_view_pos_y ;
+	pst->interrupt_by_app = dag_batches_info_interrupt_by_app ;
 	strcpy( pst->begin_datetime , dag_batches_info_begin_datetime );
 	strcpy( pst->end_datetime , dag_batches_info_end_datetime );
 	pst->progress = dag_batches_info_progress ;
@@ -54,6 +58,7 @@ void DSCSTOV_dag_batches_info( dag_batches_info *pst )
 	strcpy( dag_batches_info_batch_desc , pst->batch_desc );
 	dag_batches_info_view_pos_x = pst->view_pos_x ;
 	dag_batches_info_view_pos_y = pst->view_pos_y ;
+	dag_batches_info_interrupt_by_app = pst->interrupt_by_app ;
 	strcpy( dag_batches_info_begin_datetime , pst->begin_datetime );
 	strcpy( dag_batches_info_end_datetime , pst->end_datetime );
 	dag_batches_info_progress = pst->progress ;

@@ -15,7 +15,7 @@ static int TestDagSchedule( char *dag_schedule_pathfilename , char *rservers_ip_
 	int			perform_return = 0 ;
 	int			nret = 0 ;
 	
-	nret = DC4CLoadDagScheduleFromFile( & p_sched , dag_schedule_pathfilename , rservers_ip_port , DC4C_OPTIONS_INTERRUPT_BY_APP ) ;
+	nret = DC4CLoadDagScheduleFromFile( & p_sched , dag_schedule_pathfilename , rservers_ip_port , 0 ) ;
 	if( nret )
 	{
 		printf( "DC4CLoadDagScheduleFromFile failed[%d]\n" , nret );

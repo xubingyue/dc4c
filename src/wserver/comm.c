@@ -109,7 +109,13 @@ int comm_OnConnectedSocketInput( struct ServerEnv *penv , struct SocketSession *
 		DebugLog( __FILE__ , __LINE__ , "AsyncReceiveSocketData ok , call proto" );
 		
 		nret = proto( penv , psession ) ;
-		if( nret < 0 )
+		if( nret == RETURN_CLOSE )
+		{
+			InfoLog( __FILE__ , __LINE__ , "proto return RETURN_CLOSE" );
+			comm_CloseConnectedSocket( penv , psession );
+			return 0;
+		}
+		else if( nret )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "proto return failed[%d]" , nret );
 			comm_CloseConnectedSocket( penv , psession );
@@ -311,9 +317,9 @@ int comm_OnAcceptedSocketInput( struct ServerEnv *penv , struct SocketSession *p
 		DebugLog( __FILE__ , __LINE__ , "AsyncReceiveSocketData ok , call proto" );
 		
 		nret = proto( penv , psession ) ;
-		if( nret == RETURN_QUIT )
+		if( nret == RETURN_CLOSE )
 		{
-			InfoLog( __FILE__ , __LINE__ , "proto return ok" );
+			InfoLog( __FILE__ , __LINE__ , "proto return RETURN_CLOSE" );
 			comm_CloseAcceptedSocket( penv , psession );
 			return 0;
 		}

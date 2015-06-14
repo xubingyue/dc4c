@@ -7,6 +7,7 @@ CREATE TABLE dag_batches_info
 	batch_desc	CHARACTER VARYING(64) ,
 	view_pos_x	INTEGER ,
 	view_pos_y	INTEGER ,
+	interrupt_by_app	INTEGER ,
 	begin_datetime	CHARACTER VARYING(19) ,
 	end_datetime	CHARACTER VARYING(19) ,
 	progress	INTEGER

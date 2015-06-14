@@ -85,16 +85,16 @@ _GOTO_CHECK_ASYNC_RECEIVE_COMMAND :
 		{
 			DebugLog( __FILE__ , __LINE__ , "AsyncReceiveCommand ok , call proto" );
 			
-			nret = proto( penv , psession ) ;
-			if( nret == RETURN_QUIT )
+			nret = proto_CommandLine( penv , psession ) ;
+			if( nret == RETURN_CLOSE )
 			{
-				InfoLog( __FILE__ , __LINE__ , "proto return ok" );
+				InfoLog( __FILE__ , __LINE__ , "proto_CommandLine return RETURN_CLOSE" );
 				comm_CloseAcceptedSocket( penv , psession );
 				return 0;
 			}
 			else if( nret )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "proto return failed[%d]" , nret );
+				ErrorLog( __FILE__ , __LINE__ , "proto_CommandLine return failed[%d]" , nret );
 				comm_CloseAcceptedSocket( penv , psession );
 				return 0;
 			}
@@ -154,9 +154,9 @@ _GOTO_CHECK_ASYNC_RECEIVE_COMMAND :
 			DebugLog( __FILE__ , __LINE__ , "AsyncReceiveSocketData ok , call proto" );
 			
 			nret = proto( penv , psession ) ;
-			if( nret == RETURN_QUIT )
+			if( nret == RETURN_CLOSE )
 			{
-				InfoLog( __FILE__ , __LINE__ , "proto return ok" );
+				InfoLog( __FILE__ , __LINE__ , "proto return RETURN_CLOSE" );
 				comm_CloseAcceptedSocket( penv , psession );
 				return 0;
 			}

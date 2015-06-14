@@ -21,6 +21,7 @@ int FUNCNAME_DSCLOG_dag_batches_info( dag_batches_info *pst )
 	PREFIX_DSCLOG_dag_batches_info "dag_batches_info.batch_desc[%s]" NEWLINE_DSCLOG_dag_batches_info , pst->batch_desc );
 	PREFIX_DSCLOG_dag_batches_info "dag_batches_info.view_pos_x[%d]" NEWLINE_DSCLOG_dag_batches_info , pst->view_pos_x );
 	PREFIX_DSCLOG_dag_batches_info "dag_batches_info.view_pos_y[%d]" NEWLINE_DSCLOG_dag_batches_info , pst->view_pos_y );
+	PREFIX_DSCLOG_dag_batches_info "dag_batches_info.interrupt_by_app[%d]" NEWLINE_DSCLOG_dag_batches_info , pst->interrupt_by_app );
 	PREFIX_DSCLOG_dag_batches_info "dag_batches_info.begin_datetime[%s]" NEWLINE_DSCLOG_dag_batches_info , pst->begin_datetime );
 	PREFIX_DSCLOG_dag_batches_info "dag_batches_info.end_datetime[%s]" NEWLINE_DSCLOG_dag_batches_info , pst->end_datetime );
 	PREFIX_DSCLOG_dag_batches_info "dag_batches_info.progress[%d]" NEWLINE_DSCLOG_dag_batches_info , pst->progress );

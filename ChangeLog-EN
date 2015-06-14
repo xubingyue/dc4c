@@ -1,3 +1,9 @@
+ver 1.2.2	2015-06-12	calvin
+		* Add options interrupt_by_app in DAG tasks engine
+
+ver 1.2.1	2015-06-08	calvin
+		* Add state machine into computing node
+
 ver 1.2.0	2015-06-07	calvin
 		* Refactoring Tasks APIs
 

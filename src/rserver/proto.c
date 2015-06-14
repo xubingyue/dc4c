@@ -44,7 +44,7 @@ int proto_CommandLine( struct ServerEnv *penv , struct SocketSession *psession )
 	
 	if( cmd_and_para_count == 1 && cmd[0] && STRNCMP( cmd , == , "quit" , strlen(cmd) ) )
 	{
-		return RETURN_QUIT;
+		return RETURN_CLOSE;
 	}
 	else if( cmd_and_para_count == 1 + 1 && STRNCMP( cmd , == , "list" , strlen(cmd) ) && STRNCMP( param1 , == , "os" , strlen(param1) ) )
 	{
@@ -105,11 +105,6 @@ int proto( void *_penv , struct SocketSession *psession )
 	int			msg_len ;
 	
 	int			nret = 0 ;
-	
-	if( psession->comm_protocol_mode == COMMPROTO_LINE )
-	{
-		return proto_CommandLine( penv , psession );
-	}
 	
 	CleanSendBuffer( psession );
 	

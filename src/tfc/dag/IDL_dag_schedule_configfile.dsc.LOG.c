@@ -28,15 +28,16 @@ int FUNCNAME_DSCLOG_dag_schedule_configfile( dag_schedule_configfile *pst )
 			PREFIX_DSCLOG_dag_schedule_configfile "dag_schedule_configfile.batches.batches_info[index[2]].batch_desc[%s]" NEWLINE_DSCLOG_dag_schedule_configfile , pst->batches.batches_info[index[2]].batch_desc );
 			PREFIX_DSCLOG_dag_schedule_configfile "dag_schedule_configfile.batches.batches_info[index[2]].view_pos_x[%d]" NEWLINE_DSCLOG_dag_schedule_configfile , pst->batches.batches_info[index[2]].view_pos_x );
 			PREFIX_DSCLOG_dag_schedule_configfile "dag_schedule_configfile.batches.batches_info[index[2]].view_pos_y[%d]" NEWLINE_DSCLOG_dag_schedule_configfile , pst->batches.batches_info[index[2]].view_pos_y );
+			PREFIX_DSCLOG_dag_schedule_configfile "dag_schedule_configfile.batches.batches_info[index[2]].interrupt_by_app[%d]" NEWLINE_DSCLOG_dag_schedule_configfile , pst->batches.batches_info[index[2]].interrupt_by_app );
 			PREFIX_DSCLOG_dag_schedule_configfile "dag_schedule_configfile.batches.batches_info[index[2]].begin_datetime[%s]" NEWLINE_DSCLOG_dag_schedule_configfile , pst->batches.batches_info[index[2]].begin_datetime );
 			PREFIX_DSCLOG_dag_schedule_configfile "dag_schedule_configfile.batches.batches_info[index[2]].end_datetime[%s]" NEWLINE_DSCLOG_dag_schedule_configfile , pst->batches.batches_info[index[2]].end_datetime );
 			PREFIX_DSCLOG_dag_schedule_configfile "dag_schedule_configfile.batches.batches_info[index[2]].progress[%d]" NEWLINE_DSCLOG_dag_schedule_configfile , pst->batches.batches_info[index[2]].progress );
 				PREFIX_DSCLOG_dag_schedule_configfile "dag_schedule_configfile.batches.batches_info[index[2]]._tasks_count[%d]" NEWLINE_DSCLOG_dag_schedule_configfile , pst->batches.batches_info[index[2]]._tasks_count );
 				for( index[3] = 0 ; index[3] < pst->batches.batches_info[index[2]]._tasks_count ; index[3]++ )
 				{
+				PREFIX_DSCLOG_dag_schedule_configfile "dag_schedule_configfile.batches.batches_info[index[2]].tasks[index[3]].order_index[%d]" NEWLINE_DSCLOG_dag_schedule_configfile , pst->batches.batches_info[index[2]].tasks[index[3]].order_index );
 				PREFIX_DSCLOG_dag_schedule_configfile "dag_schedule_configfile.batches.batches_info[index[2]].tasks[index[3]].program_and_params[%s]" NEWLINE_DSCLOG_dag_schedule_configfile , pst->batches.batches_info[index[2]].tasks[index[3]].program_and_params );
 				PREFIX_DSCLOG_dag_schedule_configfile "dag_schedule_configfile.batches.batches_info[index[2]].tasks[index[3]].timeout[%d]" NEWLINE_DSCLOG_dag_schedule_configfile , pst->batches.batches_info[index[2]].tasks[index[3]].timeout );
-				PREFIX_DSCLOG_dag_schedule_configfile "dag_schedule_configfile.batches.batches_info[index[2]].tasks[index[3]].order_index[%d]" NEWLINE_DSCLOG_dag_schedule_configfile , pst->batches.batches_info[index[2]].tasks[index[3]].order_index );
 				PREFIX_DSCLOG_dag_schedule_configfile "dag_schedule_configfile.batches.batches_info[index[2]].tasks[index[3]].progress[%d]" NEWLINE_DSCLOG_dag_schedule_configfile , pst->batches.batches_info[index[2]].tasks[index[3]].progress );
 				}
 			}

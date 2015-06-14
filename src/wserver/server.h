@@ -53,6 +53,10 @@ struct CommandParameter
 #define CONNECT_SESSION_PROGRESS_CONNECTED	1
 #define CONNECT_SESSION_PROGRESS_REGISTED	2
 
+#define ACCEPTED_SESSION_PROGRESS_WAITFOR_REQUEST		0
+#define ACCEPTED_SESSION_PROGRESS_DO_DEPLOY_BEFORE_EXECUTING	12
+#define ACCEPTED_SESSION_PROGRESS_DO_EXECUTE			1
+
 struct ServerEnv
 {
 	struct CommandParameter		param ;
@@ -61,11 +65,10 @@ struct ServerEnv
 	int				wserver_index ;
 	
 	int				epoll_socks ;
+	struct SocketSession		connect_session[ RSERVER_ARRAYSIZE ] ;
 	struct SocketSession		listen_session ;
 	struct SocketSession		*accepted_session_array ; /* sizeof(struct SocketSession) * MAXCOUNT_ACCEPTED_SESSION */
 	struct SocketSession		*p_slibing_accepted_session ;
-	struct SocketSession		connect_session[ RSERVER_ARRAYSIZE ] ;
-	
 	execute_program_request		*epq_array ;
 	execute_program_response	*epp_array ;
 	
@@ -94,9 +97,9 @@ int proto_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *
 int proto_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *psession );
 int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession *psession , int error , int status );
 int proto_DeployProgramRequest( struct ServerEnv *penv , struct SocketSession *psession , execute_program_request *p_req );
-#define RETURN_QUIT	1
-int proto( void *_penv , struct SocketSession *psession );
 int proto_HeartBeatRequest( struct ServerEnv *penv , struct SocketSession *psession );
+#define RETURN_CLOSE	1
+int proto( void *_penv , struct SocketSession *psession );
 
 int app_WorkerRegisterResponse( struct ServerEnv *penv , struct SocketSession *psession , worker_register_response *p_rsp );
 int app_WaitProgramExiting( struct ServerEnv *penv , struct SocketSession *psession );
