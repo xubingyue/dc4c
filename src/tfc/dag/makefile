@@ -18,24 +18,27 @@ ec_FILE		=	\
 			dc4c_tfc_dag_pgsql.ec \
 
 ###### 目标文件、安装目录配置区
+include ../../../makeinstall
 LIB		=	libdc4c_tfc_dag.so
-LIBINST		=	$(HOME)/lib
+LIBINST		=	$(_LIBINST)
 HDER		=	dc4c_tfc_dag.h $(c_FILE2:.c=.h) $(c_FILE2:.c=.LOG.c)
-HDERINST	=	$(HOME)/include/dc4c_tfc_dag
+HDERINST	=	$(_HDERINST_TFC_DAG)
 NOINST_OBJ	=	sizeof
 
 ###### 编译选项
-CFLAGS		=	-I. \
-			-I$(HOME)/include/fasterjson \
-			-I$(HOME)/include/dc4c_util \
-			-I$(HOME)/include/dc4c_api \
+CFLAGS		=	$(_CFLAGS) \
+			-I$(_HDERINST_PROTO) \
+			-I$(_HDERINST_UTIL) \
+			-I$(_HDERINST_API) \
+			-I$(_HDERBASE)/fasterjson \
 
 ###### 链接选项
-LFLAGS		=	-L. \
-			-L$(HOME)/lib \
-			-lfasterjson \
+LFLAGS		=	$(_LFLAGS) \
+			-L$(_LIBINST) \
+			-ldc4c_proto \
 			-ldc4c_util \
 			-ldc4c_api \
+			-lfasterjson \
 
 ###### 额外宏定义区
 CLEAN_ADDITION	=	sizeof.o
@@ -47,6 +50,10 @@ CLEAN_ADDITION	=	sizeof.o
 #@ make_install_LIBINST
 #@ make_install_HDERINST
 #@ make_install_DFTHDERINST
+#@ make_uninstall
+#@ make_uninstall_LIBINST
+#@ make_uninstall_HDERINST
+#@ make_uninstall_DFTHDERINST
 
 include $(MKTPLDIR)/makeobj_$(MKTPLOS).inc
 
@@ -55,5 +62,5 @@ libdc4c_tfc_dag.so		:	$(c_FILE_o)
 	$(CC) -o $@ $(c_FILE_o) $(SOFLAGS) $(LFLAGS)
 
 sizeof		:	sizeof.o libdc4c_tfc_dag.so
-	$(CC) -o $@ sizeof.o libdc4c_tfc_dag.so
+	$(CC) -o $@ sizeof.o $(ESOFLAGS) $(LFLAGS) libdc4c_tfc_dag.so
 

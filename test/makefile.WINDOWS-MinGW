@@ -49,6 +49,27 @@ c_FILE2		=	\
 			IDL_dag_batches_info.dsc.c \
 			IDL_dag_batches_tasks.dsc.c \
 
+
+# ESQL源代码文件宏及推导规则
+# ECP		=	proc
+ECP		=	ecpg
+
+ec_FILE_ecE	=	$(ec_FILE:.ec=.ecE)
+ec_FILE_c	=	$(ec_FILE:.ec=.c)
+ec_FILE_o	=	$(ec_FILE:.ec=.o)
+ec_FILE_CLEAN	=	$(ec_FILE_ecE) $(ec_FILE_c) $(ec_FILE_o)
+ec_FILE2_ecE	=	$(ec_FILE2:.ec=.ecE)
+ec_FILE2_c	=	$(ec_FILE2:.ec=.c)
+ec_FILE2_o	=	$(ec_FILE2:.ec=.o)
+ec_FILE2_CLEAN	=	$(ec_FILE2_ecE) $(ec_FILE2_c) $(ec_FILE2_o)
+
+.SUFFIXES:.ec
+.ec.o	:
+	$(CC) -E -x c $(CFLAGS) $*.ec > $*.ecE
+	$(ECP) -h $*.ecE -o $*.c
+	sed -i 's/NULL/0/g' $*.c
+	$(CC) -c $*.c
+
 ec_FILE		=	\
 			dc4c_test_tfc_dag_master_pgsql_stepbystep.ec \
 			$(ec_FILE2) \
@@ -60,6 +81,7 @@ ec_FILE2	=	\
 			IDL_dag_batches_tasks.dsc.ESQL.ec \
 
 ###### 目标文件、安装目录配置区
+include ../makeinstall
 BIN		=	\
 			dc4c_test_master \
 			dc4c_test_batch_master \
@@ -74,24 +96,22 @@ BIN		=	\
 			dc4c_test_worker_sleep_or_error \
 			dc4c_test_worker_pi \
 
-BININST		=	/usr/local/bin
+BININST		=	$(_BININST)
 
 ###### 编译选项
-CFLAGS		=	-I. \
-			-I/usr/local/include/fasterjson \
-			-I/usr/local/include/dc4c_util \
-			-I/usr/local/include/dc4c_proto \
-			-I/usr/local/include/dc4c_api \
-			-I/usr/local/include/dc4c_tfc_dag \
+CFLAGS		=	$(_CFLAGS) \
+			-I$(_HDERINST_API) \
+			-I$(_HDERINST_TFC_DAG) \
+			-I$(_HDERBASE)/fasterjson \
 
 ###### 链接选项
-LFLAGS		=	-L. \
-			-L/usr/local/lib \
-			-lfasterjson \
-			-ldc4c_util \
+LFLAGS		=	$(_LFLAGS) \
+			-L$(_LIBINST) \
 			-ldc4c_proto \
+			-ldc4c_util \
 			-ldc4c_api \
 			-ldc4c_tfc_dag \
+			-lfasterjson \
 
 ###### 额外宏定义区
 CLEAN_ADDITION	=
@@ -127,6 +147,20 @@ ifneq ($(strip $(BININST)),)
 	$(CP) $(BIN) "$(BININST)/"
 endif
 endif
+ifneq ($(strip $(BIN2)),)
+ifneq ($(strip $(BININST2)),)
+	-$(MKDIR) "$(BININST2)"
+	$(CP) $(BIN2) "$(BININST2)/"
+endif
+endif
+
+
+# 预定义源代码缺省头文件宏
+DFTHDER		=	$(csm_FILE_DFTHDER) $(cui_FILE_DFTHDER) $(dtd_FILE_DFTHDER) $(prt_FILE_DFTHDER) $(fmd_FILE_DFTHDER) $(smd_FILE_DFTHDER) $(def_FILE_DFTHDER) $(act_FILE_DFTHDER)
+
+# 提交安装规则
+uninstall		:
+
 
 
 

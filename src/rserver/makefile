@@ -16,19 +16,20 @@ c_FILE		=	\
 			util.c \
 
 ###### 目标文件、安装目录配置区
+include ../../makeinstall
 BIN		=	dc4c_rserver
-BININST		=	$(HOME)/bin
+BININST		=	$(_BININST)
 
 ###### 编译选项
-CFLAGS		=	-I. \
-			-I$(HOME)/include/dc4c_proto \
-			-I$(HOME)/include/dc4c_util \
-			-I$(HOME)/include/dc4c_api \
-			-I$(HOME)/include/fasterjson \
+CFLAGS		=	$(_CFLAGS) \
+			-I$(_HDERINST_PROTO) \
+			-I$(_HDERINST_UTIL) \
+			-I$(_HDERINST_API) \
+			-I$(_HDERBASE)/fasterjson \
 
 ###### 链接选项
-LFLAGS		=	-L. \
-			-L$(HOME)/lib \
+LFLAGS		=	$(_LFLAGS) \
+			-L$(_LIBINST) \
 			-ldc4c_proto \
 			-ldc4c_util \
 			-ldc4c_api \
@@ -44,6 +45,10 @@ CLEAN_ADDITION	=
 #@ make_install_BININST
 #@ make_install_HDERINST
 #@ make_install_DFTHDERINST
+#@ make_uninstall
+#@ make_uninstall_BININST
+#@ make_uninstall_HDERINST
+#@ make_uninstall_DFTHDERINST
 
 include $(MKTPLDIR)/makeobj_$(MKTPLOS).inc
 

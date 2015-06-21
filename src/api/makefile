@@ -11,23 +11,24 @@ c_FILE		=	\
 			dc4c_api.c \
 
 ###### 目标文件、安装目录配置区
+include ../../makeinstall
 LIB		=	libdc4c_api.so
-LIBINST		=	$(HOME)/lib
+LIBINST		=	$(_LIBINST)
 HDER		=	dc4c_api.h
-HDERINST	=	$(HOME)/include/dc4c_api
+HDERINST	=	$(_HDERINST_API)
 
 ###### 编译选项
-CFLAGS		=	-I. \
-			-I$(HOME)/include/dc4c_util \
-			-I$(HOME)/include/dc4c_proto \
-			-I$(HOME)/include/dc4c_api \
-			-I$(HOME)/include/fasterjson \
+CFLAGS		=	$(_CFLAGS) \
+			-I$(_HDERINST_PROTO) \
+			-I$(_HDERINST_UTIL) \
+			-I$(_HDERINST_API) \
+			-I$(_HDERBASE)/fasterjson \
 
 ###### 链接选项
-LFLAGS		=	-L. \
-			-L$(HOME)/lib \
-			-ldc4c_util \
+LFLAGS		=	$(_LFLAGS) \
+			-L$(_LIBINST) \
 			-ldc4c_proto \
+			-ldc4c_util \
 			-lfasterjson \
 
 ###### 额外宏定义区
@@ -40,6 +41,10 @@ CLEAN_ADDITION	=
 #@ make_install_LIBINST
 #@ make_install_HDERINST
 #@ make_install_DFTHDERINST
+#@ make_uninstall
+#@ make_uninstall_LIBINST
+#@ make_uninstall_HDERINST
+#@ make_uninstall_DFTHDERINST
 
 include $(MKTPLDIR)/makeobj_$(MKTPLOS).inc
 

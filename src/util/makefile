@@ -13,18 +13,19 @@ c_FILE		=	\
 			dc4c_util.c \
 
 ###### 目标文件、安装目录配置区
+include ../../makeinstall
 LIB		=	libdc4c_util.so
-LIBINST		=	$(HOME)/lib
-HDER		=	dc4c_util.h ListX.h
-HDERINST	=	$(HOME)/include/dc4c_util
-HDER2		=	LOGC.h
-HDERINST2	=	$(HOME)/include/dc4c_api
+LIBINST		=	$(_LIBINST)
+HDER		=	dc4c_util.h
+HDERINST	=	$(_HDERINST_UTIL)
+HDER2		=	LOGC.h ListX.h
+HDERINST2	=	$(_HDERINST_API)
 
 ###### 编译选项
-CFLAGS		=	-I. \
+CFLAGS		=	$(_CFLAGS) \
 
 ###### 链接选项
-LFLAGS		=	-L. \
+LFLAGS		=	$(_LFLAGS) \
 			-lcrypto \
 
 ###### 额外宏定义区
@@ -37,6 +38,10 @@ CLEAN_ADDITION	=
 #@ make_install_LIBINST
 #@ make_install_HDERINST
 #@ make_install_DFTHDERINST
+#@ make_uninstall
+#@ make_uninstall_LIBINST
+#@ make_uninstall_HDERINST
+#@ make_uninstall_DFTHDERINST
 
 include $(MKTPLDIR)/makeobj_$(MKTPLOS).inc
 

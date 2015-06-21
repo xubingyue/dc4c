@@ -1,4 +1,5 @@
 # 此文件由makelocal.sh自动生成
+MAKEFILE_POSTFIX=.Linux
 # 此文件由makeobj.sh自动生成
 ############################################################
 # 项目名 : 
@@ -39,21 +40,22 @@ c_FILE		=	\
 			IDL_deploy_program_request.dsc.c \
 
 ###### 目标文件、安装目录配置区
+include ../../makeinstall
 LIB		=	libdc4c_proto.so
-LIBINST		=	$(HOME)/lib
+LIBINST		=	$(_LIBINST)
 HDER		= \
 			$(c_FILE:.c=.h) \
 			$(c_FILE:.c=.LOG.c) \
 
-HDERINST	=	$(HOME)/include/dc4c_proto
+HDERINST	=	$(_HDERINST_PROTO)
 
 ###### 编译选项
-CFLAGS		=	-I. \
-			-I/usr/include/fasterjson \
+CFLAGS		=	$(_CFLAGS) \
+			-I$(_HDERBASE)/fasterjson \
 
 ###### 链接选项
-LFLAGS		=	-L. \
-			-L/usr/lib \
+LFLAGS		=	$(_LFLAGS) \
+			-L$(_LIBINST) \
 			-lfasterjson \
 
 ###### 额外宏定义区
@@ -71,7 +73,7 @@ MV		=	mv -f
 MKDIR		=	mkdir -p
 
 # 预定义源文件清理删除关联宏
-_FILE_CLEAN	=	$(c_FILE_CLEAN) $(cpp_FILE_CLEAN) $(SQC_FILE_CLEAN) $(ec_FILE_CLEAN) $(csm_FILE_CLEAN) $(c_html_FILE_CLEAN) $(cui_FILE_CLEAN) $(dtd_FILE_CLEAN) $(prt_FILE_CLEAN) $(fmd_FILE_CLEAN) $(smd_FILE_CLEAN) $(def_FILE_CLEAN) $(act_FILE_CLEAN) $(sml2c_FILE_CLEAN)
+_FILE_CLEAN	=	$(c_FILE_CLEAN) $(cpp_FILE_CLEAN) $(SQC_FILE_CLEAN) $(ec_FILE_CLEAN) $(ec_FILE2_CLEAN) $(csm_FILE_CLEAN) $(c_html_FILE_CLEAN) $(cui_FILE_CLEAN) $(dtd_FILE_CLEAN) $(prt_FILE_CLEAN) $(fmd_FILE_CLEAN) $(smd_FILE_CLEAN) $(def_FILE_CLEAN) $(act_FILE_CLEAN) $(sml2c_FILE_CLEAN)
 
 # 清理删除规则
 .PHONY:clean
@@ -102,6 +104,19 @@ ifneq ($(strip $(LIBINST)),)
 	done
 endif
 endif
+ifneq ($(strip $(LIB2)),)
+ifneq ($(strip $(LIBINST2)),)
+	@if [ ! -d "$(LIBINST2)" ] ; then \
+		echo $(MKDIR) $(LIBINST2) ; \
+		$(MKDIR) $(LIBINST2) ; \
+	fi ; \
+	for FILE in `echo $(LIB2)` ; do \
+		echo $(CP) $$FILE $(LIBINST2)/ ; \
+		$(RM) $(LIBINST2)/$$FILE ; \
+		$(CP) $$FILE $(LIBINST2)/ ; \
+	done
+endif
+endif
 
 ifneq ($(strip $(HDER)),)
 ifneq ($(strip $(HDERINST)),)
@@ -116,6 +131,19 @@ ifneq ($(strip $(HDERINST)),)
 	done
 endif
 endif
+ifneq ($(strip $(HDER2)),)
+ifneq ($(strip $(HDERINST2)),)
+	@if [ ! -d "$(HDERINST2)" ] ; then \
+		echo $(MKDIR) $(HDERINST2) ; \
+		$(MKDIR) $(HDERINST2) ; \
+	fi ; \
+	for FILE in `echo $(HDER2)` ; do \
+		echo $(CP) $$FILE $(HDERINST2)/ ; \
+		$(RM) $(HDERINST2)/$$FILE ; \
+		$(CP) $$FILE $(HDERINST2)/ ; \
+	done
+endif
+endif
 
 ifneq ($(strip $(DFTHDER)),)
 ifneq ($(strip $(DFTHDERINST)),)
@@ -127,6 +155,57 @@ ifneq ($(strip $(DFTHDERINST)),)
 		echo $(CP) $$FILE $(DFTHDERINST)/ ; \
 		$(RM) $(DFTHDERINST)/$$FILE ; \
 		$(CP) $$FILE $(DFTHDERINST)/ ; \
+	done
+endif
+endif
+
+
+# 预定义源代码缺省头文件宏
+DFTHDER		=	$(csm_FILE_DFTHDER) $(cui_FILE_DFTHDER) $(dtd_FILE_DFTHDER) $(prt_FILE_DFTHDER) $(fmd_FILE_DFTHDER) $(smd_FILE_DFTHDER) $(def_FILE_DFTHDER) $(act_FILE_DFTHDER) $(sml2c_FILE_DFTHDER)
+
+# 提交安装规则
+.PHONY:uninstall
+uninstall		:
+
+ifneq ($(strip $(LIB)),)
+ifneq ($(strip $(LIBINST)),)
+	@for FILE in `echo $(LIB)` ; do \
+		echo $(RM) $(LIBINST)/$$FILE ; \
+		$(RM) $(LIBINST)/$$FILE ; \
+	done
+endif
+endif
+ifneq ($(strip $(LIB2)),)
+ifneq ($(strip $(LIBINST2)),)
+	@for FILE in `echo $(LIB2)` ; do \
+		echo $(RM) $(LIBINST2)/$$FILE ; \
+		$(RM) $(LIBINST2)/$$FILE ; \
+	done
+endif
+endif
+
+ifneq ($(strip $(HDER)),)
+ifneq ($(strip $(HDERINST)),)
+	@for FILE in `echo $(HDER)` ; do \
+		echo $(RM) $(HDERINST)/$$FILE ; \
+		$(RM) $(HDERINST)/$$FILE ; \
+	done
+endif
+endif
+ifneq ($(strip $(HDER2)),)
+ifneq ($(strip $(HDERINST2)),)
+	@for FILE in `echo $(HDER2)` ; do \
+		echo $(RM) $(HDERINST2)/$$FILE ; \
+		$(RM) $(HDERINST2)/$$FILE ; \
+	done
+endif
+endif
+
+ifneq ($(strip $(DFTHDER)),)
+ifneq ($(strip $(DFTHDERINST)),)
+	@for FILE in `echo $(DFTHDER)` ; do \
+		echo $(RM) $(DFTHDERINST)/$$FILE ; \
+		$(RM) $(DFTHDERINST)/$$FILE ; \
 	done
 endif
 endif

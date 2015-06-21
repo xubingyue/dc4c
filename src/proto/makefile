@@ -18,21 +18,22 @@ c_FILE		=	\
 			IDL_deploy_program_request.dsc.c \
 
 ###### 目标文件、安装目录配置区
+include ../../makeinstall
 LIB		=	libdc4c_proto.so
-LIBINST		=	$(HOME)/lib
+LIBINST		=	$(_LIBINST)
 HDER		= \
 			$(c_FILE:.c=.h) \
 			$(c_FILE:.c=.LOG.c) \
 
-HDERINST	=	$(HOME)/include/dc4c_proto
+HDERINST	=	$(_HDERINST_PROTO)
 
 ###### 编译选项
-CFLAGS		=	-I. \
-			-I$(HOME)/include/fasterjson \
+CFLAGS		=	$(_CFLAGS) \
+			-I$(_HDERBASE)/fasterjson \
 
 ###### 链接选项
-LFLAGS		=	-L. \
-			-L$(HOME)/lib \
+LFLAGS		=	$(_LFLAGS) \
+			-L$(_LIBINST) \
 			-lfasterjson \
 
 ###### 额外宏定义区
@@ -45,6 +46,10 @@ CLEAN_ADDITION	=
 #@ make_install_LIBINST
 #@ make_install_HDERINST
 #@ make_install_DFTHDERINST
+#@ make_uninstall
+#@ make_uninstall_LIBINST
+#@ make_uninstall_HDERINST
+#@ make_uninstall_DFTHDERINST
 
 include $(MKTPLDIR)/makeobj_$(MKTPLOS).inc
 

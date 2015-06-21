@@ -1,0 +1,14 @@
+_HDERBASE		=	$(HOME)/include
+_LIBBASE		=	$(HOME)/lib
+_BINBASE		=	$(HOME)/bin
+
+_CFLAGS			=	-I. -I/usr/local/include -I/usr/include
+_LFLAGS			=	-L. -L/usr/local/lib -L/usr/lib
+
+_HDERINST_PROTO		=	$(_HDERBASE)/dc4c_proto
+_HDERINST_UTIL		=	$(_HDERBASE)/dc4c_util
+_HDERINST_API		=	$(_HDERBASE)/dc4c_api
+_HDERINST_TFC_DAG	=	$(_HDERBASE)/dc4c_tfc_dag
+_LIBINST		=	$(_LIBBASE)
+_BININST		=	$(_BINBASE)
+

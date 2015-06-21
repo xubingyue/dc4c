@@ -40,24 +40,27 @@ ec_FILE		=	\
 			dc4c_tfc_dag_pgsql.ec \
 
 ###### 目标文件、安装目录配置区
+include ../../../makeinstall
 LIB		=	libdc4c_tfc_dag.so
-LIBINST		=	/usr/local/lib
+LIBINST		=	$(_LIBINST)
 HDER		=	dc4c_tfc_dag.h $(c_FILE2:.c=.h) $(c_FILE2:.c=.LOG.c)
-HDERINST	=	/usr/local/include/dc4c_tfc_dag
+HDERINST	=	$(_HDERINST_TFC_DAG)
 NOINST_OBJ	=	sizeof
 
 ###### 编译选项
-CFLAGS		=	-I. \
-			-I/usr/local/include/fasterjson \
-			-I/usr/local/include/dc4c_util \
-			-I/usr/local/include/dc4c_api \
+CFLAGS		=	$(_CFLAGS) \
+			-I$(_HDERINST_PROTO) \
+			-I$(_HDERINST_UTIL) \
+			-I$(_HDERINST_API) \
+			-I$(_HDERBASE)/fasterjson \
 
 ###### 链接选项
-LFLAGS		=	-L. \
-			-L/usr/local/lib \
-			-lfasterjson \
+LFLAGS		=	$(_LFLAGS) \
+			-L$(_LIBINST) \
+			-ldc4c_proto \
 			-ldc4c_util \
 			-ldc4c_api \
+			-lfasterjson \
 
 ###### 额外宏定义区
 CLEAN_ADDITION	=	sizeof.o
@@ -74,7 +77,7 @@ MV		=	mv -f
 MKDIR		=	mkdir -p
 
 # 预定义源文件清理删除关联宏
-_FILE_CLEAN	=	$(c_FILE_CLEAN) $(cpp_FILE_CLEAN) $(SQC_FILE_CLEAN) $(ec_FILE_CLEAN) $(csm_FILE_CLEAN) $(c_html_FILE_CLEAN) $(cui_FILE_CLEAN) $(dtd_FILE_CLEAN) $(prt_FILE_CLEAN) $(fmd_FILE_CLEAN) $(smd_FILE_CLEAN) $(def_FILE_CLEAN) $(act_FILE_CLEAN)
+_FILE_CLEAN	=	$(c_FILE_CLEAN) $(cpp_FILE_CLEAN) $(SQC_FILE_CLEAN) $(ec_FILE_CLEAN) $(ec_FILE2_CLEAN) $(csm_FILE_CLEAN) $(c_html_FILE_CLEAN) $(cui_FILE_CLEAN) $(dtd_FILE_CLEAN) $(prt_FILE_CLEAN) $(fmd_FILE_CLEAN) $(smd_FILE_CLEAN) $(def_FILE_CLEAN) $(act_FILE_CLEAN)
 
 # 清理删除规则
 clean		:
@@ -101,6 +104,17 @@ install		:	all
 			$(CP) $$FILE $(LIBINST)/ ; \
 		done \
 	fi
+	@if [ -n "$(LIB2)" -a -n "$(LIBINST2)" ] ; then \
+		if [ ! -d "$(LIBINST2)" ] ; then \
+			echo $(MKDIR) $(LIBINST2) ; \
+			$(MKDIR) $(LIBINST2) ; \
+		fi ; \
+		for FILE in `echo $(LIB2)` ; do \
+			echo $(CP) $$FILE $(LIBINST2)/ ; \
+			$(RM) $(LIBINST2)/$$FILE ; \
+			$(CP) $$FILE $(LIBINST2)/ ; \
+		done \
+	fi
 
 	@if [ -n "$(HDER)" -a -n "$(HDERINST)" ] ; then \
 		if [ ! -d "$(HDERINST)" ] ; then \
@@ -111,6 +125,17 @@ install		:	all
 			echo $(CP) $$FILE $(HDERINST)/ ; \
 			$(RM) $(HDERINST)/$$FILE ; \
 			$(CP) $$FILE $(HDERINST)/ ; \
+		done \
+	fi
+	@if [ -n "$(HDER2)" -a -n "$(HDERINST2)" ] ; then \
+		if [ ! -d "$(HDERINST2)" ] ; then \
+			echo $(MKDIR) $(HDERINST2) ; \
+			$(MKDIR) $(HDERINST2) ; \
+		fi ; \
+		for FILE in `echo $(HDER2)` ; do \
+			echo $(CP) $$FILE $(HDERINST2)/ ; \
+			$(RM) $(HDERINST2)/$$FILE ; \
+			$(CP) $$FILE $(HDERINST2)/ ; \
 		done \
 	fi
 
@@ -127,11 +152,51 @@ install		:	all
 	fi
 
 
+# 预定义源代码缺省头文件宏
+DFTHDER		=	$(csm_FILE_DFTHDER) $(cui_FILE_DFTHDER) $(dtd_FILE_DFTHDER) $(prt_FILE_DFTHDER) $(fmd_FILE_DFTHDER) $(smd_FILE_DFTHDER) $(def_FILE_DFTHDER) $(act_FILE_DFTHDER)
+
+# 提交安装规则
+uninstall		:
+
+	@if [ -n "$(LIB)" -a -n "$(LIBINST)" ] ; then \
+		for FILE in `echo $(LIB)` ; do \
+			echo $(RM) $(LIBINST)/$$FILE ; \
+			$(RM) $(LIBINST)/$$FILE ; \
+		done \
+	fi
+	@if [ -n "$(LIB2)" -a -n "$(LIBINST2)" ] ; then \
+		for FILE in `echo $(LIB2)` ; do \
+			echo $(RM) $(LIBINST2)/$$FILE ; \
+			$(RM) $(LIBINST2)/$$FILE ; \
+		done \
+	fi
+
+	@if [ -n "$(HDER)" -a -n "$(HDERINST)" ] ; then \
+		for FILE in `echo $(HDER)` ; do \
+			echo $(RM) $(HDERINST)/$$FILE ; \
+			$(RM) $(HDERINST)/$$FILE ; \
+		done \
+	fi
+	@if [ -n "$(HDER2)" -a -n "$(HDERINST2)" ] ; then \
+		for FILE in `echo $(HDER2)` ; do \
+			echo $(RM) $(HDERINST2)/$$FILE ; \
+			$(RM) $(HDERINST2)/$$FILE ; \
+		done \
+	fi
+
+	@if [ -n "$(DFTHDER)" -a -n "$(DFTHDERINST)" ] ; then \
+		for FILE in `echo $(DFTHDER)` ; do \
+			echo $(RM) $(DFTHDERINST)/$$FILE ; \
+			$(RM) $(DFTHDERINST)/$$FILE ; \
+		done \
+	fi
+
+
 
 ###### 目标文件依赖关系
 libdc4c_tfc_dag.so		:	$(c_FILE_o)
 	$(CC) -o $@ $(c_FILE_o) $(SOFLAGS) $(LFLAGS)
 
 sizeof		:	sizeof.o libdc4c_tfc_dag.so
-	$(CC) -o $@ sizeof.o libdc4c_tfc_dag.so
+	$(CC) -o $@ sizeof.o $(ESOFLAGS) $(LFLAGS) libdc4c_tfc_dag.so
 

@@ -65,8 +65,9 @@ static int DC4CLoadDagScheduleFromDatabase( struct Dc4cDagSchedule **pp_sched , 
 	DSCSQLACTION_UPDATE_dag_schedule_SET_begin_datetime_progress_WHERE_schedule_name_E( & schedule );
 	if( SQLCODE )
 	{
-		printf( "DSCSQLACTION_UPDATE_dag_schedule_SET_begin_datetime_progress_WHERE_schedule_name_E failed , SQLCODE[%d][%s][%s]\n" , SQLCODE , SQLSTATE , SQLDESC );
+		ErrorLog( __FILE__ , __LINE__ , "DSCSQLACTION_UPDATE_dag_schedule_SET_begin_datetime_progress_WHERE_schedule_name_E failed , SQLCODE[%d][%s][%s]\n" , SQLCODE , SQLSTATE , SQLDESC );
 		free( p_config );
+		DSCDBROLLBACK();
 		return DC4C_ERROR_DATABASE;
 	}
 	

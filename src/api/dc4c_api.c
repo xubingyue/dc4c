@@ -180,7 +180,10 @@ static int proto_ExecuteProgramRequest( struct SocketSession *psession , int ord
 	memset( program , 0x00 , sizeof(program) );
 	sscanf( program_and_params , "%s" , program );
 	memset( pathfilename , 0x00 , sizeof(pathfilename) );
-	SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/bin/%s" , getenv("HOME") , program );
+	if( getenv("DC4C_BINPATH") )
+		SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/%s" , getenv("DC4C_BINPATH") , program );
+	else
+		SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/bin/%s" , getenv("HOME") , program );
 	memset( req.program_md5_exp , 0x00 , sizeof(req.program_md5_exp) );
 	nret = FileMd5( pathfilename , req.program_md5_exp ) ;
 	if( nret )
@@ -253,7 +256,10 @@ static int proto_DeployProgramResponse( struct SocketSession *psession , char *p
 	CleanSendBuffer( psession );
 	
 	memset( pathfilename , 0x00 , sizeof(pathfilename) );
-	SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/bin/%s" , getenv("HOME") , program );
+	if( getenv("DC4C_BINPATH") )
+		SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/%s" , getenv("DC4C_BINPATH") , program );
+	else
+		SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/bin/%s" , getenv("HOME") , program );
 	fp = fopen( pathfilename , "rb" ) ;
 	if( fp == NULL )
 	{

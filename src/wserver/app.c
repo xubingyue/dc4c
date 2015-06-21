@@ -287,7 +287,10 @@ int app_ExecuteProgramRequest( struct ServerEnv *penv , struct SocketSession *ps
 	memset( program , 0x00 , sizeof(program) );
 	sscanf( p_req->program_and_params , "%s" , program );
 	memset( pathfilename , 0x00 , sizeof(pathfilename) );
-	SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/bin/%s" , getenv("HOME") , program );
+	if( getenv("DC4C_BINPATH") )
+		SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/%s" , getenv("DC4C_BINPATH") , program );
+	else
+		SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/bin/%s" , getenv("HOME") , program );
 	memset( program_md5_exp , 0x00 , sizeof(program_md5_exp) );
 	nret = FileMd5( pathfilename , program_md5_exp ) ;
 	if( nret || STRCMP( program_md5_exp , != , p_req->program_md5_exp ) )
@@ -331,7 +334,10 @@ int app_DeployProgramResponse( struct ServerEnv *penv , struct SocketSession *ps
 	memset( program , 0x00 , sizeof(program) );
 	sscanf( penv->epq_array[psession-penv->accepted_session_array].program_and_params , "%s" , program );
 	memset( pathfilename , 0x00 , sizeof(pathfilename) );
-	SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/bin/%s" , getenv("HOME") , program );
+	if( getenv("DC4C_BINPATH") )
+		SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/%s" , getenv("DC4C_BINPATH") , program );
+	else
+		SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/bin/%s" , getenv("HOME") , program );
 	unlink( pathfilename );
 	fp = fopen( pathfilename , "wb" ) ;
 	if( fp == NULL )

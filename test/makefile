@@ -27,6 +27,7 @@ c_FILE2		=	\
 			IDL_dag_batches_info.dsc.c \
 			IDL_dag_batches_tasks.dsc.c \
 
+#@ ec_FILE
 ec_FILE		=	\
 			dc4c_test_tfc_dag_master_pgsql_stepbystep.ec \
 			$(ec_FILE2) \
@@ -38,6 +39,7 @@ ec_FILE2	=	\
 			IDL_dag_batches_tasks.dsc.ESQL.ec \
 
 ###### 目标文件、安装目录配置区
+include ../makeinstall
 BIN		=	\
 			dc4c_test_master \
 			dc4c_test_batch_master \
@@ -52,24 +54,24 @@ BIN		=	\
 			dc4c_test_worker_sleep_or_error \
 			dc4c_test_worker_pi \
 
-BININST		=	$(HOME)/bin
+BININST		=	$(_BININST)
 
 ###### 编译选项
-CFLAGS		=	-I. \
-			-I$(HOME)/include/fasterjson \
-			-I$(HOME)/include/dc4c_util \
-			-I$(HOME)/include/dc4c_proto \
-			-I$(HOME)/include/dc4c_api \
-			-I$(HOME)/include/dc4c_tfc_dag \
+CFLAGS		=	$(_CFLAGS) \
+			-I$(_HDERINST_PROTO) \
+			-I$(_HDERINST_UTIL) \
+			-I$(_HDERINST_API) \
+			-I$(_HDERINST_TFC_DAG) \
+			-I$(_HDERBASE)/fasterjson \
 
 ###### 链接选项
-LFLAGS		=	-L. \
-			-L$(HOME)/lib \
-			-lfasterjson \
-			-ldc4c_util \
+LFLAGS		=	$(_LFLAGS) \
+			-L$(_LIBINST) \
 			-ldc4c_proto \
+			-ldc4c_util \
 			-ldc4c_api \
 			-ldc4c_tfc_dag \
+			-lfasterjson \
 
 ###### 额外宏定义区
 CLEAN_ADDITION	=
@@ -79,6 +81,8 @@ CLEAN_ADDITION	=
 #@ make_clean
 #@ make_install
 #@ make_install_BININST
+#@ make_uninstall
+#@ make_uninstall_BININST
 
 include $(MKTPLDIR)/makeobj_$(MKTPLOS).inc
 
