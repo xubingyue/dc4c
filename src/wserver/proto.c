@@ -88,7 +88,7 @@ int proto_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *ps
 	req.bits = sizeof(long) * 8 ;
 	strcpy( req.ip , penv->param.wserver_ip );
 	req.port = penv->param.wserver_port ;
-	req.is_working = IsSocketEstablished( & (penv->executing_session) ) ;
+	req.is_working = IsSocketEstablished( & (penv->accepted_session) ) ;
 	
 	DSCLOG_worker_notice_request( & req );
 	
@@ -124,7 +124,7 @@ int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession 
 	DSCINIT_execute_program_response( & rsp );
 	if( error == 0 )
 	{
-		strcpy( rsp.tid , penv->epq_array[psession-penv->accepted_session_array].tid );
+		strcpy( rsp.tid , penv->epq.tid );
 	}
 	time( & end_datetime_stamp );
 	rsp.end_datetime_stamp = end_datetime_stamp ;
@@ -133,7 +133,7 @@ int proto_ExecuteProgramResponse( struct ServerEnv *penv , struct SocketSession 
 	rsp.status = status ;
 	if( error == 0 )
 	{
-		strcpy( rsp.info , penv->epp_array[psession-penv->accepted_session_array].info );
+		strcpy( rsp.info , penv->epp.info );
 	}
 	
 	DSCLOG_execute_program_response( & rsp );
@@ -284,31 +284,15 @@ int proto( void *_penv , struct SocketSession *psession )
 	}
 	else if( STRNCMP( psession->recv_buffer + LEN_COMMHEAD , == , "DPP" , LEN_MSGHEAD_MSGTYPE ) )
 	{
-		if( IsSocketEstablished( & (penv->executing_session) ) )
+		nret = app_DeployProgramResponse( penv , psession ) ;
+		if( nret )
 		{
-			nret = proto_ExecuteProgramResponse( penv , psession , DC4C_INFO_ALREADY_EXECUTING , 0 ) ;
-			if( nret )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "proto_ExecuteProgramResponse failed[%d]" , nret );
-				return -1;
-			}
-			else
-			{
-				DebugLog( __FILE__ , __LINE__ , "proto_ExecuteProgramResponse ok" );
-			}
+			ErrorLog( __FILE__ , __LINE__ , "app_DeployProgramResponse failed[%d]" , nret );
+			return -1;
 		}
 		else
 		{
-			nret = app_DeployProgramResponse( penv , psession ) ;
-			if( nret )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "app_DeployProgramResponse failed[%d]" , nret );
-				return -1;
-			}
-			else
-			{
-				DebugLog( __FILE__ , __LINE__ , "app_DeployProgramResponse ok" );
-			}
+			DebugLog( __FILE__ , __LINE__ , "app_DeployProgramResponse ok" );
 		}
 	}
 	else if( STRNCMP( psession->recv_buffer + LEN_COMMHEAD , == , "HBQ" , LEN_MSGHEAD_MSGTYPE ) )

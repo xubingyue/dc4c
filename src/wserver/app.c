@@ -21,7 +21,7 @@ int app_WorkerRegisterResponse( struct ServerEnv *penv , struct SocketSession *p
 	return 0;
 }
 
-static int app_SendWorkerNotice( struct ServerEnv *penv )
+int app_SendWorkerNotice( struct ServerEnv *penv )
 {
 	int		rserver_index ;
 	
@@ -78,7 +78,6 @@ static int app_ExecuteProgram( struct ServerEnv *penv , struct SocketSession *ps
 		int		i ;
 		char		envbuf[ 100 + 1 ] ;
 		
-		int		accepted_session_index ;
 		int		rserver_index ;
 		
 		close( penv->executing_pipe[0] );
@@ -114,28 +113,15 @@ static int app_ExecuteProgram( struct ServerEnv *penv , struct SocketSession *ps
 		SNPRINTF( envbuf , sizeof(envbuf)-1 , "%d" , penv->executing_pipe[1] );
 		setenv( "WSERVER_INFO_PIPE" , envbuf , 1 );
 		
-		for( accepted_session_index = 0 ; accepted_session_index < MAXCOUNT_ACCEPTED_SESSION ; accepted_session_index++ )
-		{
-			if( IsSocketEstablished( penv->accepted_session_array+accepted_session_index ) )
-			{
-				if( & (penv->accepted_session_array[accepted_session_index]) != penv->executing_session.p1 )
-				{
-					CloseSocket( penv->accepted_session_array+accepted_session_index );
-					CleanSocketSession( penv->accepted_session_array+accepted_session_index );
-				}
-			}
-		}
-		free( penv->accepted_session_array );
-		
 		if( IsSocketEstablished( & (penv->listen_session) ) )
 		{
-			CloseSocket( & (penv->listen_session) );
+			CloseSocketSilently( & (penv->listen_session) );
 			CleanSocketSession( & (penv->listen_session) );
 		}
 		
 		for( rserver_index = 0 ; rserver_index < penv->rserver_count ; rserver_index++ )
 		{
-			CloseSocket( & (penv->connect_session[rserver_index]) );
+			CloseSocketSilently( & (penv->connect_session[rserver_index]) );
 			CleanSocketSession( & (penv->connect_session[rserver_index]) );
 		}
 		
@@ -153,7 +139,6 @@ static int app_ExecuteProgram( struct ServerEnv *penv , struct SocketSession *ps
 	}
 	else
 	{
-		penv->is_executing = 1 ;
 		psession->progress = ACCEPTED_SESSION_PROGRESS_DO_EXECUTE ;
 		
 		close( penv->executing_pipe[1] );
@@ -172,8 +157,6 @@ static int app_ExecuteProgram( struct ServerEnv *penv , struct SocketSession *ps
 		
 		time( & (penv->begin_datetime_stamp) );
 	}
-	
-	app_SendWorkerNotice( penv );
 	
 	return 0;
 }
@@ -221,8 +204,6 @@ int app_WaitProgramExiting( struct ServerEnv *penv , struct SocketSession *p_exe
 		error = DC4C_ERROR_UNKNOW_QUIT ;
 	}
 	
-	penv->is_executing = 0 ;
-	
 	p_accepted_session = p_execute_session->p1 ;
 	if( p_accepted_session && IsSocketEstablished( p_accepted_session ) )
 	{
@@ -250,9 +231,7 @@ int app_WaitProgramExiting( struct ServerEnv *penv , struct SocketSession *p_exe
 	}
 	
 	DeleteSockFromEpoll( penv->epoll_socks , p_execute_session );
-	CloseSocket( p_execute_session );
-	
-	app_SendWorkerNotice( penv );
+	CloseSocketSilently( p_execute_session );
 	
 	return 0;
 }
@@ -267,12 +246,6 @@ int app_ExecuteProgramRequest( struct ServerEnv *penv , struct SocketSession *ps
 	
 	int		nret = 0 ;
 	
-	if( penv->is_executing == 1 )
-	{
-		proto_ExecuteProgramResponse( penv , psession , DC4C_INFO_ALREADY_EXECUTING , 0 );
-		return 0;
-	}
-	
 	if( psession->progress != ACCEPTED_SESSION_PROGRESS_WAITFOR_REQUEST )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "progress[%d] invalid" , psession->progress );
@@ -281,16 +254,13 @@ int app_ExecuteProgramRequest( struct ServerEnv *penv , struct SocketSession *ps
 	
 	lock_file( & lock_fd );
 	
-	memcpy( & (penv->epq_array[psession-penv->accepted_session_array]) , p_req , sizeof(execute_program_request) );
-	memset( & (penv->epp_array[psession-penv->accepted_session_array]) , 0x00 , sizeof(execute_program_response) );
+	memcpy( & (penv->epq) , p_req , sizeof(execute_program_request) );
+	memset( & (penv->epp) , 0x00 , sizeof(execute_program_response) );
 	
 	memset( program , 0x00 , sizeof(program) );
 	sscanf( p_req->program_and_params , "%s" , program );
 	memset( pathfilename , 0x00 , sizeof(pathfilename) );
-	if( getenv("DC4C_BINPATH") )
-		SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/%s" , getenv("DC4C_BINPATH") , program );
-	else
-		SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/bin/%s" , getenv("HOME") , program );
+	SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/bin/%s" , getenv("HOME") , program );
 	memset( program_md5_exp , 0x00 , sizeof(program_md5_exp) );
 	nret = FileMd5( pathfilename , program_md5_exp ) ;
 	if( nret || STRCMP( program_md5_exp , != , p_req->program_md5_exp ) )
@@ -332,12 +302,9 @@ int app_DeployProgramResponse( struct ServerEnv *penv , struct SocketSession *ps
 	lock_file( & lock_fd );
 	
 	memset( program , 0x00 , sizeof(program) );
-	sscanf( penv->epq_array[psession-penv->accepted_session_array].program_and_params , "%s" , program );
+	sscanf( penv->epq.program_and_params , "%s" , program );
 	memset( pathfilename , 0x00 , sizeof(pathfilename) );
-	if( getenv("DC4C_BINPATH") )
-		SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/%s" , getenv("DC4C_BINPATH") , program );
-	else
-		SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/bin/%s" , getenv("HOME") , program );
+	SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/bin/%s" , getenv("HOME") , program );
 	unlink( pathfilename );
 	fp = fopen( pathfilename , "wb" ) ;
 	if( fp == NULL )
@@ -362,9 +329,9 @@ int app_DeployProgramResponse( struct ServerEnv *penv , struct SocketSession *ps
 	}
 	
 	nret = FileMd5( pathfilename , program_md5_exp ) ;
-	if( nret || STRCMP( program_md5_exp , != , penv->epq_array[psession-penv->accepted_session_array].program_md5_exp ) )
+	if( nret || STRCMP( program_md5_exp , != , penv->epq.program_md5_exp ) )
 	{
-		InfoLog( __FILE__ , __LINE__ , "FileMd5[%s][%d] or MD5[%s] and req[%s] not matched too" , pathfilename , nret , program_md5_exp , penv->epq_array[psession-penv->accepted_session_array].program_md5_exp );
+		InfoLog( __FILE__ , __LINE__ , "FileMd5[%s][%d] or MD5[%s] and req[%s] not matched too" , pathfilename , nret , program_md5_exp , penv->epq.program_md5_exp );
 		proto_ExecuteProgramResponse( penv , psession , DC4C_ERROR_MD5_NOT_MATCHED_TOO , 0 );
 		unlock_file( & lock_fd );
 		return 0;
@@ -372,7 +339,7 @@ int app_DeployProgramResponse( struct ServerEnv *penv , struct SocketSession *ps
 	
 	unlock_file( & lock_fd );
 	
-	return app_ExecuteProgram( penv , psession , & (penv->epq_array[psession-penv->accepted_session_array]) );
+	return app_ExecuteProgram( penv , psession , & (penv->epq) );
 }
 
 int app_HeartBeatRequest( struct ServerEnv *penv , long *p_now , long *p_epoll_timeout )

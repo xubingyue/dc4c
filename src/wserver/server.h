@@ -33,7 +33,9 @@ extern "C" {
 
 #define RSERVER_ARRAYSIZE		8
 #define MAXCOUNT_WSERVERS		1000
+/*
 #define MAXCOUNT_ACCEPTED_SESSION	100
+*/
 
 #define SEND_HEARTBEAT_INTERVAL		60
 #define MAXCNT_HEARTBEAT_LOST		3
@@ -67,12 +69,10 @@ struct ServerEnv
 	int				epoll_socks ;
 	struct SocketSession		connect_session[ RSERVER_ARRAYSIZE ] ;
 	struct SocketSession		listen_session ;
-	struct SocketSession		*accepted_session_array ; /* sizeof(struct SocketSession) * MAXCOUNT_ACCEPTED_SESSION */
-	struct SocketSession		*p_slibing_accepted_session ;
-	execute_program_request		*epq_array ;
-	execute_program_response	*epp_array ;
+	struct SocketSession		accepted_session ;
+	execute_program_request		epq ;
+	execute_program_response	epp ;
 	
-	int				is_executing ;
 	int				executing_pipe[ 2 ] ;
 	struct SocketSession		executing_session ;
 	pid_t				pid ;
@@ -92,6 +92,8 @@ int comm_OnListenSocketInput( struct ServerEnv *penv , struct SocketSession *pse
 int comm_OnAcceptedSocketInput( struct ServerEnv *penv , struct SocketSession *psession );
 int comm_OnAcceptedSocketOutput( struct ServerEnv *penv , struct SocketSession *psession );
 int comm_OnAcceptedSocketError( struct ServerEnv *penv , struct SocketSession *psession );
+int comm_OnWildSocketOutput( struct ServerEnv *penv , struct SocketSession *psession );
+int comm_OnWildSocketError( struct ServerEnv *penv , struct SocketSession *psession );
 
 int proto_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *psession );
 int proto_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *psession );
@@ -102,6 +104,7 @@ int proto_HeartBeatRequest( struct ServerEnv *penv , struct SocketSession *psess
 int proto( void *_penv , struct SocketSession *psession );
 
 int app_WorkerRegisterResponse( struct ServerEnv *penv , struct SocketSession *psession , worker_register_response *p_rsp );
+int app_SendWorkerNotice( struct ServerEnv *penv );
 int app_WaitProgramExiting( struct ServerEnv *penv , struct SocketSession *psession );
 int app_ExecuteProgramRequest( struct ServerEnv *penv , struct SocketSession *psession , execute_program_request *p_req );
 int app_DeployProgramResponse( struct ServerEnv *penv , struct SocketSession *psession );

@@ -76,17 +76,6 @@ int server( struct ServerEnv *penv )
 		return -1;
 	}
 	memset( penv->accepted_session_array , 0x00 , sizeof(struct SocketSession) * MAXCOUNT_ACCEPTED_SESSION );
-	/*
-	for( accepted_session_index = 0 ; accepted_session_index < MAXCOUNT_ACCEPTED_SESSION ; accepted_session_index++ )
-	{
-		nret = InitSocketSession( penv->accepted_session_array+accepted_session_index ) ;
-		if( nret )
-		{
-			ErrorLog( __FILE__ , __LINE__ , "InitSocketSession failed[%d]errno[%d]" , nret , errno );
-			return -1;
-		}
-	}
-	*/
 	
 	epoll_timeout = 1 ;
 	while( ! g_server_exit_flag )
@@ -109,7 +98,13 @@ int server( struct ServerEnv *penv )
 			
 			if( psession == & (penv->listen_session) )
 			{
-				if( pevent->events & EPOLLIN || pevent->events & EPOLLHUP )
+				if( pevent->events & EPOLLERR )
+				{
+					DebugLog( __FILE__ , __LINE__ , "EPOLLERR on listen sock[%d]" , psession->sock );
+					g_server_exit_flag = 1 ;
+					break;
+				}
+				else if( pevent->events & EPOLLIN || pevent->events & EPOLLHUP )
 				{
 					DebugLog( __FILE__ , __LINE__ , "EPOLLIN on listen sock[%d]" , psession->sock );
 					
@@ -123,16 +118,18 @@ int server( struct ServerEnv *penv )
 					g_server_exit_flag = 1 ;
 					break;
 				}
-				else if( pevent->events & EPOLLERR )
-				{
-					DebugLog( __FILE__ , __LINE__ , "EPOLLERR on listen sock[%d]" , psession->sock );
-					g_server_exit_flag = 1 ;
-					break;
-				}
 			}
 			else
 			{
-				if( pevent->events & EPOLLIN || pevent->events & EPOLLHUP )
+				if( pevent->events & EPOLLERR )
+				{
+					DebugLog( __FILE__ , __LINE__ , "EPOLLERR on accepted sock[%d]" , psession->sock );
+					
+					nret = comm_OnAcceptedSocketError( penv , psession ) ;
+					if( nret < 0 )
+						return nret;
+				}
+				else if( pevent->events & EPOLLIN || pevent->events & EPOLLHUP )
 				{
 					DebugLog( __FILE__ , __LINE__ , "EPOLLIN on accepted sock[%d]" , psession->sock );
 					
@@ -145,14 +142,6 @@ int server( struct ServerEnv *penv )
 					DebugLog( __FILE__ , __LINE__ , "EPOLLOUT on accepted sock[%d]" , psession->sock );
 					
 					nret = comm_OnAcceptedSocketOutput( penv , psession ) ;
-					if( nret < 0 )
-						return nret;
-				}
-				else if( pevent->events & EPOLLERR )
-				{
-					DebugLog( __FILE__ , __LINE__ , "EPOLLERR on accepted sock[%d]" , psession->sock );
-					
-					nret = comm_OnAcceptedSocketError( penv , psession ) ;
 					if( nret < 0 )
 						return nret;
 				}

@@ -3,8 +3,8 @@
 CREATE TABLE dag_batches_direction
 (
 	schedule_name	CHARACTER VARYING(64) NOT NULL ,
-	from_batch	CHARACTER VARYING(64) ,
-	to_batch	CHARACTER VARYING(64)
+	from_batch	CHARACTER VARYING(64) NOT NULL ,
+	to_batch	CHARACTER VARYING(64) NOT NULL
 ) ;
 
 CREATE INDEX dag_batches_direction_idx1 ON dag_batches_direction ( schedule_name , from_batch ) ;

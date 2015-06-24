@@ -11,7 +11,7 @@
 #include "IDL_dag_batches_tasks.dsc.LOG.c"
 
 /* for testing
-time ./dc4c_test_tfc_dag_master rservers_ip_port schedule_name_from_database"
+time ./dc4c_test_tfc_dag_master_pgsql_stepbystep 0:12001 TEST_SCHEDULE_NAME
 
 sqls dag_schedule ; sqls dag_batches_info ; sqls dag_batches_tasks
 */

@@ -8,8 +8,9 @@
                 ""         "dc4c_test_worker_sleep 5"      "dc4c_test_worker_sleep 6"
                   \               /                                      |
                          BATCH_A3                                        /
-                "dc4c_test_worker_sleep 2"                         /
-                "dc4c_test_worker_sleep 1"                    /
+                "dc4c_test_worker_sleep 1"                            /
+                "dc4c_test_worker_sleep 2"                        /
+                "dc4c_test_worker_sleep 3"                    /
                                         \                /
                                               _END_
 */
@@ -21,7 +22,7 @@
 	"batches" : {
 		"batches_info" : [
 			{ "batch_name":"BATCH_A1", "batch_desc":"", "view_pos_x":0, "view_pos_y":0, "tasks": [
-				{ "order_index":1 , "program_and_params":"dc4c_test_worker_sleep_or_error -1", "timeout":60" }
+				{ "order_index":1 , "program_and_params":"dc4c_test_worker_sleep 1", "timeout":60" }
 			] , "interrupt_by_app":0 } ,
 			{ "batch_name":"BATCH_A21", "batch_desc":"", "view_pos_x":0, "view_pos_y":0, "tasks": [
 			] , "interrupt_by_app":1 } ,

@@ -141,6 +141,8 @@ int _LoadDagScheduleFromStruct( struct Dc4cDagSchedule *p_sched , dag_schedule_c
 								p_batch->tasks_array[k].timeout = p_config->batches.batches_info[j].tasks[k].timeout ;
 								p_config->batches.batches_info[j].tasks[k].progress = DC4C_DAGTASK_PROGRESS_INIT ;
 								
+								
+								
 								p_batch->tasks_count++;
 							}
 						}
@@ -496,11 +498,14 @@ static int MovedownExecutingTree( struct Dc4cDagSchedule *p_sched , SListNode *p
 		for( p_postdepend_predepend_branch_node = FindFirstListNode(p_postdepend_branch_batch->predepend_batches_list) ; p_postdepend_predepend_branch_node ; p_postdepend_predepend_branch_node = FindNextListNode(p_postdepend_predepend_branch_node) )
 		{
 			p_postdepend_predepend_branch_batch = GetNodeMember(p_postdepend_predepend_branch_node) ;
+			DebugLog( __FILE__ , __LINE__ , "p_postdepend_predepend_branch_batch->batch_name[%s] ->progress[%d]" , p_postdepend_predepend_branch_batch->batch_name , p_postdepend_predepend_branch_batch->progress );
 			if( p_postdepend_predepend_branch_batch->progress != DC4C_DAGBATCH_PROGRESS_FINISHED )
 				break;
 		}
 		if( p_postdepend_predepend_branch_node == NULL )
 		{
+			DebugLog( __FILE__ , __LINE__ , "p_branch_batch->batch_name[%s] all finished" , p_branch_batch->batch_name );
+			
 			p_insert_execute_batches_node = InsertListNodeAfter( & (p_sched->executing_batches_tree) , & p_executing_batches_node , p_postdepend_branch_node , sizeof(struct Dc4cDagBatch) , NULL ) ;
 			if( p_insert_execute_batches_node == NULL )
 			{
@@ -519,7 +524,6 @@ static int MovedownExecutingTree( struct Dc4cDagSchedule *p_sched , SListNode *p
 				DebugLog( __FILE__ , __LINE__ , "DC4CInitEnv ok" );
 			}
 			
-InfoLog( __FILE__ , __LINE__ , "calvintest - p_postdepend_branch_batch->batch_name[%s] p_postdepend_branch_batch->interrupt_by_app[%d]" , p_postdepend_branch_batch->batch_name , p_postdepend_branch_batch->interrupt_by_app );
 			if( p_postdepend_branch_batch->interrupt_by_app )
 				DC4CSetOptions( p_postdepend_branch_batch->penv , DC4C_OPTIONS_INTERRUPT_BY_APP );
 			else
@@ -702,7 +706,6 @@ int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatc
 	else if( perform_return == DC4C_INFO_BATCH_TASKS_FINISHED )
 	{
 		InfoLog( __FILE__ , __LINE__ , "DC4CPerformMultiBatchTasks return DC4C_INFO_BATCH_TASKS_FINISHED" );
-		p_branch_batch->progress = DC4C_DAGBATCH_PROGRESS_FINISHED ;
 	}
 	else if( perform_return == DC4C_INFO_ALL_ENVS_FINISHED )
 	{
@@ -713,18 +716,16 @@ int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatc
 	else if( perform_return == DC4C_ERROR_TIMEOUT )
 	{
 		InfoLog( __FILE__ , __LINE__ , "DC4CPerformMultiBatchTasks return DC4C_ERROR_TIMEOUT" );
-		p_branch_batch->progress = DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR ;
 	}
 	else if( perform_return == DC4C_ERROR_APP )
 	{
 		InfoLog( __FILE__ , __LINE__ , "DC4CPerformMultiBatchTasks return DC4C_ERROR_APP" );
-		p_branch_batch->progress = DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR ;
 	}
 	else
 	{
 		ErrorLog( __FILE__ , __LINE__ , "DC4CPerformMultiBatchTasks failed[%d]" , perform_return );
-		p_branch_batch->progress = DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR ;
 		p_sched->progress = DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR ;
+		return perform_return;
 	}
 	
 	for( p_executing_batches_node = FindFirstListNode(p_sched->executing_batches_tree) ; p_executing_batches_node ; p_executing_batches_node = FindNextListNode(p_executing_batches_node) )
@@ -749,6 +750,16 @@ int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatc
 	{
 		InfoLog( __FILE__ , __LINE__ , "DAG FIN batch - batch_name[%s] tasks_count[%d]" , p_branch_batch->batch_name , p_branch_batch->tasks_count );
 		p_branch_batch->progress = DC4C_DAGBATCH_PROGRESS_FINISHED ;
+	}
+	else if( perform_return == DC4C_ERROR_TIMEOUT )
+	{
+		InfoLog( __FILE__ , __LINE__ , "DAG FIN TIMEOUT batch - batch_name[%s] tasks_count[%d]" , p_branch_batch->batch_name , p_branch_batch->tasks_count );
+		p_branch_batch->progress = DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR ;
+	}
+	else if( perform_return == DC4C_ERROR_APP )
+	{
+		InfoLog( __FILE__ , __LINE__ , "DAG FIN APPERR batch - batch_name[%s] tasks_count[%d]" , p_branch_batch->batch_name , p_branch_batch->tasks_count );
+		p_branch_batch->progress = DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR ;
 	}
 	else
 	{

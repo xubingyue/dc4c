@@ -8,8 +8,8 @@
 
 #include "dc4c_util.h"
 
-char __DC4C_VERSION_1_3_0[] = "1.3.0" ;
-char *__DC4C_VERSION = __DC4C_VERSION_1_3_0 ;
+char __DC4C_VERSION_1_3_1[] = "1.3.1" ;
+char *__DC4C_VERSION = __DC4C_VERSION_1_3_1 ;
 
 int ConvertToDaemonServer()
 {
@@ -466,13 +466,12 @@ int DiscardAcceptSocket( int listen_sock )
 	return 0;
 }
 
-void CloseSocket( struct SocketSession *psession )
+void CloseSocketSilently( struct SocketSession *psession )
 {
 	if( IsSocketOpened(psession) )
 	{
 		memset( psession->ip , 0x00 , sizeof(psession->ip) );
 		psession->port = 0 ;
-		InfoLog( __FILE__ , __LINE__ , "close sock[%d]" , psession->sock );
 		close( psession->sock );
 		memset( & (psession->addr) , 0x00 , sizeof(psession->addr) );
 		SetSocketClosed( psession );
@@ -491,6 +490,18 @@ void CloseSocket( struct SocketSession *psession )
 	psession->p1 = NULL ;
 	psession->p2 = NULL ;
 	psession->p3 = NULL ;
+	
+	return;
+}
+
+void CloseSocket( struct SocketSession *psession )
+{
+	if( IsSocketOpened(psession) )
+	{
+		InfoLog( __FILE__ , __LINE__ , "close sock[%d]" , psession->sock );
+	}
+	
+	CloseSocketSilently( psession );
 	
 	return;
 }

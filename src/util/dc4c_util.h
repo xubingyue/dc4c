@@ -58,6 +58,14 @@
 #define _SOCKLEN_T		int
 #endif
 
+#ifndef MIN
+#define MIN(_a_,_b_) ((_a_)<(_b_)?(_a_):(_b_))
+#endif
+
+#ifndef MAX
+#define MAX(_a_,_b_) ((_a_)>(_b_)?(_a_):(_b_))
+#endif
+
 #include "openssl/md5.h"
 #include "openssl/err.h"
 
@@ -139,6 +147,7 @@ int AcceptSocket( int listen_sock , struct SocketSession *psession );
 int AsyncConnectSocket( char *ip , long port , struct SocketSession *psession );
 int AsyncCompleteConnectedSocket( struct SocketSession *psession );
 int DiscardAcceptSocket( int listen_sock );
+void CloseSocketSilently( struct SocketSession *psession );
 void CloseSocket( struct SocketSession *psession );
 void SetSocketClosed( struct SocketSession *psession );
 void SetSocketOpened( struct SocketSession *psession );

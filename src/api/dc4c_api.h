@@ -125,7 +125,7 @@ int DC4CPerformBatchTasks( struct Dc4cApiEnv *penv , int *p_task_index );
 int DC4CPerformMultiBatchTasks( struct Dc4cApiEnv **a_penv , int envs_count , struct Dc4cApiEnv **ppenv , int *p_task_index );
 
 int DC4CQueryWorkers( struct Dc4cApiEnv *penv );
-int DC4CSetTasksFds( struct Dc4cApiEnv *penv , fd_set *read_fds , fd_set *write_fds , fd_set *expect_fds , int *p_max_fd );
+int DC4CSetTasksFds( struct Dc4cApiEnv *penv , struct Dc4cApiEnv *penv_QueryWorkers , fd_set *read_fds , fd_set *write_fds , fd_set *expect_fds , int *p_max_fd );
 int DC4CSelectTasksFds( fd_set *p_read_fds , fd_set *write_fds , fd_set *expect_fds , int *p_max_fd , int select_timeout );
 int DC4CProcessTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , fd_set *write_fds , fd_set *expect_fds , int *p_task_index );
 

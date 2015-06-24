@@ -217,17 +217,21 @@ int comm_OnInfoPipeInput( struct ServerEnv *penv , struct SocketSession *psessio
 	
 	memset( & rsp , 0x00 , sizeof(execute_program_response) );
 	size = (int)read( psession->sock , rsp.info , sizeof(rsp.info)-1 ) ;
-	if( size == 0 )
+	if( size == -1 )
+	{
+		InfoLog( __FILE__ , __LINE__ , "read info pipe[%d] failed[%d] errno[%d]" , psession->sock , size , errno );
+		app_WaitProgramExiting( penv , psession );
+	}
+	else if( size == 0 )
 	{
 		InfoLog( __FILE__ , __LINE__ , "detected info pipe[%d] close" , psession->sock );
 		app_WaitProgramExiting( penv , psession );
-		return 0;
 	}
-	
-	strncat(penv->epp_array[(struct SocketSession*)(psession->p1)-penv->accepted_session_array].info
-		, rsp.info
-		, sizeof(penv->epp_array[(struct SocketSession*)(psession->p1)-penv->accepted_session_array].info)-1
-			- strlen(penv->epp_array[(struct SocketSession*)(psession->p1)-penv->accepted_session_array].info) );
+	else
+	{
+		InfoLog( __FILE__ , __LINE__ , "read info pipe[%d] [%d]bytes[%.*s]" , psession->sock , size , (int)size , rsp.info );
+		strncat( penv->epp.info , rsp.info , MIN( size , sizeof(penv->epp.info)-1 - strlen(penv->epp.info) ) );
+	}
 	
 	return 0;
 }
@@ -245,47 +249,62 @@ static int comm_CloseAcceptedSocket( struct ServerEnv *penv , struct SocketSessi
 	
 	DeleteSockFromEpoll( penv->epoll_socks , psession );
 	CloseSocket( psession );
-	CleanSocketSession( psession );
+	
+	app_SendWorkerNotice( penv );
 	
 	return 0;
 }
 
 int comm_OnListenSocketInput( struct ServerEnv *penv , struct SocketSession *psession )
 {
-	struct SocketSession	*p_new_session = NULL ;
-	
 	int			nret = 0 ;
 	
-	p_new_session = GetUnusedSocketSession( penv->accepted_session_array , MAXCOUNT_ACCEPTED_SESSION , & (penv->p_slibing_accepted_session) ) ;
-	if( p_new_session == NULL )
+	if( IsSocketEstablished( & (penv->accepted_session) ) )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "GetUnusedSocketSession failed , too many sessions" );
-		DiscardAcceptSocket( psession->sock );
-		return 0;
-	}
-	
-	nret = InitSocketSession( p_new_session ) ;
-	if( nret )
-	{
-		ErrorLog( __FILE__ , __LINE__ , "InitSocketSession failed[%d]errno[%d]" , nret , errno );
-		DiscardAcceptSocket( psession->sock );
-		return -1;
-	}
-	
-	nret = AcceptSocket( psession->sock , p_new_session ) ;
-	if( nret )
-	{
-		ErrorLog( __FILE__ , __LINE__ , "AcceptSocket failed[%d] , errno[%d]" , nret , errno );
-		return nret;
+		struct SocketSession	*p_new_session = NULL ;
+		
+		p_new_session = AllocSocketSession() ;
+		if( p_new_session == NULL )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "AllocSocketSession failed[%d]errno[%d]" , nret , errno );
+			return 0;
+		}
+		
+		nret = AcceptSocket( psession->sock , p_new_session ) ;
+		if( nret )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "AcceptSocket failed[%d] , errno[%d]" , nret , errno );
+			return nret;
+		}
+		else
+		{
+			DebugLog( __FILE__ , __LINE__ , "AcceptSocket ok" );
+		}
+		
+		SetNonBlocking( p_new_session->sock );
+		
+		proto_ExecuteProgramResponse( penv , p_new_session , DC4C_INFO_ALREADY_EXECUTING , 0 );
+		AddOutputSockToEpoll( penv->epoll_socks , p_new_session );
 	}
 	else
 	{
-		DebugLog( __FILE__ , __LINE__ , "AcceptSocket ok" );
+		nret = AcceptSocket( psession->sock , & (penv->accepted_session) ) ;
+		if( nret )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "AcceptSocket failed[%d] , errno[%d]" , nret , errno );
+			return nret;
+		}
+		else
+		{
+			DebugLog( __FILE__ , __LINE__ , "AcceptSocket ok" );
+		}
+		
+		SetNonBlocking( penv->accepted_session.sock );
+		
+		AddInputSockToEpoll( penv->epoll_socks , & (penv->accepted_session) );
+		
+		app_SendWorkerNotice( penv );
 	}
-	
-	SetNonBlocking( p_new_session->sock );
-	
-	AddInputSockToEpoll( penv->epoll_socks , p_new_session );
 	
 	return 0;
 }
@@ -374,8 +393,7 @@ int comm_OnAcceptedSocketOutput( struct ServerEnv *penv , struct SocketSession *
 	
 	if( psession->send_len == psession->total_send_len )
 	{
-		CleanSendBuffer( psession );
-		ModifyInputSockFromEpoll( penv->epoll_socks , psession );
+		comm_CloseAcceptedSocket( penv , psession );
 	}
 	
 	return 0;
@@ -385,6 +403,46 @@ int comm_OnAcceptedSocketError( struct ServerEnv *penv , struct SocketSession *p
 {
 	ErrorLog( __FILE__ , __LINE__ , "detected sock[%d] error , errno[%d]" , psession->sock , errno );
 	comm_CloseAcceptedSocket( penv , psession );
+	return 0;
+}
+
+static int comm_CloseWildSocket( struct ServerEnv *penv , struct SocketSession *psession )
+{
+	DeleteSockFromEpoll( penv->epoll_socks , psession );
+	CloseSocket( psession );
+	FreeSocketSession( psession );
+	
+	return 0;
+}
+
+int comm_OnWildSocketOutput( struct ServerEnv *penv , struct SocketSession *psession )
+{
+	int			nret = 0 ;
+	
+	nret = AsyncSendSocketData( psession ) ;
+	if( nret )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "AsyncSendSocketData failed[%d] , errno[%d]" , nret , errno );
+		comm_CloseWildSocket( penv , psession );
+		return 0;
+	}
+	else
+	{
+		DebugLog( __FILE__ , __LINE__ , "AsyncSendSocketData ok" );
+	}
+	
+	if( psession->send_len == psession->total_send_len )
+	{
+		comm_CloseWildSocket( penv , psession );
+	}
+	
+	return 0;
+}
+
+int comm_OnWildSocketError( struct ServerEnv *penv , struct SocketSession *psession )
+{
+	ErrorLog( __FILE__ , __LINE__ , "detected sock[%d] error , errno[%d]" , psession->sock , errno );
+	comm_CloseWildSocket( penv , psession );
 	return 0;
 }
 

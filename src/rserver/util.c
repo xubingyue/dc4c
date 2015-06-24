@@ -16,7 +16,7 @@ int AddInputSockToEpoll( int epoll_socks , struct SocketSession *psession )
 	
 	memset( & event , 0x00 , sizeof(event) );
 	event.data.ptr = psession ;
-	event.events = EPOLLIN | EPOLLERR ;
+	event.events = ( EPOLLIN | EPOLLERR ) ;
 	nret = epoll_ctl( epoll_socks , EPOLL_CTL_ADD , psession->sock , & event ) ;
 	if( nret )
 	{
@@ -38,7 +38,7 @@ int AddOutputSockToEpoll( int epoll_socks , struct SocketSession *psession )
 	
 	memset( & event , 0x00 , sizeof(event) );
 	event.data.ptr = psession ;
-	event.events = EPOLLOUT | EPOLLERR ;
+	event.events = ( EPOLLOUT | EPOLLERR ) ;
 	nret = epoll_ctl( epoll_socks , EPOLL_CTL_ADD , psession->sock , & event ) ;
 	if( nret )
 	{
@@ -60,7 +60,7 @@ int ModifyInputSockFromEpoll( int epoll_socks , struct SocketSession *psession )
 	
 	memset( & event , 0x00 , sizeof(event) );
 	event.data.ptr = psession ;
-	event.events = EPOLLIN | EPOLLERR ;
+	event.events = ( EPOLLIN | EPOLLERR ) ;
 	nret = epoll_ctl( epoll_socks , EPOLL_CTL_MOD , psession->sock , & event ) ;
 	if( nret )
 	{
@@ -82,7 +82,7 @@ int ModifyOutputSockFromEpoll( int epoll_socks , struct SocketSession *psession 
 	
 	memset( & event , 0x00 , sizeof(event) );
 	event.data.ptr = psession ;
-	event.events = EPOLLOUT | EPOLLERR ;
+	event.events = ( EPOLLOUT | EPOLLERR ) ;
 	nret = epoll_ctl( epoll_socks , EPOLL_CTL_MOD , psession->sock , & event ) ;
 	if( nret )
 	{
@@ -109,7 +109,6 @@ int DeleteSockFromEpoll( int epoll_socks , struct SocketSession *psession )
 	else
 	{
 		DebugLog( __FILE__ , __LINE__ , "delete sock[%d] from epoll" , psession->sock );
-		CloseSocket( psession );
 		return 0;
 	}
 }
