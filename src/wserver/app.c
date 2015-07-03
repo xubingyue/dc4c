@@ -172,7 +172,7 @@ int app_WaitProgramExiting( struct ServerEnv *penv , struct SocketSession *p_exe
 	int			nret = 0 ;
 	
 	status = 0 ;
-	pid = waitpid( penv->pid , & status , WNOHANG ) ;
+	pid = waitpid( penv->pid , & status , 0 ); // WNOHANG ) ;
 	if( pid == -1 )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "waitpid[%d] failed , errno[%d]" , (int)pid , errno );

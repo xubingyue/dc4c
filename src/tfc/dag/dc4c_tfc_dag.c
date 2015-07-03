@@ -28,8 +28,11 @@ struct Dc4cDagSchedule
 	SList			*config_batches_tree ; /* struct Dc4cDagBatch */
 	SList			*executing_batches_tree ; /* struct Dc4cDagBatch */
 	
-	struct Dc4cApiEnv	**a_penv ;
+	struct Dc4cApiEnv	**a_penvs ;
+	int			envs_count ;
 	int			envs_size ;
+	
+	int			interrupted_flag ;
 } ;
 
 struct Dc4cDagBatch
@@ -100,7 +103,7 @@ int _LoadDagScheduleFromStruct( struct Dc4cDagSchedule *p_sched , dag_schedule_c
 					}
 					if( j >= p_config->batches._batches_info_count )
 					{
-						ErrorLog( __FILE__ , __LINE__ , "batch_name[%s] not found in config" , p_config->batches.batches_direction[i].to_batch );
+						ErrorLog( __FILE__ , __LINE__ , "to_batch_name[%s] not found in batch info" , p_config->batches.batches_direction[i].to_batch );
 						return DC4C_ERROR_PARAMETER;
 					}
 					
@@ -140,8 +143,6 @@ int _LoadDagScheduleFromStruct( struct Dc4cDagSchedule *p_sched , dag_schedule_c
 								strncpy( p_batch->tasks_array[k].program_and_params , p_config->batches.batches_info[j].tasks[k].program_and_params , sizeof(p_batch->tasks_array[k].program_and_params)-1 );
 								p_batch->tasks_array[k].timeout = p_config->batches.batches_info[j].tasks[k].timeout ;
 								p_config->batches.batches_info[j].tasks[k].progress = DC4C_DAGTASK_PROGRESS_INIT ;
-								
-								
 								
 								p_batch->tasks_count++;
 							}
@@ -206,7 +207,8 @@ int DC4CLoadDagScheduleFromStruct( struct Dc4cDagSchedule **pp_sched , dag_sched
 	strncpy( (*pp_sched)->schedule_name , p_config->schedule.schedule_name , sizeof((*pp_sched)->schedule_name)-1 );
 	strncpy( (*pp_sched)->schedule_desc , p_config->schedule.schedule_desc , sizeof((*pp_sched)->schedule_desc)-1 );
 	
-	strncpy( (*pp_sched)->rservers_ip_port , rservers_ip_port , sizeof((*pp_sched)->rservers_ip_port)-1 );
+	if( rservers_ip_port )
+		strncpy( (*pp_sched)->rservers_ip_port , rservers_ip_port , sizeof((*pp_sched)->rservers_ip_port)-1 );
 	(*pp_sched)->options = options ;
 	
 	strncpy( (*pp_sched)->begin_datetime , p_config->schedule.begin_datetime , sizeof((*pp_sched)->begin_datetime)-1 );
@@ -356,10 +358,10 @@ void DC4CUnloadDagSchedule( struct Dc4cDagSchedule **pp_sched )
 			(*pp_sched)->all_nodes_list = NULL ;
 		}
 		
-		if( (*pp_sched)->a_penv )
+		if( (*pp_sched)->a_penvs )
 		{
-			free( (*pp_sched)->a_penv );
-			(*pp_sched)->a_penv = NULL ;
+			free( (*pp_sched)->a_penvs );
+			(*pp_sched)->a_penvs = NULL ;
 			(*pp_sched)->envs_size = 0 ;
 		}
 		
@@ -449,18 +451,24 @@ int DC4CExecuteDagSchedule( struct Dc4cDagSchedule *p_sched )
 		}
 		else if( nret == DC4C_INFO_ALL_ENVS_FINISHED )
 		{
-			InfoLog( __FILE__ , __LINE__ , "DC4CPerformDagSchedule return DC4C_INFO_ALL_ENVS_FINISHED" );
-			return 0;
+			if( DC4CIsDagScheduleInterrupted(p_sched) )
+			{
+				InfoLog( __FILE__ , __LINE__ , "DC4CPerformDagSchedule return DC4C_DAGSCHEDULE_PROGRESS_FINISHED_WITH_ERROR" );
+				return DC4CIsDagScheduleInterrupted(p_sched);
+			}
+			else
+			{
+				InfoLog( __FILE__ , __LINE__ , "DC4CPerformDagSchedule return DC4C_INFO_ALL_ENVS_FINISHED" );
+				return 0;
+			}
 		}
 		else if( nret == DC4C_ERROR_TIMEOUT )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "DC4CPerformDagSchedule return DC4C_ERROR_TIMEOUT" );
-			return nret;
 		}
 		else if( nret == DC4C_ERROR_APP )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "DC4CPerformDagSchedule return DC4C_ERROR_APP" );
-			return nret;
 		}
 		else if( nret )
 		{
@@ -470,6 +478,11 @@ int DC4CExecuteDagSchedule( struct Dc4cDagSchedule *p_sched )
 	}
 	
 	return 0;
+}
+
+int DC4CIsDagScheduleInterrupted( struct Dc4cDagSchedule *p_sched )
+{
+	return p_sched->interrupted_flag;
 }
 
 extern void DC4CSetPrepareTasksCount( struct Dc4cApiEnv *penv , int prepare_count );
@@ -486,12 +499,14 @@ static int MovedownExecutingTree( struct Dc4cDagSchedule *p_sched , SListNode *p
 	
 	int			nret = 0 ;
 	
-	if( p_branch_batch->progress != DC4C_DAGBATCH_PROGRESS_FINISHED )
+	DebugLog( __FILE__ , __LINE__ , "p_branch_batch->batch_name[%s] ->progress[%d]" , p_branch_batch->batch_name , p_branch_batch->progress );
+	if( p_branch_batch->progress != DC4C_DAGBATCH_PROGRESS_FINISHED && p_branch_batch->progress != DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR )
 		return 0;
 	
-	for( p_postdepend_branch_node = FindFirstListNode(p_branch_batch->postdepend_batches_list) ; p_postdepend_branch_node ; p_postdepend_branch_node = FindNextListNode(p_postdepend_branch_node) )
+	for( p_postdepend_branch_node = FindFirstListNode(p_branch_batch->postdepend_batches_list) ; p_postdepend_branch_node && p_sched->interrupted_flag == 0 ; p_postdepend_branch_node = FindNextListNode(p_postdepend_branch_node) )
 	{
 		p_postdepend_branch_batch = GetNodeMember(p_postdepend_branch_node) ;
+		DebugLog( __FILE__ , __LINE__ , "p_postdepend_branch_batch->batch_name[%s] ->progress[%d]" , p_postdepend_branch_batch->batch_name , p_postdepend_branch_batch->progress );
 		if( STRCMP( p_postdepend_branch_batch->batch_name , == , "" ) )
 			break;
 		
@@ -516,7 +531,7 @@ static int MovedownExecutingTree( struct Dc4cDagSchedule *p_sched , SListNode *p
 			nret = DC4CInitEnv( & (p_postdepend_branch_batch->penv) , p_sched->rservers_ip_port ) ;
 			if( nret )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "DC4CInitEnv failed[%d]" , nret );
+				ErrorLog( __FILE__ , __LINE__ , "DC4CInitEnv failed[%d] , rservers_ip_port[%s]" , nret , p_sched->rservers_ip_port );
 				return nret;
 			}
 			else
@@ -545,6 +560,7 @@ static int MovedownExecutingTree( struct Dc4cDagSchedule *p_sched , SListNode *p
 		}
 	}
 	
+	/*
 	if(	p_branch_batch->progress == DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR
 		&&
 		(
@@ -561,9 +577,12 @@ static int MovedownExecutingTree( struct Dc4cDagSchedule *p_sched , SListNode *p
 	}
 	else
 	{
+	*/
 		InfoLog( __FILE__ , __LINE__ , "DeleteListNode batch_name[%s]" , p_branch_batch->batch_name );
 		DeleteListNode( & (p_sched->executing_batches_tree) , & p_executing_batches_node , NULL );
+	/*
 	}
+	*/
 	
 	return 0;
 }
@@ -586,17 +605,17 @@ int DC4CBeginDagSchedule( struct Dc4cDagSchedule *p_sched )
 	
 	p_sched->progress = DC4C_DAGSCHEDULE_PROGRESS_EXECUTING ;
 	
-	if( p_sched->a_penv == NULL )
+	if( p_sched->a_penvs == NULL )
 	{
 		p_sched->envs_size = 10 ;
-		p_sched->a_penv = (struct Dc4cApiEnv**)malloc( sizeof(struct Dc4cApiEnv*) * p_sched->envs_size ) ;
-		if( p_sched->a_penv == NULL )
+		p_sched->a_penvs = (struct Dc4cApiEnv**)malloc( sizeof(struct Dc4cApiEnv*) * p_sched->envs_size ) ;
+		if( p_sched->a_penvs == NULL )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "alloc failed , errno[%d]" , errno );
 			p_sched->progress = DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR ;
 			return DC4C_ERROR_ALLOC;
 		}
-		memset( p_sched->a_penv , 0x00 , sizeof(sizeof(struct Dc4cApiEnv*) * p_sched->envs_size) );
+		memset( p_sched->a_penvs , 0x00 , sizeof(sizeof(struct Dc4cApiEnv*) * p_sched->envs_size) );
 	}
 	
 	p_branch_batch = GetNodeMember(p_sched->config_batches_tree) ;
@@ -609,7 +628,7 @@ int DC4CBeginDagSchedule( struct Dc4cDagSchedule *p_sched )
 		nret = DC4CInitEnv( & (p_branch_batch->penv) , p_sched->rservers_ip_port ) ;
 		if( nret )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "DC4CInitEnv failed[%d]" , nret );
+			ErrorLog( __FILE__ , __LINE__ , "DC4CInitEnv failed[%d] , rservers_ip_port[%s]" , nret , p_sched->rservers_ip_port );
 			p_sched->progress = DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR ;
 			return nret;
 		}
@@ -642,7 +661,6 @@ int DC4CBeginDagSchedule( struct Dc4cDagSchedule *p_sched )
 
 int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatch **pp_batch , struct Dc4cApiEnv **ppenv , int *p_task_index )
 {
-	int			envs_count ;
 	struct Dc4cApiEnv	*penv = NULL ;
 	int			task_index ;
 	int			perform_return ;
@@ -658,11 +676,15 @@ int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatc
 	
 	if( p_sched->executing_batches_tree == NULL )
 	{
-		p_sched->progress = DC4C_DAGSCHEDULE_PROGRESS_FINISHED ;
+		if( p_sched->interrupted_flag )
+			p_sched->progress = DC4C_DAGSCHEDULE_PROGRESS_FINISHED_WITH_ERROR ;
+		else
+			p_sched->progress = DC4C_DAGSCHEDULE_PROGRESS_FINISHED ;
+		InfoLog( __FILE__ , __LINE__ , "p_sched->progress[%d] return" , p_sched->progress );
 		return DC4C_INFO_ALL_ENVS_FINISHED;
 	}
 	
-	envs_count = 0 ;
+	p_sched->envs_count = 0 ;
 	for( p_executing_batches_node = FindFirstListNode(p_sched->executing_batches_tree) ; p_executing_batches_node ; )
 	{
 		p_branch_node = GetNodeMember(p_executing_batches_node) ;
@@ -675,10 +697,10 @@ int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatc
 		{
 			GetTimeStringNow( p_branch_batch->begin_datetime , sizeof(p_branch_batch->begin_datetime) );
 		}
-		if( envs_count >= p_sched->envs_size )
+		if( p_sched->envs_count >= p_sched->envs_size )
 		{
 			struct Dc4cApiEnv	**tmp = NULL ;
-			tmp = (struct Dc4cApiEnv**)realloc( p_sched->a_penv , sizeof(struct Dc4cApiEnv*) * p_sched->envs_size * 2 ) ;
+			tmp = (struct Dc4cApiEnv**)realloc( p_sched->a_penvs , sizeof(struct Dc4cApiEnv*) * p_sched->envs_size * 2 ) ;
 			if( tmp == NULL )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "alloc failed , errno[%d]" , errno );
@@ -689,16 +711,16 @@ int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatc
 			{
 				InfoLog( __FILE__ , __LINE__ , "alloc ok , envs_size[%d]->[%d]" , p_sched->envs_size , p_sched->envs_size * 2 );
 			}
-			p_sched->a_penv = tmp ;
+			p_sched->a_penvs = tmp ;
 			p_sched->envs_size *= 2 ;
 		}
-		p_sched->a_penv[envs_count++] = p_branch_batch->penv ;
+		p_sched->a_penvs[p_sched->envs_count++] = p_branch_batch->penv ;
 		
 		p_executing_batches_node = FindNextListNode(p_executing_batches_node) ;
 	}
 	
 	penv = NULL ;
-	perform_return = DC4CPerformMultiBatchTasks( p_sched->a_penv , envs_count , & penv , & task_index ) ;
+	perform_return = DC4CPerformMultiBatchTasks( p_sched->a_penvs , p_sched->envs_count , & penv , & task_index ) ;
 	if( perform_return == DC4C_INFO_TASK_FINISHED )
 	{
 		InfoLog( __FILE__ , __LINE__ , "DC4CPerformMultiBatchTasks return DC4C_INFO_TASK_FINISHED" );
@@ -710,7 +732,11 @@ int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatc
 	else if( perform_return == DC4C_INFO_ALL_ENVS_FINISHED )
 	{
 		InfoLog( __FILE__ , __LINE__ , "DC4CPerformMultiBatchTasks return DC4C_INFO_ALL_ENVS_FINISHED" );
-		p_sched->progress = DC4C_DAGBATCH_PROGRESS_FINISHED ;
+		if( p_sched->interrupted_flag )
+			p_sched->progress = DC4C_DAGSCHEDULE_PROGRESS_FINISHED_WITH_ERROR ;
+		else
+			p_sched->progress = DC4C_DAGSCHEDULE_PROGRESS_FINISHED ;
+		InfoLog( __FILE__ , __LINE__ , "p_sched->progress[%d] return" , p_sched->progress );
 		return DC4C_INFO_ALL_ENVS_FINISHED;
 	}
 	else if( perform_return == DC4C_ERROR_TIMEOUT )
@@ -725,6 +751,7 @@ int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatc
 	{
 		ErrorLog( __FILE__ , __LINE__ , "DC4CPerformMultiBatchTasks failed[%d]" , perform_return );
 		p_sched->progress = DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR ;
+		p_sched->interrupted_flag = perform_return ;
 		return perform_return;
 	}
 	
@@ -748,22 +775,27 @@ int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatc
 	}
 	else if( perform_return == DC4C_INFO_BATCH_TASKS_FINISHED )
 	{
-		InfoLog( __FILE__ , __LINE__ , "DAG FIN batch - batch_name[%s] tasks_count[%d]" , p_branch_batch->batch_name , p_branch_batch->tasks_count );
-		p_branch_batch->progress = DC4C_DAGBATCH_PROGRESS_FINISHED ;
+		if( p_branch_batch->progress != DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR )
+			p_branch_batch->progress = DC4C_DAGBATCH_PROGRESS_FINISHED ;
+		InfoLog( __FILE__ , __LINE__ , "DAG FIN batch - batch_name[%s] tasks_count[%d] progress[%d]" , p_branch_batch->batch_name , p_branch_batch->tasks_count , p_branch_batch->progress );
 	}
 	else if( perform_return == DC4C_ERROR_TIMEOUT )
 	{
-		InfoLog( __FILE__ , __LINE__ , "DAG FIN TIMEOUT batch - batch_name[%s] tasks_count[%d]" , p_branch_batch->batch_name , p_branch_batch->tasks_count );
 		p_branch_batch->progress = DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR ;
+		p_sched->interrupted_flag = perform_return ;
+		InfoLog( __FILE__ , __LINE__ , "DAG FIN TIMEOUT batch - batch_name[%s] tasks_count[%d] progress[%d]" , p_branch_batch->batch_name , p_branch_batch->tasks_count , p_branch_batch->progress );
 	}
 	else if( perform_return == DC4C_ERROR_APP )
 	{
-		InfoLog( __FILE__ , __LINE__ , "DAG FIN APPERR batch - batch_name[%s] tasks_count[%d]" , p_branch_batch->batch_name , p_branch_batch->tasks_count );
 		p_branch_batch->progress = DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR ;
+		p_sched->interrupted_flag = perform_return ;
+		InfoLog( __FILE__ , __LINE__ , "DAG FIN APPERR batch - batch_name[%s] tasks_count[%d] progress[%d]" , p_branch_batch->batch_name , p_branch_batch->tasks_count , p_branch_batch->progress );
 	}
 	else
 	{
-		InfoLog( __FILE__ , __LINE__ , "DAG ERR batch - batch_name[%s]" , p_branch_batch->batch_name );
+		ErrorLog( __FILE__ , __LINE__ , "Internal Errno" );
+		p_sched->progress = DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR ;
+		return DC4C_ERROR_INTERNAL;
 	}
 	
 	GetTimeStringNow( p_branch_batch->end_datetime , sizeof(p_branch_batch->end_datetime) );

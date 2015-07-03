@@ -3,6 +3,7 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 #include "dc4c_api.h"
 
@@ -10,9 +11,6 @@ int main( int argc , char *argv[] )
 {
 	struct timeval		tv ;
 	int			seconds ;
-	
-	DC4CSetAppLogFile( "dc4c_test_worker_sleep_or_error" );
-	SetLogLevel( LOGLEVEL_INFO );
 	
 	gettimeofday( & tv , NULL );
 	srand( (unsigned int)(tv.tv_sec*tv.tv_usec) );
@@ -25,16 +23,13 @@ int main( int argc , char *argv[] )
 	}
 	else
 	{
-		InfoLog( __FILE__ , __LINE__ , "BEGIN SLEEP" );
 		seconds = 1 ;
 	}
 	
 	if( seconds == 0 )
 		return 1;
 	
-	InfoLog( __FILE__ , __LINE__ , "BEGIN SLEEP [%d]seconds" , seconds );
 	sleep( seconds );
-	InfoLog( __FILE__ , __LINE__ , "END SLEEP [%d]seconds" , seconds );
 	
 	DC4CFormatReplyInfo( "Elapse [%d]seconds" , seconds );
 	

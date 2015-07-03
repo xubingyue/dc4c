@@ -1,4 +1,5 @@
 ################################################
 # for dc4c
-export DC4C_RSERVER_IP_PORT=0:12001
+export DC4C_RSERVERS_IP_PORT=0:12001
+export DC4C_BINPATH=$HOME/bin
 

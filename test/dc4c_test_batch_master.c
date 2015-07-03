@@ -1,3 +1,4 @@
+#include "dc4c_util.h"
 #include "dc4c_api.h"
 
 /* for testing
@@ -111,10 +112,10 @@ int main( int argc , char *argv[] )
 		tasks_count = DC4CGetTasksCount( penv ) ;
 		for( i = 0 ; i < tasks_count ; i++ )
 		{
-			printf( "[%d]-[%s][%ld]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%s]\n"
+			printf( "[%d]-[%s][%d]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%d][%s]\n"
 				, i , DC4CGetBatchTasksIp(penv,i) , DC4CGetBatchTasksPort(penv,i)
 				, DC4CGetBatchTasksTid(penv,i) , DC4CGetBatchTasksProgramAndParams(penv,i) , DC4CGetBatchTasksTimeout(penv,i) , ConvertTimeString(DC4CGetBatchTasksBeginTimestamp(penv,i),begin_timebuf,sizeof(begin_timebuf))+11 , ConvertTimeString(DC4CGetBatchTasksEndTimestamp(penv,i),end_timebuf,sizeof(end_timebuf))+11 , DC4CGetBatchTasksElapse(penv,i)
-				, DC4CGetBatchTasksError(penv,i) , WEXITSTATUS(DC4CGetBatchTasksStatus(penv,i)) , DC4CGetBatchTasksInfo(penv,i) );
+				, DC4CGetBatchTasksProgress(penv,i) , DC4CGetBatchTasksError(penv,i) , WEXITSTATUS(DC4CGetBatchTasksStatus(penv,i)) , DC4CGetBatchTasksInfo(penv,i) );
 		}
 		
 		DC4CCleanEnv( & penv );

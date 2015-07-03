@@ -13,6 +13,7 @@ DIROBJS		= \
 			rserver \
 			wserver \
 			tfc \
+			tools \
 
 ###### ╪стьmktplдё╟Е©Б
 #@ FILESYSTEM

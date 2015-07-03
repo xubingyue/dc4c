@@ -1,3 +1,4 @@
+#include "dc4c_util.h"
 #include "dc4c_api.h"
 
 /* for testing
@@ -54,7 +55,7 @@ int main( int argc , char *argv[] )
 		}
 		memset( a_workers_count , 0x00 , sizeof(int) * envs_count );
 		
-			
+		a_tasks_array = (struct Dc4cBatchTask**)malloc( sizeof(struct Dc4cBatchTask*) * envs_count ) ;
 		if( a_tasks_array == NULL )
 		{
 			printf( "malloc failed[%d] , errno[%d]\n" , nret , errno );
@@ -141,7 +142,7 @@ int main( int argc , char *argv[] )
 		nret = DC4CDoMultiBatchTasks( a_penv , envs_count , a_workers_count , a_tasks_array , a_tasks_count ) ;
 		if( nret )
 		{
-			printf( "DC4CDoMultiBatchTasks failed[%d] , penv[%p]\n" , nret , penv );
+			printf( "DC4CDoMultiBatchTasks failed[%d]\n" , nret );
 		}
 		else
 		{
@@ -156,10 +157,10 @@ int main( int argc , char *argv[] )
 			tasks_count = DC4CGetTasksCount( penv ) ;
 			for( task_index = 0 ; task_index < tasks_count ; task_index++ )
 			{
-				printf( "[%d]-[%s][%ld]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%s]\n"
+				printf( "[%d]-[%s][%d]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%d][%s]\n"
 					, task_index , DC4CGetBatchTasksIp(penv,task_index) , DC4CGetBatchTasksPort(penv,task_index)
 					, DC4CGetBatchTasksTid(penv,task_index) , DC4CGetBatchTasksProgramAndParams(penv,task_index) , DC4CGetBatchTasksTimeout(penv,task_index) , ConvertTimeString(DC4CGetBatchTasksBeginTimestamp(penv,task_index),begin_timebuf,sizeof(begin_timebuf))+11 , ConvertTimeString(DC4CGetBatchTasksEndTimestamp(penv,task_index),end_timebuf,sizeof(end_timebuf))+11 , DC4CGetBatchTasksElapse(penv,task_index)
-					, DC4CGetBatchTasksError(penv,task_index) , WEXITSTATUS(DC4CGetBatchTasksStatus(penv,task_index)) , DC4CGetBatchTasksInfo(penv,task_index) );
+					, DC4CGetBatchTasksProgress(penv,task_index) , DC4CGetBatchTasksError(penv,task_index) , WEXITSTATUS(DC4CGetBatchTasksStatus(penv,task_index)) , DC4CGetBatchTasksInfo(penv,task_index) );
 			}
 		}
 		

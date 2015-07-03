@@ -1,3 +1,4 @@
+#include "dc4c_util.h"
 #include "dc4c_api.h"
 
 int main( int argc , char *argv[] )

@@ -1,3 +1,11 @@
+ver 1.4.0	2015-07-03	calvin
+		* Browser can access the query computing node list in register nodes
+
+ver 1.3.2	2015-06-30	calvin
+		* Fixed some bugs in function Do...Tasks
+		* Add tool 'dc4c_status'
+		* Convert to block mode on waitpid child in computing node
+
 ver 1.3.1	2015-06-24	calvin
 		* Fixed a bug about batch depending in DAG engine
 		* Optimize multi-batch task distribution balancely

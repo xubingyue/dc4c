@@ -93,7 +93,8 @@ BIN		=	\
 			dc4c_test_worker_hello \
 			dc4c_test_worker_sleep \
 			dc4c_test_worker_sleep_or_error \
-			dc4c_test_worker_pi \
+
+#			dc4c_test_worker_pi \
 
 BININST		=	$(_BININST)
 

@@ -101,6 +101,7 @@ int app_WorkerRegisterRequest( struct ServerEnv *penv , struct SocketSession *ps
 int app_QueryWorkersRequest( struct ServerEnv *penv , struct SocketSession *psession , query_workers_request *p_req , query_workers_response *p_rsp );
 int app_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *psession , worker_notice_request *p_req );
 int app_WorkerUnregister( struct ServerEnv *penv , struct SocketSession *psession );
+int app_QueryAllByHtml( struct ServerEnv *penv , struct SocketSession *psession );
 int app_QueryAllOsTypes( struct ServerEnv *penv , struct SocketSession *psession );
 int app_QueryAllHosts( struct ServerEnv *penv , struct SocketSession *psession );
 int app_QueryAllWorkers( struct ServerEnv *penv , struct SocketSession *psession );

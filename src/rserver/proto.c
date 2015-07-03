@@ -40,6 +40,26 @@ int proto_CommandLine( struct ServerEnv *penv , struct SocketSession *psession )
 	
 	memset( cmd , 0x00 , sizeof(cmd) );
 	memset( param1 , 0x00 , sizeof(param1) );
+	cmd_and_para_count = sscanf( psession->recv_buffer , "%3[^ ]%*s%5s" , cmd , param1 ) ;
+	if( cmd_and_para_count == 2 && STRICMP( cmd , == , "GET" ) && STRICMP( param1 , == , "HTTP/" ) )
+	{
+		psession->comm_protocol_mode = COMMPROTO_HTTP ;
+		
+		nret = app_QueryAllByHtml( penv , psession ) ;
+		if( nret )
+		{
+			return RETURN_CLOSE;
+		}
+		else
+		{
+			DebugLog( __FILE__ , __LINE__ , "app_QueryAllByHtml ok" );
+		}
+		
+		return 0;
+	}
+	
+	memset( cmd , 0x00 , sizeof(cmd) );
+	memset( param1 , 0x00 , sizeof(param1) );
 	cmd_and_para_count = sscanf( psession->recv_buffer , "%s %s" , cmd , param1 ) ;
 	
 	if( cmd_and_para_count == 1 && cmd[0] && STRNCMP( cmd , == , "quit" , strlen(cmd) ) )

@@ -1,3 +1,4 @@
+#include "dc4c_util.h"
 #include "dc4c_api.h"
 #include "dc4c_tfc_dag.h"
 
@@ -45,18 +46,24 @@ static int TestDagSchedule( char *dag_schedule_pathfilename , char *rservers_ip_
 		}
 		else if( perform_return == DC4C_INFO_ALL_ENVS_FINISHED )
 		{
-			printf( "DC4CPerformDagSchedule return DC4C_INFO_ALL_ENVS_FINISHED\n" );
-			break;
+			if( DC4CIsDagScheduleInterrupted(p_sched) )
+			{
+				printf( "DC4CPerformDagSchedule return DC4C_DAGSCHEDULE_PROGRESS_FINISHED_WITH_ERROR\n" );
+				break;
+			}
+			else
+			{
+				printf( "DC4CPerformDagSchedule return DC4C_INFO_ALL_ENVS_FINISHED\n" );
+				break;
+			}
 		}
 		else if( perform_return == DC4C_ERROR_TIMEOUT )
 		{
 			printf( "DC4CPerformDagSchedule return DC4C_ERROR_TIMEOUT\n" );
-			break;
 		}
 		else if( perform_return == DC4C_ERROR_APP )
 		{
 			printf( "DC4CPerformDagSchedule failed[%d] , batch_name[%s]\n" , perform_return , DC4CGetDagBatchName(p_batch) );
-			break;
 		}
 		else
 		{

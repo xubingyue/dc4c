@@ -8,7 +8,7 @@
 ** 更新日期时间	:	2005/5/2
 */
 
-#include "ListX.h"
+#include "dc4c_util.h"
 
 /*
 ** 函数名		:	CreateList

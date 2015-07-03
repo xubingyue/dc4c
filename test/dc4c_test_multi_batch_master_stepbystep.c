@@ -1,3 +1,4 @@
+#include "dc4c_util.h"
 #include "dc4c_api.h"
 
 /* for testing
@@ -126,18 +127,18 @@ int main( int argc , char *argv[] )
 			if( nret == DC4C_INFO_TASK_FINISHED )
 			{
 				printf( "DC4CPerformMultiBatchTasks return DC4C_INFO_TASK_FINISHED , penv[%p]\n" , penv );
-				printf( "[%p][%d]-[%s][%ld]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%s]\n"
-					, penv , task_index , DC4CGetBatchTasksIp(penv,task_index) , DC4CGetBatchTasksPort(penv,task_index)
-					, DC4CGetBatchTasksTid(penv,task_index) , DC4CGetBatchTasksProgramAndParams(penv,task_index) , DC4CGetBatchTasksTimeout(penv,task_index) , ConvertTimeString(DC4CGetBatchTasksBeginTimestamp(penv,task_index),begin_timebuf,sizeof(begin_timebuf))+11 , ConvertTimeString(DC4CGetBatchTasksEndTimestamp(penv,task_index),end_timebuf,sizeof(end_timebuf))+11 , DC4CGetBatchTasksElapse(penv,task_index)
-					, DC4CGetBatchTasksError(penv,task_index) , WEXITSTATUS(DC4CGetBatchTasksStatus(penv,task_index)) , DC4CGetBatchTasksInfo(penv,task_index) );
 			}
 			else if( nret == DC4C_INFO_BATCH_TASKS_FINISHED )
 			{
 				printf( "DC4CPerformMultiBatchTasks return DC4C_INFO_BATCH_TASKS_FINISHED , penv[%p]\n" , penv );
+				continue;
 			}
 			else if( nret == DC4C_INFO_ALL_ENVS_FINISHED )
 			{
-				printf( "DC4CPerformMultiBatchTasks return DC4C_INFO_ALL_ENVS_FINISHED , penv[%p]\n" , penv );
+				if( DC4CIsMultiBatchTasksInterrupted( a_penv , envs_count ) )
+					printf( "DC4CPerformMultiBatchTasks return DC4C_INFO_ALL_ENVS_FINISHED WITH ERROR\n" );
+				else
+					printf( "DC4CPerformMultiBatchTasks return DC4C_INFO_ALL_ENVS_FINISHED\n" );
 				break;
 			}
 			else if( nret == DC4C_ERROR_TIMEOUT )
@@ -154,8 +155,10 @@ int main( int argc , char *argv[] )
 				break;
 			}
 			
-			if( nret == DC4C_ERROR_APP )
-				DC4CResetFinishedTasksWithError( penv );
+			printf( "[%p][%d]-[%s][%d]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%d][%s]\n"
+				, penv , task_index , DC4CGetBatchTasksIp(penv,task_index) , DC4CGetBatchTasksPort(penv,task_index)
+				, DC4CGetBatchTasksTid(penv,task_index) , DC4CGetBatchTasksProgramAndParams(penv,task_index) , DC4CGetBatchTasksTimeout(penv,task_index) , ConvertTimeString(DC4CGetBatchTasksBeginTimestamp(penv,task_index),begin_timebuf,sizeof(begin_timebuf))+11 , ConvertTimeString(DC4CGetBatchTasksEndTimestamp(penv,task_index),end_timebuf,sizeof(end_timebuf))+11 , DC4CGetBatchTasksElapse(penv,task_index)
+				, DC4CGetBatchTasksProgress(penv,task_index) , DC4CGetBatchTasksError(penv,task_index) , WEXITSTATUS(DC4CGetBatchTasksStatus(penv,task_index)) , DC4CGetBatchTasksInfo(penv,task_index) );
 		}
 		
 		for( envs_index = 0 ; envs_index < envs_count ; envs_index++ )

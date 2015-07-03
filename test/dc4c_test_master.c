@@ -1,3 +1,4 @@
+#include "dc4c_util.h"
 #include "dc4c_api.h"
 
 /* for testing
@@ -42,10 +43,10 @@ int main( int argc , char *argv[] )
 			printf( "DC4CDoTask ok\n" );
 		}
 		
-		printf( "[%s][%ld]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%s]\n"
+		printf( "[%s][%d]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%d][%s]\n"
 			, DC4CGetTaskIp(penv) , DC4CGetTaskPort(penv)
 			, DC4CGetTaskTid(penv) , DC4CGetTaskProgramAndParams(penv) , DC4CGetTaskTimeout(penv) , ConvertTimeString(DC4CGetTaskBeginTimestamp(penv),begin_timebuf,sizeof(begin_timebuf))+11 , ConvertTimeString(DC4CGetTaskEndTimestamp(penv),end_timebuf,sizeof(end_timebuf))+11 , DC4CGetTaskElapse(penv)
-			, DC4CGetTaskError(penv) , WEXITSTATUS(DC4CGetTaskStatus(penv)) , DC4CGetTaskInfo(penv) );
+			, DC4CGetTaskProgress(penv) , DC4CGetTaskError(penv) , WEXITSTATUS(DC4CGetTaskStatus(penv)) , DC4CGetTaskInfo(penv) );
 		
 		DC4CCleanEnv( & penv );
 		printf( "DC4CCleanEnv ok\n" );

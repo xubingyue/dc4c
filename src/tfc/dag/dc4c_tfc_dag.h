@@ -9,9 +9,8 @@
 #ifndef _H_DC4C_TFC_DAG_
 #define _H_DC4C_TFC_DAG_
 
+#include "dc4c_util.h"
 #include "dc4c_api.h"
-#include "ListX.h"
-#include "LOGC.h"
 
 #include "IDL_dag_schedule_configfile.dsc.h"
 
@@ -46,6 +45,7 @@ void DC4CUnloadDagSchedule( struct Dc4cDagSchedule **pp_sched );
 void DC4CLogDagSchedule( struct Dc4cDagSchedule *p_sched );
 
 int DC4CExecuteDagSchedule( struct Dc4cDagSchedule *p_sched );
+int DC4CIsDagScheduleInterrupted( struct Dc4cDagSchedule *p_sched );
 
 int DC4CBeginDagSchedule( struct Dc4cDagSchedule *p_sched );
 int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatch **pp_batch , struct Dc4cApiEnv **ppenv , int *p_task_index );

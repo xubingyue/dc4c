@@ -15,6 +15,7 @@ DIROBJS		= \
 			rserver \
 			wserver \
 			tfc \
+			tools \
 
 ###### 加载mktpl模板库
 # 文件系统宏

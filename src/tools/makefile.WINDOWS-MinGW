@@ -30,26 +30,21 @@ c_FILE_CLEAN	=	$(c_FILE_o) $(c_FILE2_o) $(c_FILE3_o) $(c_FILE4_o) $(c_FILE5_o)
 	$(CC) $(CFLAGS) -c $<
 
 c_FILE		=	\
-			LOGC.c \
-			ListX.c \
-			dc4c_util.c \
+			dc4c_status.c \
 
 ###### 目标文件、安装目录配置区
 include ../../makeinstall
-LIB		=	libdc4c_util.so
-LIBINST		=	$(_LIBINST)
-HDER		=	dc4c_util.h
-HDERINST	=	$(_HDERINST_UTIL)
+BIN		=	dc4c_status
+BININST		=	$(_BININST)
 
 ###### 编译选项
 CFLAGS		=	$(_CFLAGS) \
 
 ###### 链接选项
 LFLAGS		=	$(_LFLAGS) \
-			-lcrypto \
 
 ###### 额外宏定义区
-CLEAN_ADDITION	=	
+CLEAN_ADDITION	=
 
 ###### 加载mktpl模板库
 # 最终目标列表
@@ -76,16 +71,16 @@ DFTHDER		=	$(csm_FILE_DFTHDER) $(cui_FILE_DFTHDER) $(dtd_FILE_DFTHDER) $(prt_FIL
 # 提交安装规则
 install		:	all
 
-ifneq ($(strip $(LIB)),)
-ifneq ($(strip $(LIBINST)),)
-	-$(MKDIR) "$(LIBINST)"
-	$(CP) $(LIB) "$(LIBINST)/"
+ifneq ($(strip $(BIN)),)
+ifneq ($(strip $(BININST)),)
+	-$(MKDIR) "$(BININST)"
+	$(CP) $(BIN) "$(BININST)/"
 endif
 endif
-ifneq ($(strip $(LIB2)),)
-ifneq ($(strip $(LIBINST2)),)
-	-$(MKDIR) "$(LIBINST2)"
-	$(CP) $(LIB2) "$(LIBINST2)/"
+ifneq ($(strip $(BIN2)),)
+ifneq ($(strip $(BININST2)),)
+	-$(MKDIR) "$(BININST2)"
+	$(CP) $(BIN2) "$(BININST2)/"
 endif
 endif
 
@@ -122,6 +117,6 @@ uninstall		:
 
 
 ###### 目标文件依赖关系
-libdc4c_util.so	:	$(c_FILE_o)
-	$(CC) $(SOFLAGS) -o $@ $(c_FILE_o) $(ESOFLAGS) $(LFLAGS)
+dc4c_status	:	$(c_FILE_o)
+	$(CC) $(ESOFLAGS) -o $@ $(c_FILE_o) $(LFLAGS)
 

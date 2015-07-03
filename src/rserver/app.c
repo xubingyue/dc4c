@@ -517,6 +517,194 @@ int app_WorkerUnregister( struct ServerEnv *penv , struct SocketSession *psessio
 	return 0;
 }
 
+#define SNPRINTF_ARGS		psession->send_buffer + psession->total_send_len		\
+				, psession->send_buffer_size-1 - psession->total_send_len	\
+
+#define SENDBUFFER_APPEND_LEN	if( len > 0 && psession->total_send_len + len < psession->send_buffer_size-1 )	\
+					psession->total_send_len += len ;					\
+
+#define HTML_BGCOLOR		"#EEF3F7"
+#define HTML_BORDERCOLOR	"#A5B6C8"
+#define HTML_FONTSIZE		"16px"
+#define HTML_FONTFAMILY		"Fixedsys, System, Terminal"
+
+int app_QueryAllByHtml( struct ServerEnv *penv , struct SocketSession *psession )
+{
+	SListNode		*os_type_node = NULL ;
+	struct OsType		*os_type = NULL ;
+	SListNode		*host_info_node = NULL ;
+	struct HostInfo		*host_info = NULL ;
+	SListNode		*worker_info_node = NULL ;
+	struct WorkerInfo	*worker_info = NULL ;
+	char			Content_Length[ 11 + 1 ] ;
+	
+	int			len ;
+	
+	len = (int)SNPRINTF( SNPRINTF_ARGS , "HTTP/1.0 200 OK\r\nContent-Length: 1234567890\r\n\r\n" );
+	SENDBUFFER_APPEND_LEN
+	
+	len = (int)SNPRINTF( SNPRINTF_ARGS , 
+		"<html>\n"
+		"<head>\n"
+		"<meta http-equiv='Content-Type' content='text/html; charset=utf-8' />\n"
+		"<meta http-equiv='refresh' content='10' />\n"
+		"<title>DC4C Servers Monitor</title>\n"
+		"<style type='text/css'>\n"
+		"body {\n"
+		"	font-size: "HTML_FONTSIZE";\n"
+		"	font-family: "HTML_FONTFAMILY";\n"
+		"}\n"
+		"</style>\n"
+		"</head>\n"
+		"<body>\n"
+		"<font color='"HTML_BORDERCOLOR"'>"
+		"rserver v%s build %s %s<br />\n"
+		"Copyright by calvin<calvinwilliams.c@gmail.com> 2014,2015<br />\n"
+		"</font>\n"
+		"<p />"
+		, __DC4C_VERSION , __DATE__ , __TIME__
+		);
+	SENDBUFFER_APPEND_LEN
+	
+	len = (int)SNPRINTF( SNPRINTF_ARGS , 
+		"<table border='1' bordercolor='"HTML_BORDERCOLOR"' cellpadding='5' cellspacing='0' style='border-collapse:collapse;'>\n"
+		"  <tr style='background-color:"HTML_BGCOLOR"; color:"HTML_BORDERCOLOR";'>\n"
+		"    <th colSpan=3>Os Types List</th>\n"
+		"  </tr>\n"
+		"  <tr style='background-color:"HTML_BGCOLOR"; color:"HTML_BORDERCOLOR";'>\n"
+		"    <th>sysname</th>\n"
+		"    <th>release</th>\n"
+		"    <th>bits</th>\n"
+		"  </tr>\n"
+		) ;
+	SENDBUFFER_APPEND_LEN
+	
+	for( os_type_node = FindFirstListNode(penv->os_type_list) ; os_type_node ; os_type_node = FindNextListNode(os_type_node) )
+	{
+		os_type = GetNodeMember(os_type_node) ;
+		
+		len = (int)SNPRINTF( SNPRINTF_ARGS , 
+			"  <tr style='color:"HTML_BORDERCOLOR";'>\n"
+			"    <td>%s</td>\n"
+			"    <td>%s</td>\n"
+			"    <td>%d</td>\n"
+			"  </tr>\n"
+			, os_type->sysname , os_type->release , os_type->bits
+			) ;
+		SENDBUFFER_APPEND_LEN
+	}
+	
+	len = (int)SNPRINTF( SNPRINTF_ARGS , 
+		"</table>\n"
+		"<p />"
+		);
+	SENDBUFFER_APPEND_LEN
+	
+	len = (int)SNPRINTF( SNPRINTF_ARGS , 
+		"<table border='1' bordercolor='"HTML_BORDERCOLOR"' cellpadding='5' cellspacing='0' style='border-collapse:collapse;'>\n"
+		"  <tr style='background-color:"HTML_BGCOLOR"; color:"HTML_BORDERCOLOR";'>\n"
+		"    <th colSpan=6>Hosts List</th>\n"
+		"  </tr>\n"
+		"  <tr style='background-color:"HTML_BGCOLOR"; color:"HTML_BORDERCOLOR";'>\n"
+		"    <th>sysname</th>\n"
+		"    <th>release</th>\n"
+		"    <th>bits</th>\n"
+		"    <th>ip</th>\n"
+		"    <th>idler_count</th>\n"
+		"    <th>working_count</th>\n"
+		"  </tr>\n"
+		) ;
+	SENDBUFFER_APPEND_LEN
+	
+	for( os_type_node = FindFirstListNode(penv->os_type_list) ; os_type_node ; os_type_node = FindNextListNode(os_type_node) )
+	{
+		os_type = GetNodeMember(os_type_node) ;
+		for( host_info_node = FindFirstListNode(os_type->host_info_list) ; host_info_node ; host_info_node = FindNextListNode(host_info_node) )
+		{
+			host_info = GetNodeMember(host_info_node) ;
+			
+			len = (int)SNPRINTF( SNPRINTF_ARGS , 
+				"  <tr style='color:"HTML_BORDERCOLOR";'>\n"
+				"    <td>%s</td>\n"
+				"    <td>%s</td>\n"
+				"    <td>%d</td>\n"
+				"    <td>%s</td>\n"
+				"    <td>%d</td>\n"
+				"    <td>%d</td>\n"
+				"  </tr>\n"
+				 , os_type->sysname , os_type->release , os_type->bits , host_info->ip , host_info->idler_count , host_info->working_count
+				) ;
+			SENDBUFFER_APPEND_LEN
+		}
+	}
+	
+	len = (int)SNPRINTF( SNPRINTF_ARGS , 
+		"</table>\n"
+		"<p />"
+		);
+	SENDBUFFER_APPEND_LEN
+	
+	len = (int)SNPRINTF( SNPRINTF_ARGS , 
+		"<table border='1' bordercolor='"HTML_BORDERCOLOR"' cellpadding='5' cellspacing='0' style='border-collapse:collapse;'>\n"
+		"  <tr style='background-color:"HTML_BGCOLOR"; color:"HTML_BORDERCOLOR";'>\n"
+		"    <th colSpan=6>Workers List</th>\n"
+		"  </tr>\n"
+		"  <tr style='background-color:"HTML_BGCOLOR"; color:"HTML_BORDERCOLOR";'>\n"
+		"    <th>sysname</th>\n"
+		"    <th>release</th>\n"
+		"    <th>bits</th>\n"
+		"    <th>ip</th>\n"
+		"    <th>port</th>\n"
+		"    <th>is_working</th>\n"
+		"  </tr>\n"
+		) ;
+	SENDBUFFER_APPEND_LEN
+	
+	for( os_type_node = FindFirstListNode(penv->os_type_list) ; os_type_node ; os_type_node = FindNextListNode(os_type_node) )
+	{
+		os_type = GetNodeMember(os_type_node) ;
+		for( host_info_node = FindFirstListNode(os_type->host_info_list) ; host_info_node ; host_info_node = FindNextListNode(host_info_node) )
+		{
+			host_info = GetNodeMember(host_info_node) ;
+			for( worker_info_node = FindFirstListNode(host_info->worker_info_list) ; worker_info_node ; worker_info_node = FindNextListNode(worker_info_node) )
+			{
+				worker_info = GetNodeMember(worker_info_node) ;
+				
+				len = (int)SNPRINTF( SNPRINTF_ARGS , 
+					"  <tr style='color:"HTML_BORDERCOLOR";'>\n"
+					"    <td>%s</td>\n"
+					"    <td>%s</td>\n"
+					"    <td>%d</td>\n"
+					"    <td>%s</td>\n"
+					"    <td>%d</td>\n"
+					"    <td>%d</td>\n"
+					"  </tr>\n"
+					 , os_type->sysname , os_type->release , os_type->bits , host_info->ip , worker_info->port , worker_info->is_working
+					) ;
+				SENDBUFFER_APPEND_LEN
+			}
+		}
+	}
+	
+	len = (int)SNPRINTF( SNPRINTF_ARGS , 
+		"</table>\n"
+		"<p />"
+		);
+	SENDBUFFER_APPEND_LEN
+	
+	len = (int)SNPRINTF( SNPRINTF_ARGS , 
+		"</body>\n"
+		"</html>\n"
+		);
+	SENDBUFFER_APPEND_LEN
+	
+	memset( Content_Length , 0x00 , sizeof(Content_Length) );
+	SNPRINTF( Content_Length , sizeof(Content_Length)-1 , "%-10d" , psession->total_send_len - 47 );
+	memcpy( psession->send_buffer + 33 , Content_Length , 10 );
+	
+	return 0;
+}
+
 int app_QueryAllOsTypes( struct ServerEnv *penv , struct SocketSession *psession )
 {
 	SListNode		*os_type_node = NULL ;
@@ -527,12 +715,8 @@ int app_QueryAllOsTypes( struct ServerEnv *penv , struct SocketSession *psession
 	for( os_type_node = FindFirstListNode(penv->os_type_list) ; os_type_node ; os_type_node = FindNextListNode(os_type_node) )
 	{
 		os_type = GetNodeMember(os_type_node) ;
-		len = (int)SNPRINTF( psession->send_buffer + psession->total_send_len
-			, psession->send_buffer_size-1 - psession->total_send_len
-			, "%s\t%s\t%d\r\n"
-			, os_type->sysname , os_type->release , os_type->bits );
-		if( len > 0 && psession->total_send_len + len < psession->send_buffer_size-1 )
-				psession->total_send_len += len ;
+		len = (int)SNPRINTF( SNPRINTF_ARGS , "%s\t%s\t%d\r\n" , os_type->sysname , os_type->release , os_type->bits );
+		SENDBUFFER_APPEND_LEN
 	}
 	
 	return 0;
@@ -554,12 +738,8 @@ int app_QueryAllHosts( struct ServerEnv *penv , struct SocketSession *psession )
 		{
 			host_info = GetNodeMember(host_info_node) ;
 			
-			len = (int)SNPRINTF( psession->send_buffer + psession->total_send_len
-				, psession->send_buffer_size-1 - psession->total_send_len
-				, "%s\t%s\t%d\t%s\t%d\t%d\r\n"
-				, os_type->sysname , os_type->release , os_type->bits , host_info->ip , host_info->idler_count , host_info->working_count );
-			if( len > 0 && psession->total_send_len + len < psession->send_buffer_size-1 )
-				psession->total_send_len += len ;
+			len = (int)SNPRINTF( SNPRINTF_ARGS , "%s\t%s\t%d\t%s\t%d\t%d\r\n" , os_type->sysname , os_type->release , os_type->bits , host_info->ip , host_info->idler_count , host_info->working_count );
+			SENDBUFFER_APPEND_LEN
 		}
 	}
 	
@@ -586,12 +766,8 @@ int app_QueryAllWorkers( struct ServerEnv *penv , struct SocketSession *psession
 			for( worker_info_node = FindFirstListNode(host_info->worker_info_list) ; worker_info_node ; worker_info_node = FindNextListNode(worker_info_node) )
 			{
 				worker_info = GetNodeMember(worker_info_node) ;
-				len = (int)SNPRINTF( psession->send_buffer + psession->total_send_len
-					, psession->send_buffer_size-1 - psession->total_send_len
-					, "%s\t%s\t%d\t%s\t%d\t%d\r\n"
-					, os_type->sysname , os_type->release , os_type->bits , host_info->ip , worker_info->port , worker_info->is_working );
-				if( len > 0 && psession->total_send_len + len < psession->send_buffer_size-1 )
-					psession->total_send_len += len ;
+				len = (int)SNPRINTF( SNPRINTF_ARGS , "%s\t%s\t%d\t%s\t%d\t%d\r\n" , os_type->sysname , os_type->release , os_type->bits , host_info->ip , worker_info->port , worker_info->is_working );
+				SENDBUFFER_APPEND_LEN
 			}
 		}
 	}

@@ -100,7 +100,14 @@ _GOTO_CHECK_ASYNC_RECEIVE_COMMAND :
 			}
 			else
 			{
-				DebugLog( __FILE__ , __LINE__ , "proto ok" );
+				DebugLog( __FILE__ , __LINE__ , "proto_CommandLine ok" );
+			}
+			
+			if( psession->comm_protocol_mode == COMMPROTO_HTTP )
+			{
+				CleanRecvBuffer( psession );
+				ModifyOutputSockFromEpoll( penv->epoll_socks , psession );
+				return 0;
 			}
 			
 			nret = AfterDoCommandProtocol( psession ) ;
@@ -214,6 +221,12 @@ int comm_OnAcceptedSocketOutput( struct ServerEnv *penv , struct SocketSession *
 	{
 		CleanSendBuffer( psession );
 		ModifyInputSockFromEpoll( penv->epoll_socks , psession );
+	}
+	
+	if( psession->comm_protocol_mode == COMMPROTO_HTTP )
+	{
+		comm_CloseAcceptedSocket( penv , psession );
+		return 0;
 	}
 	
 	return 0;
