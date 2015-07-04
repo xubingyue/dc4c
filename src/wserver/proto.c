@@ -89,6 +89,10 @@ int proto_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *ps
 	strcpy( req.ip , penv->param.wserver_ip );
 	req.port = penv->param.wserver_port ;
 	req.is_working = IsSocketEstablished( & (penv->accepted_session) ) ;
+	if( penv->accepted_session.progress == ACCEPTED_SESSION_PROGRESS_DO_EXECUTE )
+	{
+		strcpy( req.program_and_params , penv->epq.program_and_params );
+	}
 	
 	DSCLOG_worker_notice_request( & req );
 	

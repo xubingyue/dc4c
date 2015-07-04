@@ -35,6 +35,7 @@ struct WorkerInfo
 	int				port ;
 	
 	int				is_working ;
+	char				program_and_params[ sizeof( ((worker_notice_request*)NULL)->program_and_params ) ] ;
 	
 	long				access_timestamp ;
 } ;

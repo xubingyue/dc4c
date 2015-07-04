@@ -8,5 +8,6 @@ STRUCT	worker_notice_request
 	INT	4	port
 	
 	INT	4	is_working
+	STRING	256	program_and_params
 }
 

@@ -42,6 +42,11 @@ int DSCSERIALIZE_JSON_COMPACT_worker_notice_request( worker_notice_request *pst 
 	len=SNPRINTF(buf,remain_len,","); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\"is_working\":"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"%d",pst->is_working); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,","); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"\"program_and_params\":"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	JSONESCAPE_EXPAND(pst->program_and_params,strlen(pst->program_and_params),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"}"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	
 	if( p_len ) (*p_len) = (*p_len) - remain_len ;
@@ -88,6 +93,9 @@ int CallbackOnJsonNode_worker_notice_request( int type , char *jpath , int jpath
 		/* is_working */
 		if( jpath_len == 11 && strncmp( jpath , "/is_working" , jpath_len ) == 0 )
 		{NATOI(content,content_len,pst->is_working);}
+		/* program_and_params */
+		if( jpath_len == 19 && strncmp( jpath , "/program_and_params" , jpath_len ) == 0 )
+		{JSONUNESCAPE_FOLD(content,content_len,pst->program_and_params,len,sizeof(pst->program_and_params)-1); if(len<0)return -7;}
 	}
 	
 	return 0;

@@ -70,6 +70,7 @@ struct ServerEnv
 	struct SocketSession		connect_session[ RSERVER_ARRAYSIZE ] ;
 	struct SocketSession		listen_session ;
 	struct SocketSession		accepted_session ;
+	
 	execute_program_request		epq ;
 	execute_program_response	epp ;
 	

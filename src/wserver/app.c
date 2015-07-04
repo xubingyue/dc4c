@@ -158,6 +158,8 @@ static int app_ExecuteProgram( struct ServerEnv *penv , struct SocketSession *ps
 		time( & (penv->begin_datetime_stamp) );
 	}
 	
+	app_SendWorkerNotice( penv );
+	
 	return 0;
 }
 
@@ -227,11 +229,13 @@ int app_WaitProgramExiting( struct ServerEnv *penv , struct SocketSession *p_exe
 	}
 	else
 	{
-		DebugLog( __FILE__ , __LINE__ , "accepted sock not existed" );
+		ErrorLog( __FILE__ , __LINE__ , "accepted sock not existed" );
 	}
 	
 	DeleteSockFromEpoll( penv->epoll_socks , p_execute_session );
 	CloseSocketSilently( p_execute_session );
+	
+	app_SendWorkerNotice( penv );
 	
 	return 0;
 }

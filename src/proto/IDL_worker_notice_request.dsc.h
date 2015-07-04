@@ -89,6 +89,7 @@ typedef struct
 	char	ip[ 40 + 1 ] ;
 	int	port ;
 	int	is_working ;
+	char	program_and_params[ 256 + 1 ] ;
 } worker_notice_request ;
 
 _WINDLL_FUNC int DSCINIT_worker_notice_request( worker_notice_request *pst );

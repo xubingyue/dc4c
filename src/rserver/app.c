@@ -415,20 +415,17 @@ int app_WorkerNoticeRequest( struct ServerEnv *penv , struct SocketSession *pses
 						{
 							if( worker_info->is_working == 0 && p_req->is_working == 1 )
 							{
-								worker_info->is_working = 1 ;
 								working_delta++;
 							}
 							else if( worker_info->is_working == 1 && p_req->is_working == 0 )
 							{
-								worker_info->is_working = 0 ;
 								working_delta--;
 							}
-							else
-							{
-								break;
-							}
 							
-							DebugLog( __FILE__ , __LINE__ , "worker notice ok , sysname[%s] release[%s] bits[%d] ip[%s] port[%d] is_working[%d]" , os_type->sysname , os_type->release , os_type->bits , host_info->ip , worker_info->port , worker_info->is_working );
+							worker_info->is_working = p_req->is_working ;
+							strcpy( worker_info->program_and_params , p_req->program_and_params );
+							
+							DebugLog( __FILE__ , __LINE__ , "worker notice ok , sysname[%s] release[%s] bits[%d] ip[%s] port[%d] is_working[%d] program_and_params[%s]" , os_type->sysname , os_type->release , os_type->bits , host_info->ip , worker_info->port , worker_info->is_working , worker_info->program_and_params );
 							
 							last_node = FindLastListNode(host_info->worker_info_list) ;
 							if( last_node != worker_info_node )
@@ -530,6 +527,8 @@ int app_WorkerUnregister( struct ServerEnv *penv , struct SocketSession *psessio
 
 int app_QueryAllByHtml( struct ServerEnv *penv , struct SocketSession *psession )
 {
+	int			html_refresh ;
+	
 	SListNode		*os_type_node = NULL ;
 	struct OsType		*os_type = NULL ;
 	SListNode		*host_info_node = NULL ;
@@ -543,11 +542,23 @@ int app_QueryAllByHtml( struct ServerEnv *penv , struct SocketSession *psession 
 	len = (int)SNPRINTF( SNPRINTF_ARGS , "HTTP/1.0 200 OK\r\nContent-Length: 1234567890\r\n\r\n" );
 	SENDBUFFER_APPEND_LEN
 	
+	html_refresh = 10 ;
+	for( os_type_node = FindFirstListNode(penv->os_type_list) ; os_type_node ; os_type_node = FindNextListNode(os_type_node) )
+	{
+		os_type = GetNodeMember(os_type_node) ;
+		for( host_info_node = FindFirstListNode(os_type->host_info_list) ; host_info_node ; host_info_node = FindNextListNode(host_info_node) )
+		{
+			host_info = GetNodeMember(host_info_node) ;
+			if( host_info->working_count > 0 )
+				html_refresh = 1 ;
+		}
+	}
+	
 	len = (int)SNPRINTF( SNPRINTF_ARGS , 
 		"<html>\n"
 		"<head>\n"
 		"<meta http-equiv='Content-Type' content='text/html; charset=utf-8' />\n"
-		"<meta http-equiv='refresh' content='10' />\n"
+		"<meta http-equiv='refresh' content='%d' />\n"
 		"<title>DC4C Servers Monitor</title>\n"
 		"<style type='text/css'>\n"
 		"body {\n"
@@ -561,8 +572,8 @@ int app_QueryAllByHtml( struct ServerEnv *penv , struct SocketSession *psession 
 		"rserver v%s build %s %s<br />\n"
 		"Copyright by calvin<calvinwilliams.c@gmail.com> 2014,2015<br />\n"
 		"</font>\n"
-		"<p />"
-		, __DC4C_VERSION , __DATE__ , __TIME__
+		"<p />\n"
+		, html_refresh , __DC4C_VERSION , __DATE__ , __TIME__
 		);
 	SENDBUFFER_APPEND_LEN
 	
@@ -596,7 +607,7 @@ int app_QueryAllByHtml( struct ServerEnv *penv , struct SocketSession *psession 
 	
 	len = (int)SNPRINTF( SNPRINTF_ARGS , 
 		"</table>\n"
-		"<p />"
+		"<p />\n"
 		);
 	SENDBUFFER_APPEND_LEN
 	
@@ -640,14 +651,14 @@ int app_QueryAllByHtml( struct ServerEnv *penv , struct SocketSession *psession 
 	
 	len = (int)SNPRINTF( SNPRINTF_ARGS , 
 		"</table>\n"
-		"<p />"
+		"<p />\n"
 		);
 	SENDBUFFER_APPEND_LEN
 	
 	len = (int)SNPRINTF( SNPRINTF_ARGS , 
 		"<table border='1' bordercolor='"HTML_BORDERCOLOR"' cellpadding='5' cellspacing='0' style='border-collapse:collapse;'>\n"
 		"  <tr style='background-color:"HTML_BGCOLOR"; color:"HTML_BORDERCOLOR";'>\n"
-		"    <th colSpan=6>Workers List</th>\n"
+		"    <th colSpan=7>Workers List</th>\n"
 		"  </tr>\n"
 		"  <tr style='background-color:"HTML_BGCOLOR"; color:"HTML_BORDERCOLOR";'>\n"
 		"    <th>sysname</th>\n"
@@ -656,6 +667,7 @@ int app_QueryAllByHtml( struct ServerEnv *penv , struct SocketSession *psession 
 		"    <th>ip</th>\n"
 		"    <th>port</th>\n"
 		"    <th>is_working</th>\n"
+		"    <th>program_and_params</th>\n"
 		"  </tr>\n"
 		) ;
 	SENDBUFFER_APPEND_LEN
@@ -678,8 +690,9 @@ int app_QueryAllByHtml( struct ServerEnv *penv , struct SocketSession *psession 
 					"    <td>%s</td>\n"
 					"    <td>%d</td>\n"
 					"    <td>%d</td>\n"
+					"    <td>%s</td>\n"
 					"  </tr>\n"
-					 , os_type->sysname , os_type->release , os_type->bits , host_info->ip , worker_info->port , worker_info->is_working
+					 , os_type->sysname , os_type->release , os_type->bits , host_info->ip , worker_info->port , worker_info->is_working , worker_info->program_and_params
 					) ;
 				SENDBUFFER_APPEND_LEN
 			}
@@ -688,7 +701,7 @@ int app_QueryAllByHtml( struct ServerEnv *penv , struct SocketSession *psession 
 	
 	len = (int)SNPRINTF( SNPRINTF_ARGS , 
 		"</table>\n"
-		"<p />"
+		"<p />\n"
 		);
 	SENDBUFFER_APPEND_LEN
 	
@@ -766,7 +779,7 @@ int app_QueryAllWorkers( struct ServerEnv *penv , struct SocketSession *psession
 			for( worker_info_node = FindFirstListNode(host_info->worker_info_list) ; worker_info_node ; worker_info_node = FindNextListNode(worker_info_node) )
 			{
 				worker_info = GetNodeMember(worker_info_node) ;
-				len = (int)SNPRINTF( SNPRINTF_ARGS , "%s\t%s\t%d\t%s\t%d\t%d\r\n" , os_type->sysname , os_type->release , os_type->bits , host_info->ip , worker_info->port , worker_info->is_working );
+				len = (int)SNPRINTF( SNPRINTF_ARGS , "%s\t%s\t%d\t%s\t%d\t%d\t%s\r\n" , os_type->sysname , os_type->release , os_type->bits , host_info->ip , worker_info->port , worker_info->is_working , worker_info->program_and_params );
 				SENDBUFFER_APPEND_LEN
 			}
 		}

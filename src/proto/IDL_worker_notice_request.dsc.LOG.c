@@ -22,5 +22,6 @@ int FUNCNAME_DSCLOG_worker_notice_request( worker_notice_request *pst )
 	PREFIX_DSCLOG_worker_notice_request "worker_notice_request.ip[%s]" NEWLINE_DSCLOG_worker_notice_request , pst->ip );
 	PREFIX_DSCLOG_worker_notice_request "worker_notice_request.port[%d]" NEWLINE_DSCLOG_worker_notice_request , pst->port );
 	PREFIX_DSCLOG_worker_notice_request "worker_notice_request.is_working[%d]" NEWLINE_DSCLOG_worker_notice_request , pst->is_working );
+	PREFIX_DSCLOG_worker_notice_request "worker_notice_request.program_and_params[%s]" NEWLINE_DSCLOG_worker_notice_request , pst->program_and_params );
 	return 0;
 }
