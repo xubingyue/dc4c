@@ -1,0 +1,15 @@
+# 批量关系表
+pm_hzbat_batches_direction
+	schedule_name	str 64		notnull	# 计划名称
+	from_batch	str 64			# 前置批量名称
+	to_batch	str 64			# 后续批量名称
+end
+
+action index_by schedule_name from_batch end
+
+action open_select_by schedule_name end
+action fetch_select end
+action close_select end
+
+end
+

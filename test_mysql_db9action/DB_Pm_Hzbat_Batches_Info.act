@@ -1,0 +1,30 @@
+# 调度批量表
+pm_hzbat_batches_info
+	schedule_name			str 64		notnull	# 计划名称
+	batch_name			str 64		notnull	# 批量名称
+	batch_desc			str 64			# 批量描述
+	view_pos_x			int			# 图形编辑坐标X
+	view_pos_y			int			# 图形编辑坐标Y
+	interrupt_by_app		int			# 是否允许应用中断
+	begin_datetime			str 19			# 开始日期时间
+	end_datetime			str 19			# 结束日期时间
+	progress			int			# 进度
+	pretask_program_and_params	str 256			# 准备任务 执行命令行
+	pretask_timeout			int			# 准备任务 超时时间（秒）
+	pretask_progress		int			# 准备任务 进度
+	pretask_error			int			# 准备任务 执行系统响应码
+	pretask_status			int			# 准备任务 执行应用响应码
+end
+
+action index_by_unique schedule_name batch_name end
+
+action count_by schedule_name end
+action open_select_by schedule_name end
+action fetch_select end
+action close_select end
+action read_by schedule_name batch_name end
+action update_for begin_datetime end_datetime progress _by_ schedule_name batch_name end
+action update_for pretask_progress pretask_error pretask_status _by_ schedule_name batch_name end
+
+end
+

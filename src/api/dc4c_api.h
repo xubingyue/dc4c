@@ -131,6 +131,18 @@ int DC4CSetTasksFds( struct Dc4cApiEnv *penv , struct Dc4cApiEnv *penv_QueryWork
 int DC4CSelectTasksFds( fd_set *p_read_fds , fd_set *write_fds , fd_set *expect_fds , int *p_max_fd , int select_timeout );
 int DC4CProcessTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , fd_set *write_fds , fd_set *expect_fds , int *p_task_index );
 
+/* 回调钩子类 */
+
+void DC4CSetProcDataPtr( struct Dc4cApiEnv *penv , void *p1 , void *p2 );
+
+typedef void funcDC4COnBeginTaskProc( struct Dc4cApiEnv *penv , int task_index , void *p1 , void *p2 );
+typedef void funcDC4COnCancelTaskProc( struct Dc4cApiEnv *penv , int task_index , void *p1 , void *p2 );
+typedef void funcDC4COnFinishTaskProc( struct Dc4cApiEnv *penv , int task_index , void *p1 , void *p2 );
+
+void DC4CSetOnBeginTaskProc( struct Dc4cApiEnv *penv , funcDC4COnBeginTaskProc *pfuncDC4COnBeginTaskProc );
+void DC4CSetOnCancelTaskProc( struct Dc4cApiEnv *penv , funcDC4COnCancelTaskProc *pfuncDC4COnCancelTaskProc );
+void DC4CSetOnFinishTaskProc( struct Dc4cApiEnv *penv , funcDC4COnFinishTaskProc *pfuncDC4COnFinishTaskProc );
+
 /* 其它类 */
 
 int DC4CGetTasksCount( struct Dc4cApiEnv *penv );

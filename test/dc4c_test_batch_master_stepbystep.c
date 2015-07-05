@@ -8,6 +8,50 @@ time ./dc4c_test_batch_master 192.168.6.54:12001,192.168.6.54:12002 -1 -100 "dc4
 time ./dc4c_test_batch_master 192.168.6.54:12001,192.168.6.54:12002 -2 -100 "dc4c_test_worker_sleep -10"
 */
 
+funcDC4COnBeginTaskProc OnBeginTaskProc ;
+void OnBeginTaskProc( struct Dc4cApiEnv *penv , int task_index , void *p1 , void *p2 )
+{
+	char			begin_timebuf[ 256 + 1 ] ;
+	char			end_timebuf[ 256 + 1 ] ;
+	
+	printf( "%s-BEGIN -[%d]-[%s][%d]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%d][%s]\n"
+		, (char*)p1
+		, task_index , DC4CGetBatchTasksIp(penv,task_index) , DC4CGetBatchTasksPort(penv,task_index)
+		, DC4CGetBatchTasksTid(penv,task_index) , DC4CGetBatchTasksProgramAndParams(penv,task_index) , DC4CGetBatchTasksTimeout(penv,task_index) , ConvertTimeString(DC4CGetBatchTasksBeginTimestamp(penv,task_index),begin_timebuf,sizeof(begin_timebuf))+11 , ConvertTimeString(DC4CGetBatchTasksEndTimestamp(penv,task_index),end_timebuf,sizeof(end_timebuf))+11 , DC4CGetBatchTasksElapse(penv,task_index)
+		, DC4CGetBatchTasksProgress(penv,task_index) , DC4CGetBatchTasksError(penv,task_index) , WEXITSTATUS(DC4CGetBatchTasksStatus(penv,task_index)) , DC4CGetBatchTasksInfo(penv,task_index) );
+	return;
+	return;
+}
+
+funcDC4COnCancelTaskProc OnCancelTaskProc ;
+void OnCancelTaskProc( struct Dc4cApiEnv *penv , int task_index , void *p1 , void *p2 )
+{
+	char			begin_timebuf[ 256 + 1 ] ;
+	char			end_timebuf[ 256 + 1 ] ;
+	
+	printf( "%s-CANCEL-[%d]-[%s][%d]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%d][%s]\n"
+		, (char*)p1
+		, task_index , DC4CGetBatchTasksIp(penv,task_index) , DC4CGetBatchTasksPort(penv,task_index)
+		, DC4CGetBatchTasksTid(penv,task_index) , DC4CGetBatchTasksProgramAndParams(penv,task_index) , DC4CGetBatchTasksTimeout(penv,task_index) , ConvertTimeString(DC4CGetBatchTasksBeginTimestamp(penv,task_index),begin_timebuf,sizeof(begin_timebuf))+11 , ConvertTimeString(DC4CGetBatchTasksEndTimestamp(penv,task_index),end_timebuf,sizeof(end_timebuf))+11 , DC4CGetBatchTasksElapse(penv,task_index)
+		, DC4CGetBatchTasksProgress(penv,task_index) , DC4CGetBatchTasksError(penv,task_index) , WEXITSTATUS(DC4CGetBatchTasksStatus(penv,task_index)) , DC4CGetBatchTasksInfo(penv,task_index) );
+	return;
+	return;
+}
+
+funcDC4COnFinishTaskProc OnFinishTaskProc ;
+void OnFinishTaskProc( struct Dc4cApiEnv *penv , int task_index , void *p1 , void *p2 )
+{
+	char			begin_timebuf[ 256 + 1 ] ;
+	char			end_timebuf[ 256 + 1 ] ;
+	
+	printf( "%s-FINISH-[%d]-[%s][%d]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%d][%s]\n"
+		, (char*)p1
+		, task_index , DC4CGetBatchTasksIp(penv,task_index) , DC4CGetBatchTasksPort(penv,task_index)
+		, DC4CGetBatchTasksTid(penv,task_index) , DC4CGetBatchTasksProgramAndParams(penv,task_index) , DC4CGetBatchTasksTimeout(penv,task_index) , ConvertTimeString(DC4CGetBatchTasksBeginTimestamp(penv,task_index),begin_timebuf,sizeof(begin_timebuf))+11 , ConvertTimeString(DC4CGetBatchTasksEndTimestamp(penv,task_index),end_timebuf,sizeof(end_timebuf))+11 , DC4CGetBatchTasksElapse(penv,task_index)
+		, DC4CGetBatchTasksProgress(penv,task_index) , DC4CGetBatchTasksError(penv,task_index) , WEXITSTATUS(DC4CGetBatchTasksStatus(penv,task_index)) , DC4CGetBatchTasksInfo(penv,task_index) );
+	return;
+}
+
 int main( int argc , char *argv[] )
 {
 	struct Dc4cApiEnv	*penv = NULL ;
@@ -18,9 +62,6 @@ int main( int argc , char *argv[] )
 	int			workers_count ;
 	int			repeat_task_flag ;
 	int			i ;
-	
-	char			begin_timebuf[ 256 + 1 ] ;
-	char			end_timebuf[ 256 + 1 ] ;
 	
 	int			nret = 0 ;
 	
@@ -42,6 +83,11 @@ int main( int argc , char *argv[] )
 		
 		DC4CSetTimeout( penv , 15 );
 		DC4CSetOptions( penv , DC4C_OPTIONS_INTERRUPT_BY_APP );
+		
+		DC4CSetProcDataPtr( penv , "PROC" , NULL );
+		DC4CSetOnBeginTaskProc( penv , & OnBeginTaskProc );
+		DC4CSetOnCancelTaskProc( penv , & OnCancelTaskProc );
+		DC4CSetOnFinishTaskProc( penv , & OnFinishTaskProc );
 		
 		workers_count = atoi(argv[2]) ;
 		tasks_count = atoi(argv[3]) ;
@@ -138,11 +184,6 @@ int main( int argc , char *argv[] )
 				printf( "DC4CPerformBatchTasks failed[%d]\n" , nret );
 				break;
 			}
-			
-			printf( "[%d]-[%s][%d]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%d][%s]\n"
-				, task_index , DC4CGetBatchTasksIp(penv,task_index) , DC4CGetBatchTasksPort(penv,task_index)
-				, DC4CGetBatchTasksTid(penv,task_index) , DC4CGetBatchTasksProgramAndParams(penv,task_index) , DC4CGetBatchTasksTimeout(penv,task_index) , ConvertTimeString(DC4CGetBatchTasksBeginTimestamp(penv,task_index),begin_timebuf,sizeof(begin_timebuf))+11 , ConvertTimeString(DC4CGetBatchTasksEndTimestamp(penv,task_index),end_timebuf,sizeof(end_timebuf))+11 , DC4CGetBatchTasksElapse(penv,task_index)
-				, DC4CGetBatchTasksProgress(penv,task_index) , DC4CGetBatchTasksError(penv,task_index) , WEXITSTATUS(DC4CGetBatchTasksStatus(penv,task_index)) , DC4CGetBatchTasksInfo(penv,task_index) );
 		}
 		
 		DC4CCleanEnv( & penv );

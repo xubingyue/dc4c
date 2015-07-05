@@ -32,6 +32,13 @@ struct Dc4cDagSchedule
 	int			envs_count ;
 	int			envs_size ;
 	
+	void					*p1 ;
+	funcDC4COnBeginDagBatchProc		*pfuncDC4COnBeginDagBatchProc ;
+	funcDC4COnFinishDagBatchProc		*pfuncDC4COnFinishDagBatchProc ;
+	funcDC4COnBeginDagBatchTaskProc		*pfuncDC4COnBeginDagBatchTaskProc ;
+	funcDC4COnCancelDagBatchTaskProc	*pfuncDC4COnCancelDagBatchTaskProc ;
+	funcDC4COnFinishDagBatchTaskProc	*pfuncDC4COnFinishDagBatchTaskProc ;
+	
 	int			interrupted_flag ;
 } ;
 
@@ -76,7 +83,7 @@ static struct Dc4cDagBatch *FindDagBatch( struct Dc4cDagSchedule *p_sched , char
 	return NULL;
 }
 
-int _LoadDagScheduleFromStruct( struct Dc4cDagSchedule *p_sched , dag_schedule_configfile *p_config , struct Dc4cDagBatch *p_parent_batch , struct Dc4cDagBatch *p_end_batch , char *from_batch_name )
+static int _LoadDagScheduleFromStruct( struct Dc4cDagSchedule *p_sched , dag_schedule_configfile *p_config , struct Dc4cDagBatch *p_parent_batch , struct Dc4cDagBatch *p_end_batch , char *from_batch_name )
 {
 	int			i , j , k ;
 	struct Dc4cDagBatch	*p_batch = NULL ;
@@ -489,6 +496,39 @@ extern void DC4CSetPrepareTasksCount( struct Dc4cApiEnv *penv , int prepare_coun
 extern void DC4CSetRunningTasksCount( struct Dc4cApiEnv *penv , int running_count );
 extern void DC4CSetFinishedTasksCount( struct Dc4cApiEnv *penv , int finished_count );
 
+static funcDC4COnBeginTaskProc _OnBeginTaskProc ;
+void _OnBeginTaskProc( struct Dc4cApiEnv *penv , int task_index , void *p1 , void *p2 )
+{
+	struct Dc4cDagBatch *p_batch = (struct Dc4cDagBatch *) p2 ;
+	if( p_batch->p_sched->pfuncDC4COnBeginDagBatchTaskProc )
+	{
+		p_batch->p_sched->pfuncDC4COnBeginDagBatchTaskProc( p_batch->p_sched , p_batch , penv , task_index , p1 );
+	}
+	return;
+}
+
+static funcDC4COnCancelTaskProc _OnCancelTaskProc ;
+void _OnCancelTaskProc( struct Dc4cApiEnv *penv , int task_index , void *p1 , void *p2 )
+{
+	struct Dc4cDagBatch *p_batch = (struct Dc4cDagBatch *) p2 ;
+	if( p_batch->p_sched->pfuncDC4COnCancelDagBatchTaskProc )
+	{
+		p_batch->p_sched->pfuncDC4COnCancelDagBatchTaskProc( p_batch->p_sched , p_batch , penv , task_index , p1 );
+	}
+	return;
+}
+
+static funcDC4COnFinishTaskProc _OnFinishTaskProc ;
+void _OnFinishTaskProc( struct Dc4cApiEnv *penv , int task_index , void *p1 , void *p2 )
+{
+	struct Dc4cDagBatch *p_batch = (struct Dc4cDagBatch *) p2 ;
+	if( p_batch->p_sched->pfuncDC4COnFinishDagBatchTaskProc )
+	{
+		p_batch->p_sched->pfuncDC4COnFinishDagBatchTaskProc( p_batch->p_sched , p_batch , penv , task_index , p1 );
+	}
+	return;
+}
+
 static int MovedownExecutingTree( struct Dc4cDagSchedule *p_sched , SListNode *p_executing_batches_node , struct Dc4cDagBatch *p_branch_batch )
 {
 	SListNode		*p_postdepend_branch_node = NULL ;
@@ -544,6 +584,22 @@ static int MovedownExecutingTree( struct Dc4cDagSchedule *p_sched , SListNode *p
 			else
 				DC4CSetOptions( p_postdepend_branch_batch->penv , p_sched->options );
 			
+			if( p_sched->pfuncDC4COnBeginDagBatchTaskProc )
+			{
+				DC4CSetProcDataPtr( p_postdepend_branch_batch->penv , p_sched->p1 , p_postdepend_branch_batch );
+				DC4CSetOnBeginTaskProc( p_postdepend_branch_batch->penv , _OnBeginTaskProc );
+			}
+			if( p_sched->pfuncDC4COnCancelDagBatchTaskProc )
+			{
+				DC4CSetProcDataPtr( p_postdepend_branch_batch->penv , p_sched->p1 , p_postdepend_branch_batch );
+				DC4CSetOnCancelTaskProc( p_postdepend_branch_batch->penv , _OnCancelTaskProc );
+			}
+			if( p_sched->pfuncDC4COnFinishDagBatchTaskProc )
+			{
+				DC4CSetProcDataPtr( p_postdepend_branch_batch->penv , p_sched->p1 , p_postdepend_branch_batch );
+				DC4CSetOnFinishTaskProc( p_postdepend_branch_batch->penv , _OnFinishTaskProc );
+			}
+			
 			InfoLog( __FILE__ , __LINE__ , "DAG ACT batch - batch_name[%s] tasks_count[%d]" , p_postdepend_branch_batch->batch_name , p_postdepend_branch_batch->tasks_count );
 			nret = DC4CBeginBatchTasks( p_postdepend_branch_batch->penv , p_postdepend_branch_batch->tasks_count , p_postdepend_branch_batch->tasks_array , p_postdepend_branch_batch->tasks_count ) ;
 			if( nret )
@@ -557,32 +613,16 @@ static int MovedownExecutingTree( struct Dc4cDagSchedule *p_sched , SListNode *p
 			}
 			
 			p_postdepend_branch_batch->progress = DC4C_DAGBATCH_PROGRESS_EXECUTING ;
+			
+			if( p_sched->pfuncDC4COnBeginDagBatchProc )
+			{
+				p_sched->pfuncDC4COnBeginDagBatchProc( p_postdepend_branch_batch , p_sched->p1 );
+			}
 		}
 	}
 	
-	/*
-	if(	p_branch_batch->progress == DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR
-		&&
-		(
-			DC4CGetDagBatchApiEnvPtr(p_branch_batch) == NULL
-			||
-			(
-				DC4CGetDagBatchApiEnvPtr(p_branch_batch)
-				&&
-				TestAttribute( DC4CGetOptions(DC4CGetDagBatchApiEnvPtr(p_branch_batch)) , DC4C_OPTIONS_INTERRUPT_BY_APP ) )
-			)
-		)
-	{
-		;
-	}
-	else
-	{
-	*/
-		InfoLog( __FILE__ , __LINE__ , "DeleteListNode batch_name[%s]" , p_branch_batch->batch_name );
-		DeleteListNode( & (p_sched->executing_batches_tree) , & p_executing_batches_node , NULL );
-	/*
-	}
-	*/
+	InfoLog( __FILE__ , __LINE__ , "DeleteListNode batch_name[%s]" , p_branch_batch->batch_name );
+	DeleteListNode( & (p_sched->executing_batches_tree) , & p_executing_batches_node , NULL );
 	
 	return 0;
 }
@@ -638,6 +678,22 @@ int DC4CBeginDagSchedule( struct Dc4cDagSchedule *p_sched )
 		else
 			DC4CSetOptions( p_branch_batch->penv , p_sched->options );
 		
+		if( p_sched->pfuncDC4COnBeginDagBatchTaskProc )
+		{
+			DC4CSetProcDataPtr( p_branch_batch->penv , p_sched->p1 , p_branch_batch );
+			DC4CSetOnBeginTaskProc( p_branch_batch->penv , _OnBeginTaskProc );
+		}
+		if( p_sched->pfuncDC4COnCancelDagBatchTaskProc )
+		{
+			DC4CSetProcDataPtr( p_branch_batch->penv , p_sched->p1 , p_branch_batch );
+			DC4CSetOnCancelTaskProc( p_branch_batch->penv , _OnCancelTaskProc );
+		}
+		if( p_sched->pfuncDC4COnFinishDagBatchTaskProc )
+		{
+			DC4CSetProcDataPtr( p_branch_batch->penv , p_sched->p1 , p_branch_batch );
+			DC4CSetOnFinishTaskProc( p_branch_batch->penv , _OnFinishTaskProc );
+		}
+		
 		nret = DC4CBeginBatchTasks( p_branch_batch->penv , p_branch_batch->tasks_count , p_branch_batch->tasks_array , p_branch_batch->tasks_count ) ;
 		InfoLog( __FILE__ , __LINE__ , "DAG ACT batch - batch_name[%s] tasks_count[%d]" , p_branch_batch->batch_name , p_branch_batch->tasks_count );
 		if( nret )
@@ -647,12 +703,19 @@ int DC4CBeginDagSchedule( struct Dc4cDagSchedule *p_sched )
 			return nret;
 		}
 		
+		p_branch_batch->progress = DC4C_DAGBATCH_PROGRESS_EXECUTING ;
+		
 		p_executing_batches_node = AddListNode( & (p_sched->executing_batches_tree) , p_branch_node , sizeof(struct Dc4cDagBatch) , NULL ) ;
 		if( p_executing_batches_node == NULL )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "alloc failed , errno[%d]" , errno );
 			p_sched->progress = DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR ;
 			return DC4C_ERROR_ALLOC;
+		}
+		
+		if( p_sched->pfuncDC4COnBeginDagBatchProc )
+		{
+			p_sched->pfuncDC4COnBeginDagBatchProc( p_branch_batch , p_sched->p1 );
 		}
 	}
 	
@@ -778,6 +841,10 @@ int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatc
 		if( p_branch_batch->progress != DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR )
 			p_branch_batch->progress = DC4C_DAGBATCH_PROGRESS_FINISHED ;
 		InfoLog( __FILE__ , __LINE__ , "DAG FIN batch - batch_name[%s] tasks_count[%d] progress[%d]" , p_branch_batch->batch_name , p_branch_batch->tasks_count , p_branch_batch->progress );
+		if( p_sched->pfuncDC4COnFinishDagBatchProc )
+		{
+			p_sched->pfuncDC4COnFinishDagBatchProc( p_branch_batch , p_sched->p1 );
+		}
 	}
 	else if( perform_return == DC4C_ERROR_TIMEOUT )
 	{
@@ -950,3 +1017,38 @@ int DC4CLinkDagBatch( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatch *p_p
 	return 0;
 }
 
+void DC4CSetDagBatchProcDataPtr( struct Dc4cDagSchedule *p_sched , void *p1 )
+{
+	p_sched->p1 = p1 ;
+	return;
+}
+
+void DC4CSetOnBeginDagBatchProc( struct Dc4cDagSchedule *p_sched , funcDC4COnBeginDagBatchProc *pfuncDC4COnBeginDagBatchProc )
+{
+	p_sched->pfuncDC4COnBeginDagBatchProc = pfuncDC4COnBeginDagBatchProc ;
+	return;
+}
+
+void DC4CSetOnFinishDagBatchProc( struct Dc4cDagSchedule *p_sched , funcDC4COnFinishDagBatchProc *pfuncDC4COnFinishDagBatchProc )
+{
+	p_sched->pfuncDC4COnFinishDagBatchProc = pfuncDC4COnFinishDagBatchProc ;
+	return;
+}
+
+void DC4CSetOnBeginDagBatchTaskProc( struct Dc4cDagSchedule *p_sched , funcDC4COnBeginDagBatchTaskProc *pfuncDC4COnBeginDagBatchTaskProc )
+{
+	p_sched->pfuncDC4COnBeginDagBatchTaskProc = pfuncDC4COnBeginDagBatchTaskProc ;
+	return;
+}
+
+void DC4CSetOnCancelDagBatchTaskProc( struct Dc4cDagSchedule *p_sched , funcDC4COnCancelDagBatchTaskProc *pfuncDC4COnCancelDagBatchTaskProc )
+{
+	p_sched->pfuncDC4COnCancelDagBatchTaskProc = pfuncDC4COnCancelDagBatchTaskProc ;
+	return;
+}
+
+void DC4CSetOnFinishDagBatchTaskProc( struct Dc4cDagSchedule *p_sched , funcDC4COnFinishDagBatchTaskProc *pfuncDC4COnFinishDagBatchTaskProc )
+{
+	p_sched->pfuncDC4COnFinishDagBatchTaskProc = pfuncDC4COnFinishDagBatchTaskProc ;
+	return;
+}

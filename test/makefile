@@ -27,17 +27,6 @@ c_FILE2		=	\
 			IDL_dag_batches_info.dsc.c \
 			IDL_dag_batches_tasks.dsc.c \
 
-#@ ec_FILE
-ec_FILE		=	\
-			dc4c_test_tfc_dag_master_pgsql_stepbystep.ec \
-			$(ec_FILE2) \
-			
-ec_FILE2	=	\
-			IDL_dag_schedule.dsc.ESQL.ec \
-			IDL_dag_batches_direction.dsc.ESQL.ec \
-			IDL_dag_batches_info.dsc.ESQL.ec \
-			IDL_dag_batches_tasks.dsc.ESQL.ec \
-
 ###### 目标文件、安装目录配置区
 include ../makeinstall
 BIN		=	\
@@ -48,7 +37,6 @@ BIN		=	\
 			dc4c_test_multi_batch_master_stepbystep \
 			dc4c_test_tfc_dag_master \
 			dc4c_test_tfc_dag_master_stepbystep \
-			dc4c_test_tfc_dag_master_pgsql_stepbystep \
 			dc4c_test_worker_hello \
 			dc4c_test_worker_sleep \
 			dc4c_test_worker_sleep_or_error \
@@ -107,9 +95,6 @@ dc4c_test_tfc_dag_master	:	dc4c_test_tfc_dag_master.o
 
 dc4c_test_tfc_dag_master_stepbystep	:	dc4c_test_tfc_dag_master_stepbystep.o
 	$(CC) -o $@ dc4c_test_tfc_dag_master_stepbystep.o $(LFLAGS) -ldc4c_tfc_dag
-
-dc4c_test_tfc_dag_master_pgsql_stepbystep	:	dc4c_test_tfc_dag_master_pgsql_stepbystep.o $(ec_FILE2_o)
-	$(CC) -o $@ dc4c_test_tfc_dag_master_pgsql_stepbystep.o $(LFLAGS) $(ec_FILE2_o) -lecpg
 
 dc4c_test_worker_hello	:	dc4c_test_worker_hello.o
 	$(CC) -o $@ dc4c_test_worker_hello.o $(LFLAGS)

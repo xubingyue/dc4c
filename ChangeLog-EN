@@ -1,5 +1,12 @@
+ver 1.5.0	2015-07-05	calvin
+		* Add trigger functions on distribute batch-tasks
+		* Add trigger functions on distribute multi-batch-tasks
+		* Add trigger functions on distribute dag tasks engine
+
 ver 1.4.0	2015-07-03	calvin
 		* Web browser can access register node port to query computing nodes list
+		* Remove test/dc4c_test_tfc_dag_master_pgsql.ec
+		* Add demo test_mysql_db9action for configing and managing batch-tasks in database ( compile and execute by special tool environment )
 
 ver 1.3.2	2015-06-30	calvin
 		* Fixed some bugs in function Do...Tasks

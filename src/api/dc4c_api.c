@@ -47,6 +47,12 @@ struct Dc4cApiEnv
 	int				running_count ;
 	int				finished_count ;
 	
+	void				*p1 ;
+	void				*p2 ;
+	funcDC4COnBeginTaskProc		*pfuncDC4COnBeginTaskProc ;
+	funcDC4COnCancelTaskProc	*pfuncDC4COnCancelTaskProc ;
+	funcDC4COnFinishTaskProc	*pfuncDC4COnFinishTaskProc ;
+	
 	query_workers_response		qwp ;
 	int				query_count_used ;
 	
@@ -1417,6 +1423,10 @@ _GOTO_CONNECT :
 			PREPARE_COUNT_DECREASE
 			RUNNING_COUNT_INCREASE
 			task_session_ptr->progress = WSERVER_SESSION_PROGRESS_EXECUTING ;
+			if( penv->pfuncDC4COnBeginTaskProc )
+			{
+				penv->pfuncDC4COnBeginTaskProc( penv , task_index , penv->p1 , penv->p2 );
+			}
 		}
 	}
 	
@@ -1476,6 +1486,10 @@ int DC4CProcessTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , fd_set *wri
 				PREPARE_COUNT_INCREASE
 				task_session_ptr->progress = WSERVER_SESSION_PROGRESS_FINISHED_WITH_ERROR ;
 				task_response_ptr->error = DC4C_ERROR_TIMEOUT ;
+				if( penv->pfuncDC4COnFinishTaskProc )
+				{
+					penv->pfuncDC4COnFinishTaskProc( penv , task_index , penv->p1 , penv->p2 );
+				}
 				return DC4C_ERROR_TIMEOUT;
 			}
 		}
@@ -1497,6 +1511,10 @@ int DC4CProcessTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , fd_set *wri
 				PREPARE_COUNT_INCREASE
 				task_session_ptr->progress = WSERVER_SESSION_PROGRESS_FINISHED_WITH_ERROR ;
 				task_response_ptr->error = DC4C_ERROR_SEND_OR_RECEIVE ;
+				if( penv->pfuncDC4COnFinishTaskProc )
+				{
+					penv->pfuncDC4COnFinishTaskProc( penv , task_index , penv->p1 , penv->p2 );
+				}
 				return task_response_ptr->error;
 			}
 			else
@@ -1516,6 +1534,10 @@ int DC4CProcessTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , fd_set *wri
 					PREPARE_COUNT_INCREASE
 					task_session_ptr->progress = WSERVER_SESSION_PROGRESS_FINISHED_WITH_ERROR ;
 					task_response_ptr->error = nret ;
+					if( penv->pfuncDC4COnFinishTaskProc )
+					{
+						penv->pfuncDC4COnFinishTaskProc( penv , task_index , penv->p1 , penv->p2 );
+					}
 					return task_response_ptr->error;
 				}
 				else
@@ -1533,6 +1555,10 @@ int DC4CProcessTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , fd_set *wri
 					PREPARE_COUNT_INCREASE
 					task_session_ptr->progress = WSERVER_SESSION_PROGRESS_FINISHED_WITH_ERROR ;
 					task_response_ptr->error = nret ;
+					if( penv->pfuncDC4COnFinishTaskProc )
+					{
+						penv->pfuncDC4COnFinishTaskProc( penv , task_index , penv->p1 , penv->p2 );
+					}
 					return task_response_ptr->error;
 				}
 				else
@@ -1550,6 +1576,10 @@ int DC4CProcessTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , fd_set *wri
 					PREPARE_COUNT_INCREASE
 					task_session_ptr->progress = WSERVER_SESSION_PROGRESS_FINISHED_WITH_ERROR ;
 					task_response_ptr->error = DC4C_ERROR_SEND_OR_RECEIVE ;
+					if( penv->pfuncDC4COnFinishTaskProc )
+					{
+						penv->pfuncDC4COnFinishTaskProc( penv , task_index , penv->p1 , penv->p2 );
+					}
 					return task_response_ptr->error;
 				}
 				else
@@ -1569,6 +1599,10 @@ int DC4CProcessTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , fd_set *wri
 					PREPARE_COUNT_INCREASE
 					task_session_ptr->progress = WSERVER_SESSION_PROGRESS_FINISHED_WITH_ERROR ;
 					task_response_ptr->error = nret ;
+					if( penv->pfuncDC4COnFinishTaskProc )
+					{
+						penv->pfuncDC4COnFinishTaskProc( penv , task_index , penv->p1 , penv->p2 );
+					}
 					return task_response_ptr->error;
 				}
 				else
@@ -1584,6 +1618,10 @@ int DC4CProcessTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , fd_set *wri
 					RUNNING_COUNT_DECREASE
 					PREPARE_COUNT_INCREASE
 					task_session_ptr->progress = WSERVER_SESSION_PROGRESS_WAITFOR_CONNECTING ;
+					if( penv->pfuncDC4COnCancelTaskProc )
+					{
+						penv->pfuncDC4COnCancelTaskProc( penv , task_index , penv->p1 , penv->p2 );
+					}
 				}
 				else
 				{
@@ -1599,6 +1637,10 @@ int DC4CProcessTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , fd_set *wri
 							PREPARE_COUNT_INCREASE
 							task_session_ptr->progress = WSERVER_SESSION_PROGRESS_FINISHED_WITH_ERROR ;
 							task_response_ptr->error = DC4C_ERROR_APP ;
+							if( penv->pfuncDC4COnFinishTaskProc )
+							{
+								penv->pfuncDC4COnFinishTaskProc( penv , task_index , penv->p1 , penv->p2 );
+							}
 							return DC4C_ERROR_APP;
 						}
 						else
@@ -1607,6 +1649,10 @@ int DC4CProcessTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , fd_set *wri
 							RUNNING_COUNT_DECREASE
 							FINISHED_COUNT_INCREASE
 							task_session_ptr->progress = WSERVER_SESSION_PROGRESS_FINISHED_WITH_ERROR ;
+							if( penv->pfuncDC4COnFinishTaskProc )
+							{
+								penv->pfuncDC4COnFinishTaskProc( penv , task_index , penv->p1 , penv->p2 );
+							}
 							return DC4C_INFO_TASK_FINISHED;
 						}
 					}
@@ -1616,6 +1662,10 @@ int DC4CProcessTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , fd_set *wri
 						RUNNING_COUNT_DECREASE
 						FINISHED_COUNT_INCREASE
 						task_session_ptr->progress = WSERVER_SESSION_PROGRESS_FINISHED ;
+						if( penv->pfuncDC4COnFinishTaskProc )
+						{
+							penv->pfuncDC4COnFinishTaskProc( penv , task_index , penv->p1 , penv->p2 );
+						}
 						return DC4C_INFO_TASK_FINISHED;
 					}
 				}
@@ -1624,6 +1674,31 @@ int DC4CProcessTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , fd_set *wri
 	}
 	
 	return 0;
+}
+
+void DC4CSetProcDataPtr( struct Dc4cApiEnv *penv , void *p1 , void *p2 )
+{
+	penv->p1 = p1 ;
+	penv->p2 = p2 ;
+	return;
+}
+
+void DC4CSetOnBeginTaskProc( struct Dc4cApiEnv *penv , funcDC4COnBeginTaskProc *pfuncDC4COnBeginTaskProc )
+{
+	penv->pfuncDC4COnBeginTaskProc = pfuncDC4COnBeginTaskProc ;
+	return;
+}
+
+void DC4CSetOnCancelTaskProc( struct Dc4cApiEnv *penv , funcDC4COnBeginTaskProc *pfuncDC4COnCancelTaskProc )
+{
+	penv->pfuncDC4COnCancelTaskProc = pfuncDC4COnCancelTaskProc ;
+	return;
+}
+
+void DC4CSetOnFinishTaskProc( struct Dc4cApiEnv *penv , funcDC4COnFinishTaskProc *pfuncDC4COnFinishTaskProc )
+{
+	penv->pfuncDC4COnFinishTaskProc = pfuncDC4COnFinishTaskProc ;
+	return;
 }
 
 int DC4CGetTasksCount( struct Dc4cApiEnv *penv )

@@ -6,6 +6,72 @@
 time ./dc4c_test_tfc_dag_master rservers_ip_port *.dag_schedule"
 */
 
+funcDC4COnBeginDagBatchProc OnBeginDagBatchProc ;
+void OnBeginDagBatchProc( struct Dc4cDagBatch *p_batch , void *p1 )
+{
+	printf( "%s-BEGINBATCH-[%s][%p]\n"
+		, (char*)p1
+		, DC4CGetDagBatchName(p_batch) , DC4CGetDagBatchApiEnvPtr(p_batch) );
+	return;
+}
+
+funcDC4COnFinishDagBatchProc OnFinishDagBatchProc ;
+void OnFinishDagBatchProc( struct Dc4cDagBatch *p_batch , void *p1 )
+{
+	printf( "%s-FINISHBATCH-[%s][%p]\n"
+		, (char*)p1
+		, DC4CGetDagBatchName(p_batch) , DC4CGetDagBatchApiEnvPtr(p_batch) );
+	return;
+}
+
+funcDC4COnBeginDagBatchTaskProc OnBeginDagBatchTaskProc ;
+void OnBeginDagBatchTaskProc( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatch *p_batch , struct Dc4cApiEnv *penv , int task_index , void *p1 )
+{
+	char			begin_timebuf[ 256 + 1 ] ;
+	char			end_timebuf[ 256 + 1 ] ;
+	
+	printf( "%s-BEGIN -[%s][%s]-[%p][%d]-[%s][%d]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%d][%s]\n"
+		, (char*)p1
+		, DC4CGetDagScheduleName(p_sched) , DC4CGetDagBatchName(p_batch)
+		, penv , task_index
+		, DC4CGetBatchTasksIp(penv,task_index) , DC4CGetBatchTasksPort(penv,task_index)
+		, DC4CGetBatchTasksTid(penv,task_index) , DC4CGetBatchTasksProgramAndParams(penv,task_index) , DC4CGetBatchTasksTimeout(penv,task_index) , ConvertTimeString(DC4CGetBatchTasksBeginTimestamp(penv,task_index),begin_timebuf,sizeof(begin_timebuf))+11 , ConvertTimeString(DC4CGetBatchTasksEndTimestamp(penv,task_index),end_timebuf,sizeof(end_timebuf))+11 , DC4CGetBatchTasksElapse(penv,task_index)
+		, DC4CGetBatchTasksProgress(penv,task_index) , DC4CGetBatchTasksError(penv,task_index) , WEXITSTATUS(DC4CGetBatchTasksStatus(penv,task_index)) , DC4CGetBatchTasksInfo(penv,task_index) );
+	return;
+}
+
+funcDC4COnCancelDagBatchTaskProc OnCancelDagBatchTaskProc ;
+void OnCancelDagBatchTaskProc( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatch *p_batch , struct Dc4cApiEnv *penv , int task_index , void *p1 )
+{
+	char			begin_timebuf[ 256 + 1 ] ;
+	char			end_timebuf[ 256 + 1 ] ;
+	
+	printf( "%s-CANCEL-[%s][%s]-[%p][%d]-[%s][%d]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%d][%s]\n"
+		, (char*)p1
+		, DC4CGetDagScheduleName(p_sched) , DC4CGetDagBatchName(p_batch)
+		, penv , task_index
+		, DC4CGetBatchTasksIp(penv,task_index) , DC4CGetBatchTasksPort(penv,task_index)
+		, DC4CGetBatchTasksTid(penv,task_index) , DC4CGetBatchTasksProgramAndParams(penv,task_index) , DC4CGetBatchTasksTimeout(penv,task_index) , ConvertTimeString(DC4CGetBatchTasksBeginTimestamp(penv,task_index),begin_timebuf,sizeof(begin_timebuf))+11 , ConvertTimeString(DC4CGetBatchTasksEndTimestamp(penv,task_index),end_timebuf,sizeof(end_timebuf))+11 , DC4CGetBatchTasksElapse(penv,task_index)
+		, DC4CGetBatchTasksProgress(penv,task_index) , DC4CGetBatchTasksError(penv,task_index) , WEXITSTATUS(DC4CGetBatchTasksStatus(penv,task_index)) , DC4CGetBatchTasksInfo(penv,task_index) );
+	return;
+}
+
+funcDC4COnFinishDagBatchTaskProc OnFinishDagBatchTaskProc ;
+void OnFinishDagBatchTaskProc( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatch *p_batch , struct Dc4cApiEnv *penv , int task_index , void *p1 )
+{
+	char			begin_timebuf[ 256 + 1 ] ;
+	char			end_timebuf[ 256 + 1 ] ;
+	
+	printf( "%s-FINISH-[%s][%s]-[%p][%d]-[%s][%d]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%d][%s]\n"
+		, (char*)p1
+		, DC4CGetDagScheduleName(p_sched) , DC4CGetDagBatchName(p_batch)
+		, penv , task_index
+		, DC4CGetBatchTasksIp(penv,task_index) , DC4CGetBatchTasksPort(penv,task_index)
+		, DC4CGetBatchTasksTid(penv,task_index) , DC4CGetBatchTasksProgramAndParams(penv,task_index) , DC4CGetBatchTasksTimeout(penv,task_index) , ConvertTimeString(DC4CGetBatchTasksBeginTimestamp(penv,task_index),begin_timebuf,sizeof(begin_timebuf))+11 , ConvertTimeString(DC4CGetBatchTasksEndTimestamp(penv,task_index),end_timebuf,sizeof(end_timebuf))+11 , DC4CGetBatchTasksElapse(penv,task_index)
+		, DC4CGetBatchTasksProgress(penv,task_index) , DC4CGetBatchTasksError(penv,task_index) , WEXITSTATUS(DC4CGetBatchTasksStatus(penv,task_index)) , DC4CGetBatchTasksInfo(penv,task_index) );
+	return;
+}
+
 static int TestDagSchedule( char *dag_schedule_pathfilename , char *rservers_ip_port )
 {
 	struct Dc4cDagSchedule	*p_sched = NULL ;
@@ -28,6 +94,13 @@ static int TestDagSchedule( char *dag_schedule_pathfilename , char *rservers_ip_
 	}
 	
 	DC4CLogDagSchedule( p_sched );
+	
+	DC4CSetDagBatchProcDataPtr( p_sched  , "PROC" );
+	DC4CSetOnBeginDagBatchProc( p_sched  , & OnBeginDagBatchProc );
+	DC4CSetOnFinishDagBatchProc( p_sched  , & OnFinishDagBatchProc );
+	DC4CSetOnBeginDagBatchTaskProc( p_sched  , & OnBeginDagBatchTaskProc );
+	DC4CSetOnCancelDagBatchTaskProc( p_sched  , & OnCancelDagBatchTaskProc );
+	DC4CSetOnFinishDagBatchTaskProc( p_sched  , & OnFinishDagBatchTaskProc );
 	
 	nret = DC4CBeginDagSchedule( p_sched ) ;
 	if( nret )
