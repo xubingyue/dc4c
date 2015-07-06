@@ -6,7 +6,7 @@ ver 1.5.0	2015-07-05	calvin
 ver 1.4.0	2015-07-03	calvin
 		* 注册节点端口支持浏览器直接访问以查询计算节点列表了
 		* 移除test/dc4c_test_tfc_dag_master_pgsql.ec
-		* 新增test_mysql_db9action演示数据库配置、管理批量任务（需要特定工具环境才能编译和运行）
+		* 新增hzbat演示数据库配置、管理批量任务（需要特定工具环境才能编译和运行）
 
 ver 1.3.2	2015-06-30	calvin
 		* 修正了任务分发函数中的一些问题

@@ -929,6 +929,7 @@ int DC4CPerformBatchTasks( struct Dc4cApiEnv *penv , int *p_task_index )
 			if( nret )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "DC4CQueryWorkers failed[%d]" , nret );
+				penv->interrupted_flag = nret ;
 				return nret;
 			}
 			else
@@ -950,6 +951,7 @@ int DC4CPerformBatchTasks( struct Dc4cApiEnv *penv , int *p_task_index )
 		else if( nret )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "DC4CSetTasksFds failed[%d]" , nret );
+			penv->interrupted_flag = nret ;
 			return nret;
 		}
 		else
@@ -960,6 +962,7 @@ int DC4CPerformBatchTasks( struct Dc4cApiEnv *penv , int *p_task_index )
 			if( select_return_count < 0 )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "DC4CSelectTasksFds failed[%d]" , select_return_count );
+				penv->interrupted_flag = nret ;
 				return select_return_count;
 			}
 			else if( select_return_count == 0 )
@@ -1093,6 +1096,7 @@ int DC4CPerformMultiBatchTasks( struct Dc4cApiEnv **a_penv , int envs_count , st
 					nret = DC4CQueryWorkers( penv ) ;
 					if( nret )
 					{
+						penv->interrupted_flag = nret ;
 						if( p_penv )
 							(*p_penv) = penv ;
 						ErrorLog( __FILE__ , __LINE__ , "DC4CQueryWorkers failed[%d]" , nret );
@@ -1114,6 +1118,7 @@ int DC4CPerformMultiBatchTasks( struct Dc4cApiEnv **a_penv , int envs_count , st
 				}
 				else if( nret )
 				{
+					penv->interrupted_flag = nret ;
 					if( p_penv )
 						(*p_penv) = penv ;
 					ErrorLog( __FILE__ , __LINE__ , "DC4CSetTasksFds failed[%d]" , nret );
@@ -1129,6 +1134,7 @@ int DC4CPerformMultiBatchTasks( struct Dc4cApiEnv **a_penv , int envs_count , st
 			if( select_return_count < 0 )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "DC4CSelectTasksFds failed[%d]" , select_return_count );
+				penv->interrupted_flag = nret ;
 				if( p_penv )
 					(*p_penv) = NULL ;
 				return select_return_count;
@@ -1447,7 +1453,10 @@ int DC4CSelectTasksFds( fd_set *p_read_fds , fd_set *write_fds , fd_set *expect_
 	select_return_count = select( (*p_max_fd)+1 , p_read_fds , NULL , NULL , & tv ) ;
 	DebugLog( __FILE__ , __LINE__ , "select return[%d]" , select_return_count );
 	
-	return select_return_count;
+	if( select_return_count < 0 )
+		return DC4C_ERROR_SELECT;
+	else
+		return 0;
 }
 
 int DC4CProcessTasks( struct Dc4cApiEnv *penv , fd_set *p_read_fds , fd_set *write_fds , fd_set *expect_fds , int *p_task_index )

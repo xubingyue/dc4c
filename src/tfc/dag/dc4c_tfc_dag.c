@@ -613,10 +613,14 @@ static int MovedownExecutingTree( struct Dc4cDagSchedule *p_sched , SListNode *p
 			}
 			
 			p_postdepend_branch_batch->progress = DC4C_DAGBATCH_PROGRESS_EXECUTING ;
+			if( p_postdepend_branch_batch->begin_datetime[0] == '\0' )
+			{
+				GetTimeStringNow( p_postdepend_branch_batch->begin_datetime , sizeof(p_postdepend_branch_batch->begin_datetime) );
+			}
 			
 			if( p_sched->pfuncDC4COnBeginDagBatchProc )
 			{
-				p_sched->pfuncDC4COnBeginDagBatchProc( p_postdepend_branch_batch , p_sched->p1 );
+				p_sched->pfuncDC4COnBeginDagBatchProc( p_sched , p_postdepend_branch_batch , p_postdepend_branch_batch->penv , p_sched->p1 );
 			}
 		}
 	}
@@ -704,6 +708,10 @@ int DC4CBeginDagSchedule( struct Dc4cDagSchedule *p_sched )
 		}
 		
 		p_branch_batch->progress = DC4C_DAGBATCH_PROGRESS_EXECUTING ;
+		if( p_branch_batch->begin_datetime[0] == '\0' )
+		{
+			GetTimeStringNow( p_branch_batch->begin_datetime , sizeof(p_branch_batch->begin_datetime) );
+		}
 		
 		p_executing_batches_node = AddListNode( & (p_sched->executing_batches_tree) , p_branch_node , sizeof(struct Dc4cDagBatch) , NULL ) ;
 		if( p_executing_batches_node == NULL )
@@ -715,7 +723,7 @@ int DC4CBeginDagSchedule( struct Dc4cDagSchedule *p_sched )
 		
 		if( p_sched->pfuncDC4COnBeginDagBatchProc )
 		{
-			p_sched->pfuncDC4COnBeginDagBatchProc( p_branch_batch , p_sched->p1 );
+			p_sched->pfuncDC4COnBeginDagBatchProc( p_sched , p_branch_batch , p_branch_batch->penv , p_sched->p1 );
 		}
 	}
 	
@@ -755,11 +763,6 @@ int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatc
 		
 		InfoLog( __FILE__ , __LINE__ , "DAG SET batch - batch_name[%s] tasks_count[%d]" , p_branch_batch->batch_name , p_branch_batch->tasks_count );
 		
-		p_branch_batch->progress = DC4C_DAGBATCH_PROGRESS_EXECUTING ;
-		if( p_branch_batch->begin_datetime[0] == '\0' )
-		{
-			GetTimeStringNow( p_branch_batch->begin_datetime , sizeof(p_branch_batch->begin_datetime) );
-		}
 		if( p_sched->envs_count >= p_sched->envs_size )
 		{
 			struct Dc4cApiEnv	**tmp = NULL ;
@@ -838,12 +841,13 @@ int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatc
 	}
 	else if( perform_return == DC4C_INFO_BATCH_TASKS_FINISHED )
 	{
+		GetTimeStringNow( p_branch_batch->end_datetime , sizeof(p_branch_batch->end_datetime) );
 		if( p_branch_batch->progress != DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR )
 			p_branch_batch->progress = DC4C_DAGBATCH_PROGRESS_FINISHED ;
 		InfoLog( __FILE__ , __LINE__ , "DAG FIN batch - batch_name[%s] tasks_count[%d] progress[%d]" , p_branch_batch->batch_name , p_branch_batch->tasks_count , p_branch_batch->progress );
 		if( p_sched->pfuncDC4COnFinishDagBatchProc )
 		{
-			p_sched->pfuncDC4COnFinishDagBatchProc( p_branch_batch , p_sched->p1 );
+			p_sched->pfuncDC4COnFinishDagBatchProc( p_sched , p_branch_batch , p_branch_batch->penv , p_sched->p1 );
 		}
 	}
 	else if( perform_return == DC4C_ERROR_TIMEOUT )
@@ -864,8 +868,6 @@ int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatc
 		p_sched->progress = DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR ;
 		return DC4C_ERROR_INTERNAL;
 	}
-	
-	GetTimeStringNow( p_branch_batch->end_datetime , sizeof(p_branch_batch->end_datetime) );
 	
 	if( pp_batch )
 		(*pp_batch) = p_branch_batch ;

@@ -7,7 +7,7 @@ time ./dc4c_test_tfc_dag_master rservers_ip_port *.dag_schedule"
 */
 
 funcDC4COnBeginDagBatchProc OnBeginDagBatchProc ;
-void OnBeginDagBatchProc( struct Dc4cDagBatch *p_batch , void *p1 )
+void OnBeginDagBatchProc( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatch *p_batch , struct Dc4cApiEnv *penv , void *p1 )
 {
 	printf( "%s-BEGINBATCH-[%s][%p]\n"
 		, (char*)p1
@@ -16,7 +16,7 @@ void OnBeginDagBatchProc( struct Dc4cDagBatch *p_batch , void *p1 )
 }
 
 funcDC4COnFinishDagBatchProc OnFinishDagBatchProc ;
-void OnFinishDagBatchProc( struct Dc4cDagBatch *p_batch , void *p1 )
+void OnFinishDagBatchProc( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatch *p_batch , struct Dc4cApiEnv *penv , void *p1 )
 {
 	printf( "%s-FINISHBATCH-[%s][%p]\n"
 		, (char*)p1

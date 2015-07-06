@@ -74,8 +74,8 @@ int DC4CLinkDagBatch( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatch *p_p
 
 void DC4CSetDagBatchProcDataPtr( struct Dc4cDagSchedule *p_sched , void *p1 );
 
-typedef void funcDC4COnBeginDagBatchProc( struct Dc4cDagBatch *p_batch , void *p1 );
-typedef void funcDC4COnFinishDagBatchProc( struct Dc4cDagBatch *p_batch , void *p1 );
+typedef void funcDC4COnBeginDagBatchProc( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatch *p_batch , struct Dc4cApiEnv *penv , void *p1 );
+typedef void funcDC4COnFinishDagBatchProc( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatch *p_batch , struct Dc4cApiEnv *penv , void *p1 );
 
 void DC4CSetOnBeginDagBatchProc( struct Dc4cDagSchedule *p_sched , funcDC4COnBeginDagBatchProc *pfuncDC4COnBeginDagBatchProc );
 void DC4CSetOnFinishDagBatchProc( struct Dc4cDagSchedule *p_sched , funcDC4COnFinishDagBatchProc *pfuncDC4COnFinishDagBatchProc );
