@@ -7,6 +7,8 @@ pm_hzbat_batches_tasks
 	timeout			int			# 超时配置（单位：秒）
 	begin_datetime		str 19			# 开始日期时间
 	end_datetime		str 19			# 结束日期时间
+	ip			str 40			# 执行IP
+	port			int			# 执行PORT
 	progress		int			# 进度
 	error			int			# 执行系统响应码
 	status			int			# 执行应用响应码
@@ -14,12 +16,13 @@ end
 
 action index_by_unique schedule_name batch_name order_index end
 
+action count_by schedule_name batch_name end
 action open_select_by schedule_name end
 action open_select_by schedule_name batch_name _order_by_ order_index end
 action fetch_select end
 action close_select end
 action read_by schedule_name batch_name order_index end
-action update_for begin_datetime progress _by_ schedule_name batch_name order_index end
+action update_for begin_datetime end_datetime ip port progress error status _by_ schedule_name batch_name order_index end
 action update_for end_datetime progress error status _by_ schedule_name batch_name order_index end
 action add end
 

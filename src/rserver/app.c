@@ -520,204 +520,6 @@ int app_WorkerUnregister( struct ServerEnv *penv , struct SocketSession *psessio
 #define SENDBUFFER_APPEND_LEN	if( len > 0 && psession->total_send_len + len < psession->send_buffer_size-1 )	\
 					psession->total_send_len += len ;					\
 
-#define HTML_BGCOLOR		"#EEF3F7"
-#define HTML_BORDERCOLOR	"#A5B6C8"
-#define HTML_FONTSIZE		"16px"
-#define HTML_FONTFAMILY		"Fixedsys, System, Terminal"
-
-int app_QueryAllByHtml( struct ServerEnv *penv , struct SocketSession *psession )
-{
-	int			html_refresh ;
-	
-	SListNode		*os_type_node = NULL ;
-	struct OsType		*os_type = NULL ;
-	SListNode		*host_info_node = NULL ;
-	struct HostInfo		*host_info = NULL ;
-	SListNode		*worker_info_node = NULL ;
-	struct WorkerInfo	*worker_info = NULL ;
-	char			Content_Length[ 11 + 1 ] ;
-	
-	int			len ;
-	
-	len = (int)SNPRINTF( SNPRINTF_ARGS , "HTTP/1.0 200 OK\r\nContent-Length: 1234567890\r\n\r\n" );
-	SENDBUFFER_APPEND_LEN
-	
-	html_refresh = 10 ;
-	for( os_type_node = FindFirstListNode(penv->os_type_list) ; os_type_node ; os_type_node = FindNextListNode(os_type_node) )
-	{
-		os_type = GetNodeMember(os_type_node) ;
-		for( host_info_node = FindFirstListNode(os_type->host_info_list) ; host_info_node ; host_info_node = FindNextListNode(host_info_node) )
-		{
-			host_info = GetNodeMember(host_info_node) ;
-			if( host_info->working_count > 0 )
-				html_refresh = 1 ;
-		}
-	}
-	
-	len = (int)SNPRINTF( SNPRINTF_ARGS , 
-		"<html>\n"
-		"<head>\n"
-		"<meta http-equiv='Content-Type' content='text/html; charset=utf-8' />\n"
-		"<meta http-equiv='refresh' content='%d' />\n"
-		"<title>DC4C Servers Monitor</title>\n"
-		"<style type='text/css'>\n"
-		"body {\n"
-		"	font-size: "HTML_FONTSIZE";\n"
-		"	font-family: "HTML_FONTFAMILY";\n"
-		"}\n"
-		"</style>\n"
-		"</head>\n"
-		"<body>\n"
-		"<font color='"HTML_BORDERCOLOR"'>"
-		"rserver v%s build %s %s<br />\n"
-		"Copyright by calvin<calvinwilliams.c@gmail.com> 2014,2015<br />\n"
-		"</font>\n"
-		"<p />\n"
-		, html_refresh , __DC4C_VERSION , __DATE__ , __TIME__
-		);
-	SENDBUFFER_APPEND_LEN
-	
-	len = (int)SNPRINTF( SNPRINTF_ARGS , 
-		"<table border='1' bordercolor='"HTML_BORDERCOLOR"' cellpadding='5' cellspacing='0' style='border-collapse:collapse;'>\n"
-		"  <tr style='background-color:"HTML_BGCOLOR"; color:"HTML_BORDERCOLOR";'>\n"
-		"    <th colSpan=3>Os Types List</th>\n"
-		"  </tr>\n"
-		"  <tr style='background-color:"HTML_BGCOLOR"; color:"HTML_BORDERCOLOR";'>\n"
-		"    <th>sysname</th>\n"
-		"    <th>release</th>\n"
-		"    <th>bits</th>\n"
-		"  </tr>\n"
-		) ;
-	SENDBUFFER_APPEND_LEN
-	
-	for( os_type_node = FindFirstListNode(penv->os_type_list) ; os_type_node ; os_type_node = FindNextListNode(os_type_node) )
-	{
-		os_type = GetNodeMember(os_type_node) ;
-		
-		len = (int)SNPRINTF( SNPRINTF_ARGS , 
-			"  <tr style='color:"HTML_BORDERCOLOR";'>\n"
-			"    <td>%s</td>\n"
-			"    <td>%s</td>\n"
-			"    <td>%d</td>\n"
-			"  </tr>\n"
-			, os_type->sysname , os_type->release , os_type->bits
-			) ;
-		SENDBUFFER_APPEND_LEN
-	}
-	
-	len = (int)SNPRINTF( SNPRINTF_ARGS , 
-		"</table>\n"
-		"<p />\n"
-		);
-	SENDBUFFER_APPEND_LEN
-	
-	len = (int)SNPRINTF( SNPRINTF_ARGS , 
-		"<table border='1' bordercolor='"HTML_BORDERCOLOR"' cellpadding='5' cellspacing='0' style='border-collapse:collapse;'>\n"
-		"  <tr style='background-color:"HTML_BGCOLOR"; color:"HTML_BORDERCOLOR";'>\n"
-		"    <th colSpan=6>Hosts List</th>\n"
-		"  </tr>\n"
-		"  <tr style='background-color:"HTML_BGCOLOR"; color:"HTML_BORDERCOLOR";'>\n"
-		"    <th>sysname</th>\n"
-		"    <th>release</th>\n"
-		"    <th>bits</th>\n"
-		"    <th>ip</th>\n"
-		"    <th>idler_count</th>\n"
-		"    <th>working_count</th>\n"
-		"  </tr>\n"
-		) ;
-	SENDBUFFER_APPEND_LEN
-	
-	for( os_type_node = FindFirstListNode(penv->os_type_list) ; os_type_node ; os_type_node = FindNextListNode(os_type_node) )
-	{
-		os_type = GetNodeMember(os_type_node) ;
-		for( host_info_node = FindFirstListNode(os_type->host_info_list) ; host_info_node ; host_info_node = FindNextListNode(host_info_node) )
-		{
-			host_info = GetNodeMember(host_info_node) ;
-			
-			len = (int)SNPRINTF( SNPRINTF_ARGS , 
-				"  <tr style='color:"HTML_BORDERCOLOR";'>\n"
-				"    <td>%s</td>\n"
-				"    <td>%s</td>\n"
-				"    <td>%d</td>\n"
-				"    <td>%s</td>\n"
-				"    <td>%d</td>\n"
-				"    <td>%d</td>\n"
-				"  </tr>\n"
-				 , os_type->sysname , os_type->release , os_type->bits , host_info->ip , host_info->idler_count , host_info->working_count
-				) ;
-			SENDBUFFER_APPEND_LEN
-		}
-	}
-	
-	len = (int)SNPRINTF( SNPRINTF_ARGS , 
-		"</table>\n"
-		"<p />\n"
-		);
-	SENDBUFFER_APPEND_LEN
-	
-	len = (int)SNPRINTF( SNPRINTF_ARGS , 
-		"<table border='1' bordercolor='"HTML_BORDERCOLOR"' cellpadding='5' cellspacing='0' style='border-collapse:collapse;'>\n"
-		"  <tr style='background-color:"HTML_BGCOLOR"; color:"HTML_BORDERCOLOR";'>\n"
-		"    <th colSpan=7>Workers List</th>\n"
-		"  </tr>\n"
-		"  <tr style='background-color:"HTML_BGCOLOR"; color:"HTML_BORDERCOLOR";'>\n"
-		"    <th>sysname</th>\n"
-		"    <th>release</th>\n"
-		"    <th>bits</th>\n"
-		"    <th>ip</th>\n"
-		"    <th>port</th>\n"
-		"    <th>is_working</th>\n"
-		"    <th>program_and_params</th>\n"
-		"  </tr>\n"
-		) ;
-	SENDBUFFER_APPEND_LEN
-	
-	for( os_type_node = FindFirstListNode(penv->os_type_list) ; os_type_node ; os_type_node = FindNextListNode(os_type_node) )
-	{
-		os_type = GetNodeMember(os_type_node) ;
-		for( host_info_node = FindFirstListNode(os_type->host_info_list) ; host_info_node ; host_info_node = FindNextListNode(host_info_node) )
-		{
-			host_info = GetNodeMember(host_info_node) ;
-			for( worker_info_node = FindFirstListNode(host_info->worker_info_list) ; worker_info_node ; worker_info_node = FindNextListNode(worker_info_node) )
-			{
-				worker_info = GetNodeMember(worker_info_node) ;
-				
-				len = (int)SNPRINTF( SNPRINTF_ARGS , 
-					"  <tr style='color:"HTML_BORDERCOLOR";'>\n"
-					"    <td>%s</td>\n"
-					"    <td>%s</td>\n"
-					"    <td>%d</td>\n"
-					"    <td>%s</td>\n"
-					"    <td>%d</td>\n"
-					"    <td>%d</td>\n"
-					"    <td>%s</td>\n"
-					"  </tr>\n"
-					 , os_type->sysname , os_type->release , os_type->bits , host_info->ip , worker_info->port , worker_info->is_working , worker_info->program_and_params
-					) ;
-				SENDBUFFER_APPEND_LEN
-			}
-		}
-	}
-	
-	len = (int)SNPRINTF( SNPRINTF_ARGS , 
-		"</table>\n"
-		"<p />\n"
-		);
-	SENDBUFFER_APPEND_LEN
-	
-	len = (int)SNPRINTF( SNPRINTF_ARGS , 
-		"</body>\n"
-		"</html>\n"
-		);
-	SENDBUFFER_APPEND_LEN
-	
-	memset( Content_Length , 0x00 , sizeof(Content_Length) );
-	SNPRINTF( Content_Length , sizeof(Content_Length)-1 , "%-10d" , psession->total_send_len - 47 );
-	memcpy( psession->send_buffer + 33 , Content_Length , 10 );
-	
-	return 0;
-}
-
 int app_QueryAllOsTypes( struct ServerEnv *penv , struct SocketSession *psession )
 {
 	SListNode		*os_type_node = NULL ;
@@ -784,6 +586,369 @@ int app_QueryAllWorkers( struct ServerEnv *penv , struct SocketSession *psession
 			}
 		}
 	}
+	
+	return 0;
+}
+
+#define HTML_BGCOLOR		"#EEF3F7"
+#define HTML_BORDERCOLOR	"#A5B6C8"
+#define HTML_FONTSIZE		"16px"
+#define HTML_FONTFAMILY		"Fixedsys, System, Terminal"
+
+int app_MonitorHtmlFrame( struct ServerEnv *penv , struct SocketSession *psession )
+{
+	int			len ;
+	int			httphead_len ;
+	char			Content_Length[ 11 + 1 ] ;
+	
+	httphead_len = len = (int)SNPRINTF( SNPRINTF_ARGS ,
+		"HTTP/1.0 200 OK\r\nContent-Length: 1234567890\r\n"
+		"Cache-Control: no-cache,must-revalidate\r\n\r\n"
+		);
+	SENDBUFFER_APPEND_LEN
+	
+	len = (int)SNPRINTF( SNPRINTF_ARGS , 
+		"<html>\n"
+		"<head>\n"
+		"<meta http-equiv='Content-Type' content='text/html; charset=utf-8' />\n"
+		"<title>DC4C Servers Monitor</title>\n"
+		"<style type='text/css'>\n"
+		"body {\n"
+		"	font-size: "HTML_FONTSIZE";\n"
+		"	font-family: "HTML_FONTFAMILY";\n"
+		"}\n"
+		"</style>\n"
+		"</head>\n"
+		"<script language='JavaScript'>\n"
+		"var xmlhttpOsTypesList ;\n"
+		"var xmlhttpHostsList ;\n"
+		"var xmlhttpWorkersList ;\n"
+		"function initXmlHttp()\n"
+		"{\n"
+		"	try\n"
+		"	{\n"
+		"		xmlhttpOsTypesList = new XMLHttpRequest();\n"
+		"	}\n"
+		"	catch ( trymicrosoft )\n"
+		"	{\n"
+		"		try\n"
+		"		{\n"
+		"			xmlhttpOsTypesList = new ActiveXObject('Msxml2.XMLHTTP') ;\n"
+		"		}\n"
+		"		catch ( othermicrosoft )\n"
+		"		{\n"
+		"			try\n"
+		"			{\n"
+		"				xmlhttpOsTypesList = new ActiveXObject('Microsoft.XMLHTTP') ;\n"
+		"			}\n"
+		"			catch ( failed )\n"
+		"			{\n"
+		"				xmlhttpOsTypesList = null ;\n"
+		"			}\n"
+		"		}\n"
+		"	}\n"
+		"	try\n"
+		"	{\n"
+		"		xmlhttpHostsList = new XMLHttpRequest();\n"
+		"	}\n"
+		"	catch ( trymicrosoft )\n"
+		"	{\n"
+		"		try\n"
+		"		{\n"
+		"			xmlhttpHostsList = new ActiveXObject('Msxml2.XMLHTTP') ;\n"
+		"		}\n"
+		"		catch ( othermicrosoft )\n"
+		"		{\n"
+		"			try\n"
+		"			{\n"
+		"				xmlhttpHostsList = new ActiveXObject('Microsoft.XMLHTTP') ;\n"
+		"			}\n"
+		"			catch ( failed )\n"
+		"			{\n"
+		"				xmlhttpHostsList = null ;\n"
+		"			}\n"
+		"		}\n"
+		"	}\n"
+		"	try\n"
+		"	{\n"
+		"		xmlhttpWorkersList = new XMLHttpRequest();\n"
+		"	}\n"
+		"	catch ( trymicrosoft )\n"
+		"	{\n"
+		"		try\n"
+		"		{\n"
+		"			xmlhttpWorkersList = new ActiveXObject('Msxml2.XMLHTTP') ;\n"
+		"		}\n"
+		"		catch ( othermicrosoft )\n"
+		"		{\n"
+		"			try\n"
+		"			{\n"
+		"				xmlhttpWorkersList = new ActiveXObject('Microsoft.XMLHTTP') ;\n"
+		"			}\n"
+		"			catch ( failed )\n"
+		"			{\n"
+		"				xmlhttpWorkersList = null ;\n"
+		"			}\n"
+		"		}\n"
+		"	}\n"
+		"}\n"
+		"function refreshOsTypesList()\n"
+		"{\n"
+		"	xmlhttpOsTypesList.open( 'GET' , '/ostypesList' , true );\n"
+		"	xmlhttpOsTypesList.onreadystatechange = function()\n"
+		"		{\n"
+		"			if( xmlhttpOsTypesList.readyState == 4 && xmlhttpOsTypesList.status == 200 )\n"
+		"			{\n"
+		"				document.getElementById('ostypesList').innerHTML = xmlhttpOsTypesList.responseText ;\n"
+		"				setTimeout('refreshOsTypesList()',1000);\n"
+		"			}\n"
+		"		}\n"
+		"	xmlhttpOsTypesList.setRequestHeader('If-Modified-Since','0');\n"
+		"	xmlhttpOsTypesList.send(null);\n"
+		"}\n"
+		"function refreshHostsList()\n"
+		"{\n"
+		"	xmlhttpHostsList.open( 'GET' , '/hostsList' , true );\n"
+		"	xmlhttpHostsList.onreadystatechange = function()\n"
+		"		{\n"
+		"			if( xmlhttpHostsList.readyState == 4 && xmlhttpHostsList.status == 200 )\n"
+		"			{\n"
+		"				document.getElementById('hostsList').innerHTML = xmlhttpHostsList.responseText ;\n"
+		"				setTimeout('refreshHostsList()',1000);\n"
+		"			}\n"
+		"		}\n"
+		"	xmlhttpHostsList.setRequestHeader('If-Modified-Since','0');\n"
+		"	xmlhttpHostsList.send(null);\n"
+		"}\n"
+		"function refreshWorkersList()\n"
+		"{\n"
+		"	xmlhttpWorkersList.open( 'GET' , '/workersList' , true );\n"
+		"	xmlhttpWorkersList.onreadystatechange = function()\n"
+		"		{\n"
+		"			if( xmlhttpWorkersList.readyState == 4 && xmlhttpWorkersList.status == 200 )\n"
+		"			{\n"
+		"				document.getElementById('workersList').innerHTML = xmlhttpWorkersList.responseText ;\n"
+		"				setTimeout('refreshWorkersList()',1000);\n"
+		"			}\n"
+		"		}\n"
+		"	xmlhttpWorkersList.setRequestHeader('If-Modified-Since','0');\n"
+		"	xmlhttpWorkersList.send(null);\n"
+		"}\n"
+		"</script>\n"
+		"<body onLoad='initXmlHttp();refreshOsTypesList();refreshHostsList();refreshWorkersList();'>\n"
+		"<font color='"HTML_BORDERCOLOR"'>"
+		"rserver v%s build %s %s<br />\n"
+		"Copyright by calvin<calvinwilliams.c@gmail.com> 2014,2015<br />\n"
+		"</font>\n"
+		"<p />\n"
+		"<div id='ostypesList'></div>\n"
+		"<p />\n"
+		"<div id='hostsList'></div>\n"
+		"<p />\n"
+		"<div id='workersList'></div>\n"
+		"</body>\n"
+		"</html>\n"
+		, __DC4C_VERSION , __DATE__ , __TIME__
+		);
+	SENDBUFFER_APPEND_LEN
+	
+	memset( Content_Length , 0x00 , sizeof(Content_Length) );
+	SNPRINTF( Content_Length , sizeof(Content_Length)-1 , "%-10d" , psession->total_send_len - httphead_len );
+	memcpy( psession->send_buffer + 33 , Content_Length , 10 );
+	
+	return 0;
+}
+
+int app_OutputOsTypesListHtml( struct ServerEnv *penv , struct SocketSession *psession )
+{
+	SListNode		*os_type_node = NULL ;
+	struct OsType		*os_type = NULL ;
+	int			len ;
+	int			httphead_len ;
+	char			Content_Length[ 11 + 1 ] ;
+	
+	httphead_len = len = (int)SNPRINTF( SNPRINTF_ARGS ,
+		"HTTP/1.0 200 OK\r\nContent-Length: 1234567890\r\n"
+		"Cache-Control: no-cache,must-revalidate\r\n\r\n"
+		);
+	SENDBUFFER_APPEND_LEN
+	
+	len = (int)SNPRINTF( SNPRINTF_ARGS , 
+		"<table border='1' bordercolor='"HTML_BORDERCOLOR"' cellpadding='5' cellspacing='0' style='border-collapse:collapse;'>\n"
+		"  <tr style='background-color:"HTML_BGCOLOR"; color:"HTML_BORDERCOLOR";'>\n"
+		"    <th colSpan=3>Os Types List</th>\n"
+		"  </tr>\n"
+		"  <tr style='background-color:"HTML_BGCOLOR"; color:"HTML_BORDERCOLOR";'>\n"
+		"    <th>sysname</th>\n"
+		"    <th>release</th>\n"
+		"    <th>bits</th>\n"
+		"  </tr>\n"
+		) ;
+	SENDBUFFER_APPEND_LEN
+	
+	for( os_type_node = FindFirstListNode(penv->os_type_list) ; os_type_node ; os_type_node = FindNextListNode(os_type_node) )
+	{
+		os_type = GetNodeMember(os_type_node) ;
+		
+		len = (int)SNPRINTF( SNPRINTF_ARGS , 
+			"  <tr style='color:"HTML_BORDERCOLOR";'>\n"
+			"    <td>%s</td>\n"
+			"    <td>%s</td>\n"
+			"    <td>%d</td>\n"
+			"  </tr>\n"
+			, os_type->sysname , os_type->release , os_type->bits
+			) ;
+		SENDBUFFER_APPEND_LEN
+	}
+	
+	len = (int)SNPRINTF( SNPRINTF_ARGS , 
+		"</table>\n"
+		);
+	SENDBUFFER_APPEND_LEN
+	
+	memset( Content_Length , 0x00 , sizeof(Content_Length) );
+	SNPRINTF( Content_Length , sizeof(Content_Length)-1 , "%-10d" , psession->total_send_len - httphead_len );
+	memcpy( psession->send_buffer + 33 , Content_Length , 10 );
+	
+	return 0;
+}
+
+int app_OutputHostsListHtml( struct ServerEnv *penv , struct SocketSession *psession )
+{
+	SListNode		*os_type_node = NULL ;
+	struct OsType		*os_type = NULL ;
+	SListNode		*host_info_node = NULL ;
+	struct HostInfo		*host_info = NULL ;
+	int			len ;
+	int			httphead_len ;
+	char			Content_Length[ 11 + 1 ] ;
+	
+	httphead_len = len = (int)SNPRINTF( SNPRINTF_ARGS ,
+		"HTTP/1.0 200 OK\r\nContent-Length: 1234567890\r\n"
+		"Cache-Control: no-cache,must-revalidate\r\n\r\n"
+		);
+	SENDBUFFER_APPEND_LEN
+	
+	len = (int)SNPRINTF( SNPRINTF_ARGS , 
+		"<table border='1' bordercolor='"HTML_BORDERCOLOR"' cellpadding='5' cellspacing='0' style='border-collapse:collapse;'>\n"
+		"  <tr style='background-color:"HTML_BGCOLOR"; color:"HTML_BORDERCOLOR";'>\n"
+		"    <th colSpan=6>Hosts List</th>\n"
+		"  </tr>\n"
+		"  <tr style='background-color:"HTML_BGCOLOR"; color:"HTML_BORDERCOLOR";'>\n"
+		"    <th>sysname</th>\n"
+		"    <th>release</th>\n"
+		"    <th>bits</th>\n"
+		"    <th>ip</th>\n"
+		"    <th>idler_count</th>\n"
+		"    <th>working_count</th>\n"
+		"  </tr>\n"
+		) ;
+	SENDBUFFER_APPEND_LEN
+	
+	for( os_type_node = FindFirstListNode(penv->os_type_list) ; os_type_node ; os_type_node = FindNextListNode(os_type_node) )
+	{
+		os_type = GetNodeMember(os_type_node) ;
+		for( host_info_node = FindFirstListNode(os_type->host_info_list) ; host_info_node ; host_info_node = FindNextListNode(host_info_node) )
+		{
+			host_info = GetNodeMember(host_info_node) ;
+			
+			len = (int)SNPRINTF( SNPRINTF_ARGS , 
+				"  <tr style='color:"HTML_BORDERCOLOR";'>\n"
+				"    <td>%s</td>\n"
+				"    <td>%s</td>\n"
+				"    <td>%d</td>\n"
+				"    <td>%s</td>\n"
+				"    <td>%d</td>\n"
+				"    <td>%d</td>\n"
+				"  </tr>\n"
+				 , os_type->sysname , os_type->release , os_type->bits , host_info->ip , host_info->idler_count , host_info->working_count
+				) ;
+			SENDBUFFER_APPEND_LEN
+		}
+	}
+	
+	len = (int)SNPRINTF( SNPRINTF_ARGS , 
+		"</table>\n"
+		);
+	SENDBUFFER_APPEND_LEN
+	
+	memset( Content_Length , 0x00 , sizeof(Content_Length) );
+	SNPRINTF( Content_Length , sizeof(Content_Length)-1 , "%-10d" , psession->total_send_len - httphead_len );
+	memcpy( psession->send_buffer + 33 , Content_Length , 10 );
+	
+	return 0;
+}
+
+int app_OutputWorkersListHtml( struct ServerEnv *penv , struct SocketSession *psession )
+{
+	SListNode		*os_type_node = NULL ;
+	struct OsType		*os_type = NULL ;
+	SListNode		*host_info_node = NULL ;
+	struct HostInfo		*host_info = NULL ;
+	SListNode		*worker_info_node = NULL ;
+	struct WorkerInfo	*worker_info = NULL ;
+	int			len ;
+	int			httphead_len ;
+	char			Content_Length[ 11 + 1 ] ;
+	
+	httphead_len = len = (int)SNPRINTF( SNPRINTF_ARGS ,
+		"HTTP/1.0 200 OK\r\nContent-Length: 1234567890\r\n"
+		"Cache-Control: no-cache, must-revalidate\r\n\r\n"
+		);
+	SENDBUFFER_APPEND_LEN
+	
+	len = (int)SNPRINTF( SNPRINTF_ARGS , 
+		"<table border='1' bordercolor='"HTML_BORDERCOLOR"' cellpadding='5' cellspacing='0' style='border-collapse:collapse;'>\n"
+		"  <tr style='background-color:"HTML_BGCOLOR"; color:"HTML_BORDERCOLOR";'>\n"
+		"    <th colSpan=7>Workers List</th>\n"
+		"  </tr>\n"
+		"  <tr style='background-color:"HTML_BGCOLOR"; color:"HTML_BORDERCOLOR";'>\n"
+		"    <th>sysname</th>\n"
+		"    <th>release</th>\n"
+		"    <th>bits</th>\n"
+		"    <th>ip</th>\n"
+		"    <th>port</th>\n"
+		"    <th>is_working</th>\n"
+		"    <th>program_and_params</th>\n"
+		"  </tr>\n"
+		) ;
+	SENDBUFFER_APPEND_LEN
+	
+	for( os_type_node = FindFirstListNode(penv->os_type_list) ; os_type_node ; os_type_node = FindNextListNode(os_type_node) )
+	{
+		os_type = GetNodeMember(os_type_node) ;
+		for( host_info_node = FindFirstListNode(os_type->host_info_list) ; host_info_node ; host_info_node = FindNextListNode(host_info_node) )
+		{
+			host_info = GetNodeMember(host_info_node) ;
+			for( worker_info_node = FindFirstListNode(host_info->worker_info_list) ; worker_info_node ; worker_info_node = FindNextListNode(worker_info_node) )
+			{
+				worker_info = GetNodeMember(worker_info_node) ;
+				
+				len = (int)SNPRINTF( SNPRINTF_ARGS , 
+					"  <tr style='color:"HTML_BORDERCOLOR";'>\n"
+					"    <td>%s</td>\n"
+					"    <td>%s</td>\n"
+					"    <td>%d</td>\n"
+					"    <td>%s</td>\n"
+					"    <td>%d</td>\n"
+					"    <td>%d</td>\n"
+					"    <td>%s</td>\n"
+					"  </tr>\n"
+					 , os_type->sysname , os_type->release , os_type->bits , host_info->ip , worker_info->port , worker_info->is_working , worker_info->program_and_params
+					) ;
+				SENDBUFFER_APPEND_LEN
+			}
+		}
+	}
+	
+	len = (int)SNPRINTF( SNPRINTF_ARGS , 
+		"</table>\n"
+		);
+	SENDBUFFER_APPEND_LEN
+	
+	memset( Content_Length , 0x00 , sizeof(Content_Length) );
+	SNPRINTF( Content_Length , sizeof(Content_Length)-1 , "%-10d" , psession->total_send_len - httphead_len );
+	memcpy( psession->send_buffer + 33 , Content_Length , 10 );
 	
 	return 0;
 }

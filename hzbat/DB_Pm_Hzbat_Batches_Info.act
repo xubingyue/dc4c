@@ -11,6 +11,8 @@ pm_hzbat_batches_info
 	progress			int			# 进度
 	pretask_program_and_params	str 256			# 准备任务 执行命令行
 	pretask_timeout			int			# 准备任务 超时时间（秒）
+	pretask_ip			str 40			# 准备任务 执行IP
+	pretask_port			int			# 准备任务 执行PORT
 	pretask_progress		int			# 准备任务 进度
 	pretask_error			int			# 准备任务 执行系统响应码
 	pretask_status			int			# 准备任务 执行应用响应码
@@ -23,9 +25,9 @@ action open_select_by schedule_name end
 action fetch_select end
 action close_select end
 action read_by schedule_name batch_name end
-action update_for begin_datetime progress _by_ schedule_name batch_name end
+action update_for begin_datetime end_datetime progress _by_ schedule_name batch_name end
 action update_for end_datetime progress _by_ schedule_name batch_name end
-action update_for pretask_progress pretask_error pretask_status _by_ schedule_name batch_name end
+action update_for pretask_ip pretask_port pretask_progress pretask_error pretask_status _by_ schedule_name batch_name end
 
 end
 

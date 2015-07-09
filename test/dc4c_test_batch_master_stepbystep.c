@@ -165,7 +165,7 @@ int main( int argc , char *argv[] )
 			}
 			else if( nret == DC4C_INFO_BATCH_TASKS_FINISHED )
 			{
-				if( DC4CIsBatchTasksInterrupted(penv) )
+				if( DC4CBatchTasksInterruptCode(penv) )
 					printf( "DC4CPerformBatchTasks return DC4C_INFO_BATCH_TASKS_FINISHED WITH ERROR\n" );
 				else
 					printf( "DC4CPerformBatchTasks return DC4C_INFO_BATCH_TASKS_FINISHED\n" );
@@ -182,7 +182,6 @@ int main( int argc , char *argv[] )
 			else
 			{
 				printf( "DC4CPerformBatchTasks failed[%d]\n" , nret );
-				break;
 			}
 		}
 		

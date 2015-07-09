@@ -102,7 +102,7 @@ struct Dc4cBatchTask
 } ;
 
 int DC4CDoBatchTasks( struct Dc4cApiEnv *penv , int workers_count , struct Dc4cBatchTask *a_tasks , int tasks_count );
-int DC4CIsBatchTasksInterrupted( struct Dc4cApiEnv *penv );
+int DC4CBatchTasksInterruptCode( struct Dc4cApiEnv *penv );
 
 int DC4CGetBatchTasksProgress( struct Dc4cApiEnv *penv , int task_index ); /* task_index based 0 */
 char *DC4CGetBatchTasksIp( struct Dc4cApiEnv *penv , int task_index );
@@ -119,7 +119,7 @@ int DC4CGetBatchTasksStatus( struct Dc4cApiEnv *penv , int task_index );
 char *DC4CGetBatchTasksInfo( struct Dc4cApiEnv *penv , int task_index );
 
 int DC4CDoMultiBatchTasks( struct Dc4cApiEnv **a_penv , int envs_count , int *a_workers_count , struct Dc4cBatchTask **aa_tasks , int *a_tasks_count );
-int DC4CIsMultiBatchTasksInterrupted( struct Dc4cApiEnv **a_penv , int envs_count );
+int DC4CMultiBatchTasksInterruptCode( struct Dc4cApiEnv **a_penv , int envs_count );
 
 /* µÍ²ãº¯ÊýÀà */
 

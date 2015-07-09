@@ -33,26 +33,74 @@ int proto_CommandLine( struct ServerEnv *penv , struct SocketSession *psession )
 	int		cmd_and_para_count ;
 	char		cmd[ 64 + 1 ] ;
 	char		param1[ 64 + 1 ] ;
+	char		param2[ 64 + 1 ] ;
 	
 	int		nret = 0 ;
 	
 	CleanSendBuffer( psession );
 	
+	InfoLog( __FILE__ , __LINE__ , "command[%s]" , psession->recv_buffer );
+	
 	memset( cmd , 0x00 , sizeof(cmd) );
 	memset( param1 , 0x00 , sizeof(param1) );
-	cmd_and_para_count = sscanf( psession->recv_buffer , "%3[^ ]%*s%5s" , cmd , param1 ) ;
-	if( cmd_and_para_count == 2 && STRICMP( cmd , == , "GET" ) && STRICMP( param1 , == , "HTTP/" ) )
+	memset( param2 , 0x00 , sizeof(param2) );
+	cmd_and_para_count = sscanf( psession->recv_buffer , "%3[^ ]%s%5s" , cmd , param1 , param2 ) ;
+	if( cmd_and_para_count == 3 && STRICMP( cmd , == , "GET" ) && STRICMP( param2 , == , "HTTP/" ) )
 	{
 		psession->comm_protocol_mode = COMMPROTO_HTTP ;
 		
-		nret = app_QueryAllByHtml( penv , psession ) ;
-		if( nret )
+		if( STRCMP( param1 , == , "/" ) )
 		{
-			return RETURN_CLOSE;
+			nret = app_MonitorHtmlFrame( penv , psession ) ;
+			if( nret )
+			{
+				return RETURN_CLOSE;
+			}
+			else
+			{
+				DebugLog( __FILE__ , __LINE__ , "app_MonitorHtmlFrame ok" );
+			}
+		}
+		else if( STRCMP( param1 , == , "/ostypesList" ) )
+		{
+			nret = app_OutputOsTypesListHtml( penv , psession ) ;
+			if( nret )
+			{
+				return RETURN_CLOSE;
+			}
+			else
+			{
+				DebugLog( __FILE__ , __LINE__ , "app_OutputOsTypesListHtml ok" );
+			}
+		}
+		else if( STRCMP( param1 , == , "/hostsList" ) )
+		{
+			nret = app_OutputHostsListHtml( penv , psession ) ;
+			if( nret )
+			{
+				return RETURN_CLOSE;
+			}
+			else
+			{
+				DebugLog( __FILE__ , __LINE__ , "app_OutputHostsListHtml ok" );
+			}
+		}
+		else if( STRCMP( param1 , == , "/workersList" ) )
+		{
+			nret = app_OutputWorkersListHtml( penv , psession ) ;
+			if( nret )
+			{
+				return RETURN_CLOSE;
+			}
+			else
+			{
+				DebugLog( __FILE__ , __LINE__ , "app_OutputWorkersListHtml ok" );
+			}
 		}
 		else
 		{
-			DebugLog( __FILE__ , __LINE__ , "app_QueryAllByHtml ok" );
+			ErrorLog( __FILE__ , __LINE__ , "URL[%s] invalid" , param1 );
+			return RETURN_CLOSE;
 		}
 		
 		return 0;

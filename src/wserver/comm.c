@@ -393,7 +393,8 @@ int comm_OnAcceptedSocketOutput( struct ServerEnv *penv , struct SocketSession *
 	
 	if( psession->send_len == psession->total_send_len )
 	{
-		comm_CloseAcceptedSocket( penv , psession );
+		CleanSendBuffer( psession );
+		ModifyInputSockFromEpoll( penv->epoll_socks , psession );
 	}
 	
 	return 0;

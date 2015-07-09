@@ -45,7 +45,7 @@ void DC4CUnloadDagSchedule( struct Dc4cDagSchedule **pp_sched );
 void DC4CLogDagSchedule( struct Dc4cDagSchedule *p_sched );
 
 int DC4CExecuteDagSchedule( struct Dc4cDagSchedule *p_sched );
-int DC4CIsDagScheduleInterrupted( struct Dc4cDagSchedule *p_sched );
+int DC4CDagScheduleInterruptCode( struct Dc4cDagSchedule *p_sched );
 
 int DC4CBeginDagSchedule( struct Dc4cDagSchedule *p_sched );
 int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatch **pp_batch , struct Dc4cApiEnv **ppenv , int *p_task_index );

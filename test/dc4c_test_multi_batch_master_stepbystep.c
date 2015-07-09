@@ -178,11 +178,10 @@ int main( int argc , char *argv[] )
 			else if( nret == DC4C_INFO_BATCH_TASKS_FINISHED )
 			{
 				printf( "DC4CPerformMultiBatchTasks return DC4C_INFO_BATCH_TASKS_FINISHED , penv[%p]\n" , penv );
-				continue;
 			}
 			else if( nret == DC4C_INFO_ALL_ENVS_FINISHED )
 			{
-				if( DC4CIsMultiBatchTasksInterrupted( a_penvs , envs_count ) )
+				if( DC4CMultiBatchTasksInterruptCode( a_penvs , envs_count ) )
 					printf( "DC4CPerformMultiBatchTasks return DC4C_INFO_ALL_ENVS_FINISHED WITH ERROR\n" );
 				else
 					printf( "DC4CPerformMultiBatchTasks return DC4C_INFO_ALL_ENVS_FINISHED\n" );
@@ -199,7 +198,6 @@ int main( int argc , char *argv[] )
 			else
 			{
 				printf( "DC4CPerformMultiBatchTasks failed[%d] , penv[%p]\n" , nret , penv );
-				break;
 			}
 		}
 		

@@ -39,7 +39,7 @@ struct Dc4cDagSchedule
 	funcDC4COnCancelDagBatchTaskProc	*pfuncDC4COnCancelDagBatchTaskProc ;
 	funcDC4COnFinishDagBatchTaskProc	*pfuncDC4COnFinishDagBatchTaskProc ;
 	
-	int			interrupted_flag ;
+	int			interrupt_code ;
 } ;
 
 struct Dc4cDagBatch
@@ -458,10 +458,10 @@ int DC4CExecuteDagSchedule( struct Dc4cDagSchedule *p_sched )
 		}
 		else if( nret == DC4C_INFO_ALL_ENVS_FINISHED )
 		{
-			if( DC4CIsDagScheduleInterrupted(p_sched) )
+			if( DC4CDagScheduleInterruptCode(p_sched) )
 			{
 				InfoLog( __FILE__ , __LINE__ , "DC4CPerformDagSchedule return DC4C_DAGSCHEDULE_PROGRESS_FINISHED_WITH_ERROR" );
-				return DC4CIsDagScheduleInterrupted(p_sched);
+				return DC4CDagScheduleInterruptCode(p_sched);
 			}
 			else
 			{
@@ -480,16 +480,15 @@ int DC4CExecuteDagSchedule( struct Dc4cDagSchedule *p_sched )
 		else if( nret )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "DC4CPerformDagSchedule failed[%d]" , nret );
-			return nret;
 		}
 	}
 	
 	return 0;
 }
 
-int DC4CIsDagScheduleInterrupted( struct Dc4cDagSchedule *p_sched )
+int DC4CDagScheduleInterruptCode( struct Dc4cDagSchedule *p_sched )
 {
-	return p_sched->interrupted_flag;
+	return p_sched->interrupt_code;
 }
 
 extern void DC4CSetPrepareTasksCount( struct Dc4cApiEnv *penv , int prepare_count );
@@ -543,7 +542,7 @@ static int MovedownExecutingTree( struct Dc4cDagSchedule *p_sched , SListNode *p
 	if( p_branch_batch->progress != DC4C_DAGBATCH_PROGRESS_FINISHED && p_branch_batch->progress != DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR )
 		return 0;
 	
-	for( p_postdepend_branch_node = FindFirstListNode(p_branch_batch->postdepend_batches_list) ; p_postdepend_branch_node && p_sched->interrupted_flag == 0 ; p_postdepend_branch_node = FindNextListNode(p_postdepend_branch_node) )
+	for( p_postdepend_branch_node = FindFirstListNode(p_branch_batch->postdepend_batches_list) ; p_postdepend_branch_node && p_sched->interrupt_code == 0 ; p_postdepend_branch_node = FindNextListNode(p_postdepend_branch_node) )
 	{
 		p_postdepend_branch_batch = GetNodeMember(p_postdepend_branch_node) ;
 		DebugLog( __FILE__ , __LINE__ , "p_postdepend_branch_batch->batch_name[%s] ->progress[%d]" , p_postdepend_branch_batch->batch_name , p_postdepend_branch_batch->progress );
@@ -625,8 +624,11 @@ static int MovedownExecutingTree( struct Dc4cDagSchedule *p_sched , SListNode *p
 		}
 	}
 	
-	InfoLog( __FILE__ , __LINE__ , "DeleteListNode batch_name[%s]" , p_branch_batch->batch_name );
-	DeleteListNode( & (p_sched->executing_batches_tree) , & p_executing_batches_node , NULL );
+	if( p_branch_batch->progress == DC4C_DAGBATCH_PROGRESS_FINISHED )
+	{
+		InfoLog( __FILE__ , __LINE__ , "DeleteListNode batch_name[%s]" , p_branch_batch->batch_name );
+		DeleteListNode( & (p_sched->executing_batches_tree) , & p_executing_batches_node , NULL );
+	}
 	
 	return 0;
 }
@@ -747,7 +749,7 @@ int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatc
 	
 	if( p_sched->executing_batches_tree == NULL )
 	{
-		if( p_sched->interrupted_flag )
+		if( p_sched->interrupt_code )
 			p_sched->progress = DC4C_DAGSCHEDULE_PROGRESS_FINISHED_WITH_ERROR ;
 		else
 			p_sched->progress = DC4C_DAGSCHEDULE_PROGRESS_FINISHED ;
@@ -798,7 +800,7 @@ int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatc
 	else if( perform_return == DC4C_INFO_ALL_ENVS_FINISHED )
 	{
 		InfoLog( __FILE__ , __LINE__ , "DC4CPerformMultiBatchTasks return DC4C_INFO_ALL_ENVS_FINISHED" );
-		if( p_sched->interrupted_flag )
+		if( p_sched->interrupt_code )
 			p_sched->progress = DC4C_DAGSCHEDULE_PROGRESS_FINISHED_WITH_ERROR ;
 		else
 			p_sched->progress = DC4C_DAGSCHEDULE_PROGRESS_FINISHED ;
@@ -807,18 +809,20 @@ int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatc
 	}
 	else if( perform_return == DC4C_ERROR_TIMEOUT )
 	{
-		InfoLog( __FILE__ , __LINE__ , "DC4CPerformMultiBatchTasks return DC4C_ERROR_TIMEOUT" );
+		WarnLog( __FILE__ , __LINE__ , "DC4CPerformMultiBatchTasks return DC4C_ERROR_TIMEOUT" );
 	}
 	else if( perform_return == DC4C_ERROR_APP )
 	{
-		InfoLog( __FILE__ , __LINE__ , "DC4CPerformMultiBatchTasks return DC4C_ERROR_APP" );
+		WarnLog( __FILE__ , __LINE__ , "DC4CPerformMultiBatchTasks return DC4C_ERROR_APP" );
 	}
 	else
 	{
 		ErrorLog( __FILE__ , __LINE__ , "DC4CPerformMultiBatchTasks failed[%d]" , perform_return );
-		p_sched->progress = DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR ;
-		p_sched->interrupted_flag = perform_return ;
-		return perform_return;
+		if( penv == NULL )
+		{
+			p_sched->progress = DC4C_DAGSCHEDULE_PROGRESS_FINISHED_WITH_ERROR ;
+			return perform_return;
+		}
 	}
 	
 	for( p_executing_batches_node = FindFirstListNode(p_sched->executing_batches_tree) ; p_executing_batches_node ; p_executing_batches_node = FindNextListNode(p_executing_batches_node) )
@@ -831,6 +835,7 @@ int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatc
 	if( p_executing_batches_node == NULL )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "Internal Errno" );
+		p_sched->interrupt_code = DC4C_ERROR_INTERNAL ;
 		p_sched->progress = DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR ;
 		return DC4C_ERROR_INTERNAL;
 	}
@@ -852,21 +857,21 @@ int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatc
 	}
 	else if( perform_return == DC4C_ERROR_TIMEOUT )
 	{
+		p_sched->interrupt_code = perform_return ;
 		p_branch_batch->progress = DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR ;
-		p_sched->interrupted_flag = perform_return ;
-		InfoLog( __FILE__ , __LINE__ , "DAG FIN TIMEOUT batch - batch_name[%s] tasks_count[%d] progress[%d]" , p_branch_batch->batch_name , p_branch_batch->tasks_count , p_branch_batch->progress );
+		WarnLog( __FILE__ , __LINE__ , "DAG FIN TIMEOUT batch - batch_name[%s] tasks_count[%d] progress[%d]" , p_branch_batch->batch_name , p_branch_batch->tasks_count , p_branch_batch->progress );
 	}
 	else if( perform_return == DC4C_ERROR_APP )
 	{
+		p_sched->interrupt_code = perform_return ;
 		p_branch_batch->progress = DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR ;
-		p_sched->interrupted_flag = perform_return ;
-		InfoLog( __FILE__ , __LINE__ , "DAG FIN APPERR batch - batch_name[%s] tasks_count[%d] progress[%d]" , p_branch_batch->batch_name , p_branch_batch->tasks_count , p_branch_batch->progress );
+		WarnLog( __FILE__ , __LINE__ , "DAG FIN APPERR batch - batch_name[%s] tasks_count[%d] progress[%d]" , p_branch_batch->batch_name , p_branch_batch->tasks_count , p_branch_batch->progress );
 	}
 	else
 	{
-		ErrorLog( __FILE__ , __LINE__ , "Internal Errno" );
-		p_sched->progress = DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR ;
-		return DC4C_ERROR_INTERNAL;
+		p_sched->interrupt_code = perform_return ;
+		p_branch_batch->progress = DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR ;
+		ErrorLog( __FILE__ , __LINE__ , "DAG FIN ERR batch - batch_name[%s] tasks_count[%d] progress[%d]" , p_branch_batch->batch_name , p_branch_batch->tasks_count , p_branch_batch->progress );
 	}
 	
 	if( pp_batch )
@@ -880,6 +885,7 @@ int DC4CPerformDagSchedule( struct Dc4cDagSchedule *p_sched , struct Dc4cDagBatc
 	if( nret )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "MovedownExecutingTree failed[%d]" , nret );
+		p_sched->interrupt_code = nret ;
 		p_sched->progress = DC4C_DAGBATCH_PROGRESS_FINISHED_WITH_ERROR ;
 		return nret;
 	}

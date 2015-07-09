@@ -119,7 +119,7 @@ static int TestDagSchedule( char *dag_schedule_pathfilename , char *rservers_ip_
 		}
 		else if( perform_return == DC4C_INFO_ALL_ENVS_FINISHED )
 		{
-			if( DC4CIsDagScheduleInterrupted(p_sched) )
+			if( DC4CDagScheduleInterruptCode(p_sched) )
 			{
 				printf( "DC4CPerformDagSchedule return DC4C_DAGSCHEDULE_PROGRESS_FINISHED_WITH_ERROR\n" );
 				break;
@@ -141,7 +141,6 @@ static int TestDagSchedule( char *dag_schedule_pathfilename , char *rservers_ip_
 		else
 		{
 			printf( "DC4CPerformDagSchedule failed[%d]\n" , nret );
-			break;
 		}
 	}
 	
