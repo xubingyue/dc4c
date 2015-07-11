@@ -472,6 +472,7 @@ _WINDLL_EXPORT long CountListNodes( SList *list );
 
 _WINDLL_EXPORT long AccessList( SList *listHead , BOOL (* AccessListNodeProc)( void *member ) );
 
+_WINDLL_EXPORT int SwapNeighborListNodes( SListNode **list , SListNode **ppnode );
 _WINDLL_EXPORT int SwapTwoListNodes( SListNode *pnode1 , SListNode *pnode2 );
 _WINDLL_EXPORT int SortList( SList *plist , int (* SortListNodeProc)( void *pmember1 , void *pmember2 ) );
 

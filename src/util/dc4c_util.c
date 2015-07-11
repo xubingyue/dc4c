@@ -8,8 +8,8 @@
 
 #include "dc4c_util.h"
 
-char __DC4C_VERSION_1_5_1[] = "1.5.1" ;
-char *__DC4C_VERSION = __DC4C_VERSION_1_5_1 ;
+char __DC4C_VERSION_1_5_2[] = "1.5.2" ;
+char *__DC4C_VERSION = __DC4C_VERSION_1_5_2 ;
 
 int ConvertToDaemonServer()
 {

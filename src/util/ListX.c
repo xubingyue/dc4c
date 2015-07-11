@@ -682,7 +682,48 @@ long AccessList( SList *listHead , BOOL (* AccessListNodeProc)( void *member ) )
 	return -1;
 }
 
-int SwapTwoListNodes( SListNode *pnode1 , SListNode *pnode2 )
+int SwapNeighborListNodes( SListNode **list , SListNode **ppnode )
+{
+	SListNode	*pnode = (*ppnode) ;
+	SListNode	*pnode_prev = NULL ;
+	SListNode	*pnode_neighbor = NULL ;
+	SListNode	*pnode_neighbor_next = NULL ;
+	
+	if( pnode == NULL )
+		return -1;
+	
+	pnode_prev = pnode->prev ;
+	
+	pnode_neighbor = pnode->next ;
+	if( pnode_neighbor == NULL )
+		return -1;
+	
+	pnode_neighbor_next = pnode_neighbor->next ;
+	
+	if( pnode_prev )
+	{
+		pnode_prev->next = pnode_neighbor ;
+	}
+	
+	if( pnode_neighbor_next )
+	{
+		pnode_neighbor_next->prev = pnode ;
+	}
+	
+	pnode_neighbor->prev = pnode_prev ;
+	pnode_neighbor->next = pnode ;
+	
+	pnode->prev = pnode_neighbor ;
+	pnode->next = pnode_neighbor_next ;
+	
+	if( (*list) == (*ppnode) )
+		(*list) = pnode_neighbor ;
+	(*ppnode) = pnode_neighbor ;
+	
+	return 0;
+}
+
+int SwapTwoListNodeMembers( SListNode *pnode1 , SListNode *pnode2 )
 {
 	SListNode nodeBackup ;
 	
@@ -729,7 +770,7 @@ int SortList( SList *plist , int (* SortListNodeProc)( void *pmember1 , void *pm
 		}
 		if( pnode1 != pnodeSelected )
 		{
-			iret = SwapTwoListNodes( pnode1 , pnodeSelected ) ;
+			iret = SwapTwoListNodeMembers( pnode1 , pnodeSelected ) ;
 			if( iret < 0 )
 				return -2;
 		}
@@ -855,21 +896,23 @@ BOOL DetachListNode( SList **pplistSource , SListNode *nodeDetach )
 	else if( nodeDetach->prev == NULL )
 	{
 		(*pplistSource) = nodeDetach->next ;
-		nodeDetach->next->prev = NULL ;
+		(*pplistSource)->prev = NULL ;
+		
 		
 		nodeDetach->next = NULL ;
 	}
 	else if( nodeDetach->next == NULL )
 	{
 		nodeDetach->prev->next = NULL ;
-		
-		nodeDetach->prev = NULL ;
 	}
 	else
 	{
 		nodeDetach->prev->next = nodeDetach->next ;
 		nodeDetach->next->prev = nodeDetach->prev ;
 	}
+	
+	nodeDetach->next = NULL ;
+	nodeDetach->prev = NULL ;
 	
 	return TRUE;
 }
