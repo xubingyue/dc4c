@@ -526,13 +526,18 @@ unsigned long DC4CGetOptions( struct Dc4cApiEnv *penv )
 	return penv->options;
 }
 
-int DC4CDoTask( struct Dc4cApiEnv *penv , char *program_and_params , int timeout )
+int DC4CDoTask( struct Dc4cApiEnv *penv , char *program_and_params , int timeout , char *ip )
 {
 	struct Dc4cBatchTask	task ;
 	
 	memset( & task , 0x00 , sizeof(struct Dc4cBatchTask) );
-	strcpy( task.program_and_params , program_and_params );
+	if( program_and_params == NULL || program_and_params[0] == '\0' )
+		return 0;
+	strncpy( task.program_and_params , program_and_params , sizeof(task.program_and_params)-1 );
 	task.timeout = timeout ;
+	task.order_index = 1 ;
+	if( ip )
+		strncpy( task.ip , ip , sizeof(task.ip)-1 );
 	
 	return DC4CDoBatchTasks( penv , 1 , & task , 1 );
 }

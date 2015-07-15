@@ -280,11 +280,16 @@ static int _hzbat_schedule_batch( char *business_date , char *schedule_name , ch
 		InfoLog( __FILE__ , __LINE__ , "DC4CInitEnv ok" );
 	}
 	
-	nret = DC4CDoTask( penv , batch_info.pretask_program_and_params , batch_info.pretask_timeout ) ;
+	nret = DC4CDoTask( penv , batch_info.pretask_program_and_params , batch_info.pretask_timeout , NULL ) ;
 	if( nret )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "DC4CDoTask failed[%d]" , nret );
 	}
+	
+	printf( "BATCHTASK-[%s][%d]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%d][%s]\n"
+		, DC4CGetTaskIp(penv) , DC4CGetTaskPort(penv)
+		, DC4CGetTaskTid(penv) , DC4CGetTaskProgramAndParams(penv) , DC4CGetTaskTimeout(penv) , ConvertTimeString(DC4CGetTaskBeginTimestamp(penv),begin_datetime,sizeof(begin_datetime))+11 , ConvertTimeString(DC4CGetTaskEndTimestamp(penv),end_datetime,sizeof(end_datetime))+11 , DC4CGetTaskElapse(penv)
+		, DC4CGetTaskProgress(penv) , DC4CGetTaskError(penv) , WEXITSTATUS(DC4CGetTaskStatus(penv)) , DC4CGetTaskInfo(penv) );
 	
 	dbBeginWork();
 	
@@ -572,6 +577,7 @@ static int HZBATDoPrepareTasks( char *business_date , char *schedule_name )
 	char			end_datetime[ 19 + 1 ] ;
 	
 	int			nret = 0 ;
+	int			nret2 = 0 ;
 	
 	nret = DB_pm_hzbat_batches_info_count_by_schedule_name( schedule_name , & pretasks_count ) ;
 	if( nret == SQLNOTFOUND )
@@ -748,9 +754,9 @@ static int HZBATDoPrepareTasks( char *business_date , char *schedule_name )
 			printf( "DC4CPerformBatchTasks failed[%d]\n" , nret );
 		}
 		
-		if( pretask_index > 0 )
+		if( pretask_index >= 0 )
 		{
-			printf( "[%d]-[%s][%d]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%d][%s]\n"
+			printf( "BATCHTASK-[%d]-[%s][%d]-[%s][%s][%d][%s][%s][%d]-[%d][%d][%d][%s]\n"
 				, pretask_index , DC4CGetBatchTasksIp(penv,pretask_index) , DC4CGetBatchTasksPort(penv,pretask_index)
 				, DC4CGetBatchTasksTid(penv,pretask_index) , DC4CGetBatchTasksProgramAndParams(penv,pretask_index) , DC4CGetBatchTasksTimeout(penv,pretask_index) , ConvertTimeString(DC4CGetBatchTasksBeginTimestamp(penv,pretask_index),begin_datetime,sizeof(begin_datetime))+11 , ConvertTimeString(DC4CGetBatchTasksEndTimestamp(penv,pretask_index),end_datetime,sizeof(end_datetime))+11 , DC4CGetBatchTasksElapse(penv,pretask_index)
 				, DC4CGetBatchTasksProgress(penv,pretask_index) , DC4CGetBatchTasksError(penv,pretask_index) , WEXITSTATUS(DC4CGetBatchTasksStatus(penv,pretask_index)) , DC4CGetBatchTasksInfo(penv,pretask_index) );
@@ -763,16 +769,16 @@ static int HZBATDoPrepareTasks( char *business_date , char *schedule_name )
 			batch_info.pretask_port = DC4CGetBatchTasksPort(penv,pretask_index) ;
 			batch_info.pretask_error = DC4CGetBatchTasksError(penv,pretask_index) ;
 			batch_info.pretask_status = DC4CGetBatchTasksStatus(penv,pretask_index) ;
-			nret = DB_pm_hzbat_batches_info_update_for_pretask_ip_and_pretask_port_and_pretask_progress_and_pretask_error_and_pretask_status_by_schedule_name_and_batch_name( a_batches_info[pretask_index].schedule_name , a_batches_info[pretask_index].batch_name , & batch_info ) ;
-			if( nret )
+			nret2 = DB_pm_hzbat_batches_info_update_for_pretask_ip_and_pretask_port_and_pretask_progress_and_pretask_error_and_pretask_status_by_schedule_name_and_batch_name( a_batches_info[pretask_index].schedule_name , a_batches_info[pretask_index].batch_name , & batch_info ) ;
+			if( nret2 )
 			{
-				printf( "DB_pm_hzbat_batches_info_update_for_pretask_ip_and_pretask_port_and_pretask_progress_and_pretask_error_and_pretask_status_by_schedule_name_and_batch_name failed[%d] , schedule_name[%s] batch_name[%s]\n" , nret , a_batches_info[pretask_index].schedule_name , a_batches_info[pretask_index].batch_name );
+				printf( "DB_pm_hzbat_batches_info_update_for_pretask_ip_and_pretask_port_and_pretask_progress_and_pretask_error_and_pretask_status_by_schedule_name_and_batch_name failed[%d] , schedule_name[%s] batch_name[%s]\n" , nret2 , a_batches_info[pretask_index].schedule_name , a_batches_info[pretask_index].batch_name );
 				dbRollback();
 				break;
 			}
+			
+			dbCommit();
 		}
-		
-		dbCommit();
 		
 		if( nret != DC4C_INFO_TASK_FINISHED )
 			break;
@@ -1426,7 +1432,7 @@ static int hzbat_all_schedules( char *business_date )
 
 static void version()
 {
-	printf( "hzbat v1.5.0 build %s %s\n" , __DATE__ , __TIME__ );
+	printf( "hzbat v1.5.3 build %s %s\n" , __DATE__ , __TIME__ );
 	return;
 }
 

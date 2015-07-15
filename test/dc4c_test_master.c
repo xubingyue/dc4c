@@ -33,7 +33,7 @@ int main( int argc , char *argv[] )
 		DC4CSetTimeout( penv , 15 );
 		DC4CSetOptions( penv , DC4C_OPTIONS_INTERRUPT_BY_APP );
 		
-		nret = DC4CDoTask( penv , argv[2] , DC4CGetTimeout(penv) ) ;
+		nret = DC4CDoTask( penv , argv[2] , DC4CGetTimeout(penv) , NULL ) ;
 		if( nret )
 		{
 			printf( "DC4CDoTask failed[%d]\n" , nret );

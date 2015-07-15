@@ -72,7 +72,7 @@ unsigned long DC4CGetOptions( struct Dc4cApiEnv *penv );
 
 /* 同步发起任务类 */
 
-int DC4CDoTask( struct Dc4cApiEnv *penv , char *program_and_params , int timeout );
+int DC4CDoTask( struct Dc4cApiEnv *penv , char *program_and_params , int timeout , char *ip );
 
 int DC4CGetTaskProgress( struct Dc4cApiEnv *penv );
 char *DC4CGetTaskIp( struct Dc4cApiEnv *penv );
