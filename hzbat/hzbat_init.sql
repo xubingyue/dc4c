@@ -26,30 +26,30 @@ INSERT INTO pm_hzbat_schedule VALUES (30,'POIT_RPT','±¨±í','','',0);
 -- Êý¾Ý±ê×¼»¯¼Æ»®
 
 INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHA901','¿Í»§ÐÅÏ¢Í¬²½',0,0,1,'','',0,'POTHA901 -s',60,'',0,0,0,0);
-INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB001','´æ¿îÀàµ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB001 -s',60,'',0,0,0,0);
-INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB002','ÐÅ´ûÀàµ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB002 -s',60,'',0,0,0,0);
+-- INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB001','´æ¿îÀàµ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB001 -s',60,'',0,0,0,0);
+-- INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB002','ÐÅ´ûÀàµ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB002 -s',60,'',0,0,0,0);
 INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB003','»ù½ðÊý¾Ýµ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB003 -s',60,'',0,0,0,0);
-INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB004','»Æ½ðT+DÊý¾Ýµ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB004 -s',60,'',0,0,0,0);
-INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB005','µç×Ó¹úÕ®µ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB005 -s',60,'',0,0,0,0);
+-- INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB004','»Æ½ðT+DÊý¾Ýµ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB004 -s',60,'',0,0,0,0);
+-- INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB005','µç×Ó¹úÕ®µ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB005 -s',60,'',0,0,0,0);
 INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB006','ÍøÒøÊý¾Ýµ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB006 -s',60,'',0,0,0,0);
-INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB007','½è¼Ç¿¨Êý¾Ýµ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB007 -s',60,'',0,0,0,0);
-INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB008','ÇþµÀÀàÊý¾Ýµ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB008 -s',60,'',0,0,0,0);
+-- INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB007','½è¼Ç¿¨Êý¾Ýµ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB007 -s',60,'',0,0,0,0);
+-- INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB008','ÇþµÀÀàÊý¾Ýµ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB008 -s',60,'',0,0,0,0);
 INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB009','Î¢ÐÅÒøÐÐÊý¾Ýµ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB009 -s',60,'',0,0,0,0);
 INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB010','½è¼Ç¿¨posÏû·ÑÊý¾Ýµ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB010 -s',60,'',0,0,0,0);
-INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB011','Æ¾Ö¤Ê½¹úÕ®µ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB011 -s',60,'',0,0,0,0);
-INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB012','µç×ÓÊ½¹úÕ®µ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB012 -s',60,'',0,0,0,0);
+-- INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB011','Æ¾Ö¤Ê½¹úÕ®µ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB011 -s',60,'',0,0,0,0);
+-- INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB012','µç×ÓÊ½¹úÕ®µ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB012 -s',60,'',0,0,0,0);
 INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB013','Àí²ÆÇ©Ô¼µ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB013 -s',60,'',0,0,0,0);
-INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB014','ÐÅ´ûÀàµ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB014 -s',60,'',0,0,0,0);
-INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB015','Àí²ÆºÍ»ù½ðµ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB015 -s',60,'',0,0,0,0);
+-- INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB014','ÐÅ´ûÀàµ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB014 -s',60,'',0,0,0,0);
+-- INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB015','Àí²ÆºÍ»ù½ðµ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB015 -s',60,'',0,0,0,0);
 INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB016','ÐÅÓÃ¿¨posÏû·Ñµ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB016 -s',60,'',0,0,0,0);
-INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB017','´úÀíÀàµ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB017 -s',60,'',0,0,0,0);
-INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB018','´ú·¢¹¤×ÊÇ©Ô¼Êý¾Ý±ê×¼»¯',0,0,1,'','',0,'POTHB018 -s',60,'',0,0,0,0);
+-- INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB017','´úÀíÀàµ½±ê×¼Êý¾Ý',0,0,1,'','',0,'POTHB017 -s',60,'',0,0,0,0);
+-- INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB018','´ú·¢¹¤×ÊÇ©Ô¼Êý¾Ý±ê×¼»¯',0,0,1,'','',0,'POTHB018 -s',60,'',0,0,0,0);
 INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB019','½á¹¹ÐÔ´æ¿î',0,0,1,'','',0,'POTHB019 -s',60,'',0,0,0,0);
-INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB020','¸öÈË×Ô¶¯×ª´æ',0,0,1,'','',0,'POTHB020 -s',60,'',0,0,0,0);
-INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB021','×Ê½ð¹é¼¯Ç©Ô¼',0,0,1,'','',0,'POTHB021 -s',60,'',0,0,0,0);
-INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB022','Î¢´û¿¨ÍøÒøÇ©Ô¼',0,0,1,'','',0,'POTHB022 -s',60,'',0,0,0,0);
-INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB023','´ú¿ÛÒµÎñÇ©Ô¼',0,0,1,'','',0,'POTHB023 -s',60,'',0,0,0,0);
-INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB024','ÎÒÐÐPOS»ú¾ß½»Ò×Á¿',0,0,1,'','',0,'POTHB024 -s',60,'',0,0,0,0);
+-- INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB020','¸öÈË×Ô¶¯×ª´æ',0,0,1,'','',0,'POTHB020 -s',60,'',0,0,0,0);
+-- INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB021','×Ê½ð¹é¼¯Ç©Ô¼',0,0,1,'','',0,'POTHB021 -s',60,'',0,0,0,0);
+-- INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB022','Î¢´û¿¨ÍøÒøÇ©Ô¼',0,0,1,'','',0,'POTHB022 -s',60,'',0,0,0,0);
+-- INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB023','´ú¿ÛÒµÎñÇ©Ô¼',0,0,1,'','',0,'POTHB023 -s',60,'',0,0,0,0);
+-- INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB024','ÎÒÐÐPOS»ú¾ß½»Ò×Á¿',0,0,1,'','',0,'POTHB024 -s',60,'',0,0,0,0);
 INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB025','»ù½ð°´¹ºÂò½ð¶îËÍ»ý·Öµ½±ê×¼',0,0,1,'','',0,'POTHB025 -s',60,'',0,0,0,0);
 INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB026','ÔÚÏß½É·Ñ°´±ÊÊýËÍ»ý·Ö',0,0,1,'','',0,'POTHB026 -s',60,'',0,0,0,0);
 INSERT INTO pm_hzbat_batches_info VALUES ('POIT_STAD','POTHB027','ÐÅÓÃ¿¨»¹¿î',0,0,1,'','',0,'POTHB027 -s',60,'',0,0,0,0);
@@ -64,6 +64,7 @@ INSERT INTO pm_hzbat_batches_info VALUES ('POIT_CALC','POTHC001','»ý·Ö¼ÆËã',0,0,
 INSERT INTO pm_hzbat_batches_info VALUES ('POIT_CALC','POTHC101','»ý·Ö»ã×Ü',0,0,1,'','',0,'POTHC101 -s',60,'',0,0,0,0);
 INSERT INTO pm_hzbat_batches_info VALUES ('POIT_CALC','POTHC201','»ý·Ö»ã×Ü',0,0,1,'','',0,'POTHC201 -s',60,'',0,0,0,0);
 INSERT INTO pm_hzbat_batches_info VALUES ('POIT_CALC','POTHC301','»ý·ÖÈëÕË',0,0,1,'','',0,'POTHC301 -s',60,'',0,0,0,0);
+INSERT INTO pm_hzbat_batches_info VALUES ('POIT_CALC','POTHC302','Ê±µã»ý·ÖÓà¶î´¦Àí',0,0,1,'','',0,'POTHC302 -s',60,'',0,0,0,0);
 INSERT INTO pm_hzbat_batches_info VALUES ('POIT_CALC','POTHC401','»ý·ÖÊ§Ð§',0,0,1,'','',0,'POTHC401 -s',60,'',0,0,0,0);
 
 -- »ý·Ö¼ÆËã¼Æ»®
@@ -73,6 +74,8 @@ INSERT INTO pm_hzbat_batches_info VALUES ('POIT_DAYE','POTHD001','ÒµÎñÈÕÆÚÇÐ»»',
 -- ±¨±íÉú³É¼Æ»®
 
 INSERT INTO pm_hzbat_batches_info VALUES ('POIT_RPT','POTHR001','»ý·ÖÕËºÅÔÂ»ã×Ü',0,0,1,'','',0,'POTHR001 -m',60,'',0,0,0,0);
+INSERT INTO pm_hzbat_batches_info VALUES ('POIT_RPT','POTHR002','ÏîÄ¿Ã÷Ï¸Ã¿ÈÕ»ã×Ü',0,0,1,'','',0,'POTHR002 -m',60,'',0,0,0,0);
+INSERT INTO pm_hzbat_batches_info VALUES ('POIT_RPT','POTHR003','¿Í»§ÏîÄ¿Ã÷Ï¸Ã¿ÈÕTOP',0,0,1,'','',0,'POTHR003 -m',60,'',0,0,0,0);
 INSERT INTO pm_hzbat_batches_info VALUES ('POIT_RPT','POTHR101','¿Í»§»ý·Ö²úÉúÈÕ±¨±í',0,0,1,'','',0,'POTHR101 -s',60,'',0,0,0,0);
 INSERT INTO pm_hzbat_batches_info VALUES ('POIT_RPT','POTHR201','¿Í»§»ý·Ö²úÉúÔÂ±¨±í',0,0,1,'','',0,'POTHR201 -s',60,'',0,0,0,0);
 INSERT INTO pm_hzbat_batches_info VALUES ('POIT_RPT','POTHR301','¿Í»§»ý·Ö²úÉú¼¾±¨±í',0,0,1,'','',0,'POTHR301 -s',60,'',0,0,0,0);
@@ -90,6 +93,7 @@ INSERT INTO pm_hzbat_batches_info VALUES ('POIT_RPT','POTHR403','ÌõÏß¿Í»§»ý·Ö²úÉ
 -- ²åÈëÅúÁ¿¹ýÂË±íÊý¾Ý
 -- ----------------------------------------------------------------------------
 
+INSERT INTO pm_hzbat_batches_filter VALUES ('POIT_CALC','POTHC302','DD','ME');
 INSERT INTO pm_hzbat_batches_filter VALUES ('POIT_RPT','POTHR201','DD','ME');
 INSERT INTO pm_hzbat_batches_filter VALUES ('POIT_RPT','POTHR202','DD','ME');
 INSERT INTO pm_hzbat_batches_filter VALUES ('POIT_RPT','POTHR203','DD','ME');
@@ -107,30 +111,30 @@ INSERT INTO pm_hzbat_batches_filter VALUES ('POIT_RPT','POTHR403','MM-DD','12-31
 -- Êý¾Ý±ê×¼»¯¼Æ»®
 
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHA901');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB001');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB002');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB001');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB002');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB003');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB004');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB005');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB004');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB005');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB006');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB007');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB008');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB007');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB008');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB009');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB010');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB011');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB012');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB011');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB012');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB013');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB014');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB015');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB014');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB015');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB016');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB017');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB018');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB017');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB018');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB019');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB020');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB021');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB022');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB023');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB024');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB020');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB021');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB022');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB023');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB024');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB025');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB026');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB027');
@@ -140,30 +144,30 @@ INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB030');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','','POTHB031');
 
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHA901','');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB001','');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB002','');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB001','');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB002','');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB003','');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB004','');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB005','');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB004','');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB005','');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB006','');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB007','');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB008','');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB007','');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB008','');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB009','');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB010','');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB011','');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB012','');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB011','');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB012','');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB013','');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB014','');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB015','');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB014','');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB015','');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB016','');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB017','');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB018','');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB017','');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB018','');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB019','');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB020','');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB021','');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB022','');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB023','');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB024','');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB020','');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB021','');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB022','');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB023','');
+-- INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB024','');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB025','');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB026','');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_STAD','POTHB027','');
@@ -178,7 +182,8 @@ INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_CALC','','POTHC001');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_CALC','POTHC001','POTHC101');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_CALC','POTHC101','POTHC201');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_CALC','POTHC201','POTHC301');
-INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_CALC','POTHC301','POTHC401');
+INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_CALC','POTHC301','POTHC302');
+INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_CALC','POTHC302','POTHC401');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_CALC','POTHC401','');
 
 -- »ý·Ö¼ÆËã¼Æ»®
@@ -190,6 +195,9 @@ INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_DAYE','POTHD001','');
 
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_RPT','','POTHR001');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_RPT','POTHR001','');
+INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_RPT','','POTHR002');
+INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_RPT','POTHR002','POTHR003');
+INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_RPT','POTHR003','');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_RPT','','POTHR101');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_RPT','POTHR101','POTHR201');
 INSERT INTO pm_hzbat_batches_direction VALUES ('POIT_RPT','POTHR201','POTHR301');
