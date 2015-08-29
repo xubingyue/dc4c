@@ -1,3 +1,8 @@
+ver 1.5.4	2015-08-27	calvin
+		* 计算节点守护新增-s选项，用于启动时延迟连接注册节点
+		* 新增脚本shbin/dc4c_cluster.do用于集群的一键管理
+		* 解决了有些浏览器会请求注册节点/favicon.icon的报错反应
+
 ver 1.5.3	2015-07-14	calvin
 		* 调整了DC4CDoTask函数原型，增加char*ip参数，但暂不实现内部功能
 

@@ -109,6 +109,7 @@ int app_MonitorHtmlFrame( struct ServerEnv *penv , struct SocketSession *psessio
 int app_OutputOsTypesListHtml( struct ServerEnv *penv , struct SocketSession *psession );
 int app_OutputHostsListHtml( struct ServerEnv *penv , struct SocketSession *psession );
 int app_OutputWorkersListHtml( struct ServerEnv *penv , struct SocketSession *psession );
+int app_OutputErrorHtml( struct ServerEnv *penv , struct SocketSession *psession );
 int app_HeartBeatRequest( struct ServerEnv *penv , long *p_tt , long *p_epoll_timeout );
 int app_HeartBeatResponse( struct ServerEnv *penv , struct SocketSession *psession );
 

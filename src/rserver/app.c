@@ -900,6 +900,19 @@ int app_OutputWorkersListHtml( struct ServerEnv *penv , struct SocketSession *ps
 	return 0;
 }
 
+int app_OutputErrorHtml( struct ServerEnv *penv , struct SocketSession *psession )
+{
+	int			len ;
+	int			httphead_len ;
+	
+	httphead_len = len = (int)SNPRINTF( SNPRINTF_ARGS ,
+		"HTTP/1.0 404 Not found\r\n\r\n"
+		);
+	SENDBUFFER_APPEND_LEN
+	
+	return 0;
+}
+
 int app_HeartBeatRequest( struct ServerEnv *penv , long *p_now , long *p_epoll_timeout )
 {
 	struct SocketSession	*psession ;

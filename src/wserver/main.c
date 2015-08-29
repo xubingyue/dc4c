@@ -73,6 +73,11 @@ static int ParseCommandParameter( int argc , char *argv[] , struct ServerEnv *pe
 		{
 			penv->param.loglevel_debug = 1 ;
 		}
+		else if( ( STRCMP( argv[i] , == , "-s" ) || STRCMP( argv[i] , == , "--sleep" ) ) && i + 1 < argc )
+		{
+			i++;
+			penv->param.sleep = atoi(argv[i]) ;
+		}
 		else
 		{
 			printf( "invalid parameter[%s]\n" , argv[i] );
@@ -144,6 +149,8 @@ int main( int argc , char *argv[] )
 	sigemptyset( & (act.sa_mask) );
 	act.sa_flags = 0 ;
 	sigaction( SIGTERM , & act , & oact );
+	
+	sleep( penv->param.sleep );
 	
 	for( penv->wserver_index = 0 ; penv->wserver_index < penv->param.wserver_count ; penv->wserver_index++ )
 	{

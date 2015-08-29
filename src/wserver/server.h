@@ -49,6 +49,7 @@ struct CommandParameter
 	int				wserver_port_base ;
 	int				wserver_count ;
 	int				loglevel_debug ;
+	int				sleep ;
 } ;
 
 #define CONNECT_SESSION_PROGRESS_CLOSED		0

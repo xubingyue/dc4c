@@ -99,8 +99,9 @@ int proto_CommandLine( struct ServerEnv *penv , struct SocketSession *psession )
 		}
 		else
 		{
-			ErrorLog( __FILE__ , __LINE__ , "URL[%s] invalid" , param1 );
-			return RETURN_CLOSE;
+			WarnLog( __FILE__ , __LINE__ , "URL[%s] invalid" , param1 );
+			app_OutputErrorHtml( penv , psession );
+			return 0;
 		}
 		
 		return 0;
