@@ -8,7 +8,7 @@ if [ $# -eq 0 ] ; then
 	exit 7 ;
 fi
 
-action=$1
+ACTION=$1
 shift
 
 function rsh_call()
@@ -22,7 +22,7 @@ function rsh_call()
 	fi
 }
 
-case $action in
+case $ACTION in
 	start)
 		exec 3<$HOME/etc/dc4c_cluster.conf
 		while read -u3 LINE ; do
@@ -32,12 +32,13 @@ case $action in
 			fi
 			H=`echo $LINE | awk '{print $1}'`
 			U=`echo $LINE | awk '{print $2}'`
-			rsh_call "$U" "$H" "dc4c.do start $*"
+			rsh_call "$U" "$H" "dc4c.do start --delay 5 $*"
 		done
 		exec 3<&-
 		;;
 	stop)
-		exec 3<$HOME/etc/dc4c_cluster.conf
+		tac $HOME/etc/dc4c_cluster.conf > $HOME/etc/dc4c_cluster.conf.tac
+		exec 3<$HOME/etc/dc4c_cluster.conf.tac
 		while read -u3 LINE ; do
 			echo $LINE | grep -E "^$|^#" >/dev/null 2>&1
 			if [ $? -eq 0 ] ; then
@@ -48,15 +49,17 @@ case $action in
 			rsh_call "$U" "$H" "dc4c.do stop"
 		done
 		exec 3<&-
+		rm -f $HOME/etc/dc4c_cluster.conf.tac
 		;;
 	restart)
 		dc4c_cluster.do stop
-		sleep 1
+		sleep 5
 		dc4c_cluster.do status
 		dc4c_cluster.do start $*
 		;;
 	kill)
-		exec 3<$HOME/etc/dc4c_cluster.conf
+		tac $HOME/etc/dc4c_cluster.conf > $HOME/etc/dc4c_cluster.conf.tac
+		exec 3<$HOME/etc/dc4c_cluster.conf.tac
 		while read -u3 LINE ; do
 			echo $LINE | grep -E "^$|^#" >/dev/null 2>&1
 			if [ $? -eq 0 ] ; then
@@ -67,6 +70,7 @@ case $action in
 			rsh_call "$U" "$H" "dc4c.do kill"
 		done
 		exec 3<&-
+		rm -f $HOME/etc/dc4c_cluster.conf.tac
 		;;
 	status)
 		exec 3<$HOME/etc/dc4c_cluster.conf

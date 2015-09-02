@@ -8,7 +8,7 @@ if [ $# -eq 0 ] ; then
 	exit 7 ;
 fi
 
-action=$1
+ACTION=$1
 shift
 
 function call()
@@ -18,11 +18,16 @@ function call()
 	$CMD
 }
 
-case $action in
+case $ACTION in
 	start)
-		call "dc4c_rserver -r 127.0.0.1:12001 $*"
-		call "dc4c_rserver -r 127.0.0.1:12002 $*"
-		call "dc4c_wserver -r 127.0.0.1:12001,127.0.0.1:12002 -w 127.0.0.1:13001 -c 10 $*"
+		PID=`ps -f -u $USER | grep -v grep | awk '{if($3=="1"&&$8=="dc4c_wserver")print $2}'`
+		PID2=`ps -f -u $USER | grep -v grep | awk '{if($3=="1"&&$8=="dc4c_rserver")print $2}'`
+		if [ x"$PID" != x"" ] || [ x"$PID2" != x"" ] ; then
+			exit 0
+		fi
+		call "dc4c_rserver -r 192.68.74.231:16001 $*"
+		call "dc4c_rserver -r 192.68.74.231:16002 $*"
+		call "dc4c_wserver -r 192.68.74.231:16001,192.68.74.231:16002 -w 192.68.74.231:17001 -c 10 $*"
 		;;
 	stop)
 		PID=`ps -f -u $USER | grep -v grep | awk '{if($3=="1"&&$8=="dc4c_wserver")print $2}'`
@@ -33,7 +38,6 @@ case $action in
 		if [ x"$PID" != x"" ] ; then
 			call "kill $PID"
 		fi
-		sleep 1
 		PID=`ps -f -u $USER | grep -v grep | awk '{if($3!="1"&&$8=="dc4c_wserver")print $2}'`
 		if [ x"$PID" != x"" ] ; then
 			call "kill $PID"
@@ -58,7 +62,6 @@ case $action in
 		if [ x"$PID" != x"" ] ; then
 			call "kill -9 $PID"
 		fi
-		sleep 1
 		PID=`ps -f -u $USER | grep -v grep | awk '{if($3!="1"&&$8=="dc4c_wserver")print $2}'`
 		if [ x"$PID" != x"" ] ; then
 			call "kill -9 $PID"

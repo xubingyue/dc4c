@@ -151,6 +151,8 @@ int server( struct ServerEnv *penv )
 		app_HeartBeatRequest( penv , & now , & epoll_timeout );
 	}
 	
+	sleep( penv->param.delay );
+	
 	for( accepted_session_index = 0 ; accepted_session_index < MAXCOUNT_ACCEPTED_SESSION ; accepted_session_index++ )
 	{
 		CleanSocketSession( penv->accepted_session_array+accepted_session_index );

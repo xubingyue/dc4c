@@ -64,6 +64,7 @@ struct CommandParameter
 	char				rserver_ip[ 40 + 1 ] ;
 	int				rserver_port ;
 	int				loglevel_debug ;
+	int				delay ;
 } ;
 
 #define SESSIONTYPE_WORKER		1

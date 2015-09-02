@@ -26,7 +26,7 @@ static void version()
 
 static void usage()
 {
-	printf( "USAGE : wserver [ -r | --rserver-ip-port ] ip:port,... [ -w | --wserver-ip-port ] ip:port [ -c | --wserver_count count ] [ -d | --loglevel-debug ]\n\n" );
+	printf( "USAGE : wserver [ -r | --rserver-ip-port ] ip:port,... [ -w | --wserver-ip-port ] ip:port [ -c | --wserver_count count ] [ -d | --loglevel-debug ] [ --delay-begin seconds ]\n\n" );
 	return;
 }
 
@@ -73,10 +73,10 @@ static int ParseCommandParameter( int argc , char *argv[] , struct ServerEnv *pe
 		{
 			penv->param.loglevel_debug = 1 ;
 		}
-		else if( ( STRCMP( argv[i] , == , "-s" ) || STRCMP( argv[i] , == , "--sleep" ) ) && i + 1 < argc )
+		else if( STRCMP( argv[i] , == , "--delay" ) && i + 1 < argc )
 		{
 			i++;
-			penv->param.sleep = atoi(argv[i]) ;
+			penv->param.delay = atoi(argv[i]) ;
 		}
 		else
 		{
@@ -150,7 +150,7 @@ int main( int argc , char *argv[] )
 	act.sa_flags = 0 ;
 	sigaction( SIGTERM , & act , & oact );
 	
-	sleep( penv->param.sleep );
+	sleep( penv->param.delay );
 	
 	for( penv->wserver_index = 0 ; penv->wserver_index < penv->param.wserver_count ; penv->wserver_index++ )
 	{

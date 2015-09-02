@@ -26,7 +26,7 @@ static void version()
 
 static void usage()
 {
-	printf( "USAGE : rserver [ -r | --rserver-ip-port ] ip:port,... [ -d | --loglevel-debug ]\n\n" );
+	printf( "USAGE : rserver [ -r | --rserver-ip-port ] ip:port,... [ -d | --loglevel-debug ] [ --delay-finish seconds ]\n\n" );
 	return;
 }
 
@@ -51,6 +51,11 @@ static int ParseCommandParameter( int argc , char *argv[] , struct ServerEnv *pe
 		else if( STRCMP( argv[i] , == , "-d" ) || STRCMP( argv[i] , == , "--loglevel-debug" ) )
 		{
 			penv->param.loglevel_debug = 1 ;
+		}
+		else if( STRCMP( argv[i] , == , "--delay" ) && i + 1 < argc )
+		{
+			i++;
+			penv->param.delay = atoi(argv[i]) ;
 		}
 		else
 		{

@@ -1,5 +1,5 @@
 ver 1.5.4	2015-08-27	calvin
-		* Create option -s in computing node for delaying boot
+		* Add option --delay
 		* Create shbin/dc4c_cluster.do for managing cluster
 		* Fixed error log on http request /favicon.icon
 
